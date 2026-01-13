@@ -50,7 +50,7 @@ git remote add origin https://github.com/ReinVelt/velt.org.git
 git pull origin main --allow-unrelated-histories
 ```
 
-Or if you're on a different branch:
+Or if you're on a different branch (replace `<branch-name>` with your actual branch name, e.g., `develop` or `staging`):
 
 ```bash
 git pull origin <branch-name> --allow-unrelated-histories
@@ -71,7 +71,7 @@ git commit -m "Merge server code with GitHub repository"
 git push origin main
 ```
 
-Or push to your current branch:
+Or push to your current branch (replace `<branch-name>` with your actual branch name):
 
 ```bash
 git push origin <branch-name>
