@@ -1,0 +1,3635 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Regenwormen (Pickomino)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 25%, #45B7D1 50%, #96CEB4 75%, #FFEAA7 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            padding: 10px;
+            color: #2c3e50;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        
+        @keyframes dawn {
+            0% { background-position: 0% 0%; }
+            50% { background-position: 100% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(-45deg, rgba(255,107,107,0.1), rgba(78,205,196,0.1), rgba(69,183,209,0.1), rgba(255,234,167,0.1));
+            background-size: 400% 400%;
+            animation: dawn 15s ease infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .game-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: clamp(15px, 3vw, 30px);
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                0 15px 25px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7);
+            border-radius: 25px 25px 0 0;
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        @keyframes shimmer {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+        
+        @keyframes diceRoll {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 0.8;
+            }
+            15% {
+                transform: translate(10px, -20px) rotate(90deg) scale(1.1);
+                opacity: 0.9;
+            }
+            30% {
+                transform: translate(-5px, -35px) rotate(180deg) scale(0.9);
+                opacity: 1;
+            }
+            45% {
+                transform: translate(8px, -25px) rotate(270deg) scale(1.05);
+                opacity: 0.95;
+            }
+            60% {
+                transform: translate(-3px, -15px) rotate(360deg) scale(0.95);
+                opacity: 1;
+            }
+            75% {
+                transform: translate(2px, -8px) rotate(405deg) scale(1.02);
+                opacity: 1;
+            }
+            90% {
+                transform: translate(0, -3px) rotate(450deg) scale(0.98);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(0, 0) rotate(360deg) scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes diceSettle {
+            0% {
+                transform: scale(1.05);
+            }
+            50% {
+                transform: scale(0.95);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes diceAppear {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) rotate(-180deg);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.1) rotate(10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            margin-bottom: clamp(15px, 4vw, 25px);
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            font-weight: 700;
+            letter-spacing: -1px;
+            position: relative;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, #FF6B6B, #4ECDC4);
+            border-radius: 2px;
+        }
+
+        .game-layout {
+            display: grid;
+            grid-template-areas: 
+                "turn-info turn-info turn-info"
+                "player-left central-area player-right"
+                "controls central-area instructions";
+            grid-template-columns: minmax(200px, 1fr) 2.5fr minmax(200px, 1fr);
+            grid-template-rows: auto 1fr auto;
+            gap: 15px;
+            min-height: 70vh;
+        }
+        
+        .central-play-area {
+            grid-area: central-area;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 249, 250, 0.9));
+            backdrop-filter: blur(15px);
+            border: 2px solid rgba(69, 183, 209, 0.3);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .central-play-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #FF6B6B, #4ECDC4, #45B7D1);
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .widget {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.8));
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(69, 183, 209, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .widget:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+        
+        .turn-widget {
+            grid-area: turn-info;
+        }
+        
+        .player-left-widget {
+            grid-area: player-left;
+        }
+        
+        .player-right-widget {
+            grid-area: player-right;
+        }
+        
+        .controls-widget {
+            grid-area: controls;
+        }
+        
+        .instructions-widget {
+            grid-area: instructions;
+        }
+
+        .tiles-section {
+            flex: 1;
+            margin-bottom: 20px;
+        }
+        
+        .tiles-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(69, 183, 209, 0.3);
+        }
+
+        .tiles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+            gap: clamp(4px, 1vw, 8px);
+            max-width: 100%;
+        }
+
+        .tile {
+            aspect-ratio: 3/4;
+            min-width: 50px;
+            background: linear-gradient(145deg, #FFD54F, #FFC107, #FF8F00);
+            border: 2px solid rgba(255, 143, 0, 0.6);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: clamp(4px, 1vw, 8px);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-weight: 600;
+            color: #E65100;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .tile::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .tile:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 15px 30px rgba(255, 143, 0, 0.4),
+                0 5px 15px rgba(0, 0, 0, 0.2);
+            border-color: #FF6B6B;
+        }
+        
+        .tile:hover::before {
+            left: 100%;
+        }
+        
+        .tile:active {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .tile.taken {
+            background: #BDBDBD;
+            border-color: #757575;
+            color: #424242;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .tile-number {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .worms {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 2px;
+        }
+
+        .worm {
+            width: 12px;
+            height: 12px;
+            background: #8BC34A;
+            border-radius: 50%;
+            border: 1px solid #4CAF50;
+        }
+
+        .dice-section {
+            flex: 1;
+        }
+        
+        .dice-section h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+            text-align: center;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(69, 183, 209, 0.3);
+        }
+
+        .dice-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(60px, 80px));
+            gap: clamp(8px, 2vw, 15px);
+            margin-bottom: clamp(12px, 2.5vw, 20px);
+            max-width: 100%;
+            justify-content: center;
+        }
+
+        .die {
+            aspect-ratio: 1;
+            min-width: 50px;
+            max-width: 80px;
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border: 3px solid rgba(44, 62, 80, 0.2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(18px, 3vw, 24px);
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+        
+        .die.rolling {
+            animation: diceRoll 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+            cursor: wait;
+        }
+        
+        .die.settling {
+            animation: diceSettle 0.3s ease-out forwards;
+        }
+        
+        .die.appearing {
+            animation: diceAppear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        
+        .die::before {
+            content: '';
+            position: absolute;
+            inset: 2px;
+            background: linear-gradient(145deg, transparent, rgba(78, 205, 196, 0.1));
+            border-radius: 12px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .die:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 
+                0 8px 25px rgba(78, 205, 196, 0.3),
+                0 4px 15px rgba(0, 0, 0, 0.15);
+            border-color: #4ECDC4;
+        }
+
+        .die:hover::before {
+            opacity: 1;
+        }
+
+        .die.selected {
+            background: linear-gradient(145deg, #4ECDC4, #45B7D1);
+            color: white;
+            transform: scale(0.95);
+            box-shadow: 
+                inset 0 4px 8px rgba(0, 0, 0, 0.2),
+                0 2px 10px rgba(78, 205, 196, 0.5);
+        }
+
+        .die.used {
+            background: linear-gradient(145deg, #bdc3c7, #95a5a6);
+            color: #7f8c8d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .die:active {
+            transform: translateY(-1px) scale(1.02);
+        }
+
+        .worm-symbol {
+            color: #8BC34A;
+            font-size: 30px;
+        }
+
+        .selected-dice {
+            background: linear-gradient(135deg, rgba(78, 205, 196, 0.2), rgba(150, 206, 180, 0.15));
+            backdrop-filter: blur(10px);
+            padding: clamp(10px, 2vw, 15px);
+            border-radius: 12px;
+            margin-bottom: clamp(12px, 2.5vw, 18px);
+            min-height: clamp(40px, 8vw, 60px);
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            box-shadow: 
+                0 4px 15px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .selected-dice:hover {
+            transform: translateY(-1px);
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: clamp(12px, 2.5vw, 18px) clamp(20px, 4vw, 30px);
+            font-size: clamp(16px, 3vw, 20px);
+            font-weight: 700;
+            border: 3px solid transparent;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 6px 20px rgba(0, 0, 0, 0.15),
+                0 2px 8px rgba(0, 0, 0, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transform-style: preserve-3d;
+            animation: buttonIdle 4s ease-in-out infinite;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255, 255, 255, 0.4), 
+                rgba(255, 255, 255, 0.6),
+                rgba(255, 255, 255, 0.4),
+                transparent);
+            transition: left 0.6s ease;
+            z-index: 1;
+        }
+        
+        button::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+            transform: translate(-50%, -50%);
+            transition: all 0.4s ease;
+            border-radius: 50%;
+            z-index: 0;
+        }
+        
+        button:hover::before {
+            left: 100%;
+            animation: shimmerPulse 1.5s ease-in-out infinite;
+        }
+        
+        button:hover::after {
+            width: 200%;
+            height: 200%;
+        }
+
+        @keyframes buttonIdle {
+            0%, 100% { 
+                transform: translateY(0px) scale(1);
+                box-shadow: 
+                    0 6px 20px rgba(0, 0, 0, 0.15),
+                    0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+            50% { 
+                transform: translateY(-1px) scale(1.01);
+                box-shadow: 
+                    0 8px 25px rgba(0, 0, 0, 0.2),
+                    0 4px 12px rgba(0, 0, 0, 0.12);
+            }
+        }
+
+        @keyframes shimmerPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        @keyframes buttonPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .roll-btn {
+            background: linear-gradient(135deg, #FF6B6B, #ff5722, #e74c3c);
+            color: white;
+            border-color: rgba(255, 107, 107, 0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+
+        .roll-btn:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 12px 35px rgba(255, 107, 107, 0.6),
+                0 6px 15px rgba(255, 107, 107, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #ff5722, #e74c3c, #c0392b);
+            border-color: rgba(255, 107, 107, 0.8);
+            animation: buttonPulse 0.6s ease-in-out infinite;
+        }
+
+        .end-turn-btn {
+            background: linear-gradient(135deg, #45B7D1, #2196F3, #1976D2);
+            color: white;
+            border-color: rgba(69, 183, 209, 0.5);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .end-turn-btn:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 12px 35px rgba(69, 183, 209, 0.6),
+                0 6px 15px rgba(69, 183, 209, 0.4),
+                inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #2196F3, #1976D2, #1565C0);
+            border-color: rgba(69, 183, 209, 0.8);
+        }
+
+        button:disabled {
+            background: linear-gradient(135deg, #bdc3c7, #95a5a6);
+            color: #7f8c8d;
+            cursor: not-allowed;
+            opacity: 0.5;
+            transform: none;
+            animation: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            filter: grayscale(50%);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(2px) scale(0.95);
+            box-shadow: 
+                0 3px 10px rgba(0, 0, 0, 0.2),
+                inset 0 3px 8px rgba(0, 0, 0, 0.15);
+            transition: all 0.1s ease;
+        }
+
+        button:focus:not(:disabled) {
+            outline: none;
+            box-shadow: 
+                0 0 0 3px rgba(78, 205, 196, 0.4),
+                0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .hint-btn {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad, #7d3c98);
+            border: 3px solid rgba(155, 89, 182, 0.5);
+            color: white;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .hint-btn:hover:not(:disabled) {
+            background: linear-gradient(145deg, #8e44ad, #7d3c98, #6c3483);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 
+                0 12px 35px rgba(155, 89, 182, 0.6),
+                0 6px 15px rgba(155, 89, 182, 0.4);
+            border-color: rgba(155, 89, 182, 0.8);
+        }
+
+        /* Special glow effect for primary action buttons */
+        .roll-btn:not(:disabled) {
+            animation: primaryGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes primaryGlow {
+            0%, 100% { 
+                box-shadow: 
+                    0 6px 20px rgba(255, 107, 107, 0.3),
+                    0 2px 8px rgba(0, 0, 0, 0.08);
+            }
+            50% { 
+                box-shadow: 
+                    0 8px 30px rgba(255, 107, 107, 0.5),
+                    0 4px 15px rgba(255, 107, 107, 0.3),
+                    0 0 20px rgba(255, 107, 107, 0.2);
+            }
+        }
+
+        /* Button ripple effect */
+        .button-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        .hint-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(155, 89, 182, 0.4);
+        }
+        
+        .hint-btn:active {
+            transform: translateY(0);
+        }
+        
+        .strategy-hints {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(300px, 90vw, 600px);
+            max-height: 80vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(44, 62, 80, 0.2);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            overflow: hidden;
+        }
+        
+        .strategy-hints.show {
+            display: block;
+            animation: hintAppear 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes hintAppear {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        .hint-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .hint-header h4 {
+            margin: 0;
+            font-size: clamp(16px, 3vw, 20px);
+        }
+        
+        .close-hint {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .close-hint:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .hint-content {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+            font-size: clamp(14px, 2.5vw, 16px);
+            line-height: 1.6;
+        }
+        
+        .hint-category {
+            margin-bottom: 20px;
+        }
+        
+        .hint-category h5 {
+            color: #667eea;
+            margin: 0 0 10px 0;
+            font-size: clamp(15px, 2.8vw, 18px);
+            font-weight: 600;
+        }
+        
+        .hint-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .hint-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(44, 62, 80, 0.1);
+        }
+        
+        .hint-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .hint-list li::before {
+            content: "💡";
+            margin-right: 8px;
+        }
+        
+        .hint-emphasis {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        .hint-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        
+        .hint-overlay.show {
+            display: block;
+        }
+        
+        /* Animated Worm Character */
+        .worm-character {
+            position: fixed;
+            bottom: 5px;
+            left: -200px;
+            width: 150px;
+            height: 80px;
+            z-index: 1001;
+            transition: left 3s ease-in-out;
+        }
+        
+        .worm-character.walking {
+            animation: wormWalk 12s linear infinite;
+        }
+        
+        @keyframes wormWalk {
+            0% { left: -200px; }
+            20% { left: 15%; }
+            50% { left: 50%; }
+            80% { left: 85%; }
+            100% { left: calc(100% + 200px); }
+        }
+        
+        .worm-body {
+            position: relative;
+            width: 120px;
+            height: 25px;
+            background: linear-gradient(90deg, #8e44ad, #9b59b6, #e74c3c, #f39c12, #f1c40f);
+            border-radius: 50px;
+            animation: wormWiggle 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes wormWiggle {
+            0% { transform: scaleY(1) rotate(-2deg); }
+            100% { transform: scaleY(1.1) rotate(2deg); }
+        }
+        
+        .worm-head {
+            position: absolute;
+            right: -15px;
+            top: -5px;
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle, #e74c3c, #c0392b);
+            border-radius: 50%;
+            border: 3px solid #8e44ad;
+        }
+        
+        .worm-eyes {
+            position: absolute;
+            top: 8px;
+            right: 5px;
+            display: flex;
+            gap: 3px;
+        }
+        
+        .worm-eye {
+            width: 8px;
+            height: 8px;
+            background: white;
+            border-radius: 50%;
+            position: relative;
+            animation: wormBlink 3s infinite;
+        }
+        
+        .worm-eye::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 4px;
+            height: 4px;
+            background: black;
+            border-radius: 50%;
+            animation: eyeLook 2s ease-in-out infinite;
+        }
+        
+        @keyframes wormBlink {
+            0%, 90%, 100% { transform: scaleY(1); }
+            95% { transform: scaleY(0.1); }
+        }
+        
+        @keyframes eyeLook {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-1px); }
+            75% { transform: translateX(1px); }
+        }
+        
+        .worm-segments {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50px;
+            background: repeating-linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.2) 0px,
+                rgba(255, 255, 255, 0.2) 8px,
+                transparent 8px,
+                transparent 16px
+            );
+        }
+        
+        /* Speech Balloon */
+        .speech-balloon {
+            position: absolute;
+            bottom: 75px;
+            left: -50px;
+            width: 280px;
+            min-height: 60px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 3px solid #8e44ad;
+            border-radius: 20px;
+            padding: 12px;
+            font-size: 13px;
+            line-height: 1.3;
+            color: #2c3e50;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .speech-balloon.show {
+            transform: scale(1);
+            opacity: 1;
+            animation: balloonFloat 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes balloonFloat {
+            0% { transform: scale(1) translateY(0px); }
+            100% { transform: scale(1) translateY(-5px); }
+        }
+        
+        .speech-balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 30px;
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 15px solid #8e44ad;
+        }
+        
+        .speech-balloon::before {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 32px;
+            width: 0;
+            height: 0;
+            border-left: 13px solid transparent;
+            border-right: 13px solid transparent;
+            border-top: 13px solid rgba(255, 255, 255, 0.95);
+        }
+        
+        .tip-category-icon {
+            font-size: 18px;
+            margin-right: 8px;
+        }
+        
+        .tip-text {
+            font-weight: 500;
+        }
+        
+        .tip-emphasis {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+        
+        /* Worm walking legs animation */
+        .worm-legs {
+            position: absolute;
+            bottom: -8px;
+            left: 10px;
+            right: 10px;
+            height: 8px;
+        }
+        
+        .worm-leg {
+            position: absolute;
+            width: 3px;
+            height: 8px;
+            background: #8e44ad;
+            border-radius: 2px;
+            animation: legWalk 0.6s ease-in-out infinite;
+        }
+        
+        .worm-leg:nth-child(1) { left: 10%; animation-delay: 0s; }
+        .worm-leg:nth-child(2) { left: 25%; animation-delay: 0.1s; }
+        .worm-leg:nth-child(3) { left: 40%; animation-delay: 0.2s; }
+        .worm-leg:nth-child(4) { left: 55%; animation-delay: 0.3s; }
+        .worm-leg:nth-child(5) { left: 70%; animation-delay: 0.4s; }
+        .worm-leg:nth-child(6) { left: 85%; animation-delay: 0.5s; }
+        
+        @keyframes legWalk {
+            0%, 50%, 100% { transform: scaleY(1) translateY(0); }
+            25% { transform: scaleY(1.5) translateY(-2px); }
+        }
+        
+        /* Enhanced hint button */
+        .hint-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hint-btn::after {
+            content: '🐛';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            animation: wormBounce 2s ease-in-out infinite;
+        }
+        
+        @keyframes wormBounce {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-60%) scale(1.2); }
+        }
+
+        .widget-content {
+            padding: 0;
+        }
+        
+        .widget h3 {
+            margin: 0 0 10px 0;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .compact-widget {
+            padding: 12px;
+        }
+        
+        .compact-widget h3 {
+            font-size: clamp(0.8rem, 1.8vw, 1rem);
+        }
+        
+        /* Turn Indicator */
+        .turn-indicator {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.9));
+            backdrop-filter: blur(15px);
+            border: 3px solid rgba(69, 183, 209, 0.3);
+            border-radius: 20px;
+            padding: 15px;
+            text-align: center;
+            font-size: clamp(16px, 3vw, 20px);
+            font-weight: 700;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .turn-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .turn-indicator.active::before {
+            left: 100%;
+        }
+        
+        .turn-indicator.human-turn {
+            border-color: rgba(46, 204, 113, 0.6);
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.15), rgba(39, 174, 96, 0.1));
+            color: #27ae60;
+            animation: playerGlow 2s ease-in-out infinite;
+        }
+        
+        .turn-indicator.computer-turn {
+            border-color: rgba(231, 76, 60, 0.6);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.15), rgba(192, 57, 43, 0.1));
+            color: #e74c3c;
+            animation: computerGlow 2s ease-in-out infinite;
+        }
+        
+        @keyframes playerGlow {
+            0%, 100% { 
+                box-shadow: 0 8px 25px rgba(46, 204, 113, 0.2), 0 0 0 0 rgba(46, 204, 113, 0.4);
+            }
+            50% { 
+                box-shadow: 0 12px 35px rgba(46, 204, 113, 0.3), 0 0 0 8px rgba(46, 204, 113, 0.1);
+            }
+        }
+        
+        @keyframes computerGlow {
+            0%, 100% { 
+                box-shadow: 0 8px 25px rgba(231, 76, 60, 0.2), 0 0 0 0 rgba(231, 76, 60, 0.4);
+            }
+            50% { 
+                box-shadow: 0 12px 35px rgba(231, 76, 60, 0.3), 0 0 0 8px rgba(231, 76, 60, 0.1);
+            }
+        }
+        
+        .turn-player-icon {
+            font-size: clamp(24px, 4vw, 32px);
+            margin-right: 10px;
+            display: inline-block;
+            animation: iconBounce 1s ease-in-out infinite alternate;
+        }
+        
+        @keyframes iconBounce {
+            0% { transform: translateY(0) scale(1); }
+            100% { transform: translateY(-3px) scale(1.1); }
+        }
+
+        .score-area {
+            background: linear-gradient(135deg, rgba(255, 234, 167, 0.8), rgba(255, 107, 107, 0.1));
+            backdrop-filter: blur(10px);
+            padding: clamp(12px, 2.5vw, 18px);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 160, 0, 0.3);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .score-area.active-player {
+            transform: scale(1.02);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .score-area.human-active {
+            border-color: rgba(46, 204, 113, 0.8);
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.2), rgba(39, 174, 96, 0.1));
+        }
+        
+        .score-area.computer-active {
+            border-color: rgba(231, 76, 60, 0.8);
+            background: linear-gradient(135deg, rgba(231, 76, 60, 0.2), rgba(192, 57, 43, 0.1));
+        }
+        
+        .score-area:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .score-area h3 {
+            margin: 0 0 10px 0;
+            color: #e67e22;
+            font-weight: 600;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+        }
+
+        .player-stack {
+            background: white;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 100px;
+        }
+
+        .stack-tile {
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(145deg, #FFD54F, #FFC107);
+            border: 1px solid #FF8F00;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-weight: bold;
+            color: #E65100;
+        }
+
+        .info-panel {
+            background: linear-gradient(135deg, rgba(156, 39, 176, 0.1), rgba(69, 183, 209, 0.1));
+            backdrop-filter: blur(10px);
+            padding: clamp(12px, 2.5vw, 18px);
+            border-radius: 15px;
+            border: 2px solid rgba(156, 39, 176, 0.2);
+            font-size: clamp(12px, 2vw, 15px);
+            box-shadow: 
+                0 8px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .info-panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 30px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+        
+        .info-panel h4 {
+            margin: 0 0 10px 0;
+            color: #8e44ad;
+            font-weight: 600;
+            font-size: clamp(0.9rem, 2vw, 1.1rem);
+        }
+
+        .current-score {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2E7D32;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .game-status {
+            text-align: center;
+            font-size: clamp(14px, 2.5vw, 18px);
+            font-weight: 600;
+            margin: clamp(8px, 2vw, 15px) 0;
+            padding: clamp(10px, 2vw, 15px);
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(69, 183, 209, 0.1));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(33, 150, 243, 0.3);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { 
+                box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+                border-color: rgba(33, 150, 243, 0.3);
+            }
+            50% { 
+                box-shadow: 0 6px 20px rgba(33, 150, 243, 0.2);
+                border-color: rgba(33, 150, 243, 0.5);
+            }
+        }
+
+        .rules-summary {
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        .game-log {
+            max-height: clamp(150px, 25vh, 250px);
+            overflow-y: auto;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(248, 249, 250, 0.9));
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(69, 183, 209, 0.2);
+            border-radius: 12px;
+            padding: clamp(8px, 2vw, 15px);
+            font-size: clamp(11px, 1.8vw, 14px);
+            line-height: 1.4;
+            box-shadow: 
+                inset 0 2px 10px rgba(0, 0, 0, 0.05),
+                0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .game-log::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .game-log::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 3px;
+        }
+        
+        .game-log::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+            border-radius: 3px;
+        }
+        
+        .game-log::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #45B7D1, #4ECDC4);
+        }
+
+        .log-entry {
+            margin-bottom: clamp(4px, 1vw, 8px);
+            padding: clamp(6px, 1.5vw, 10px) clamp(8px, 2vw, 12px);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Music Controls */
+        .music-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 10px 15px;
+            border: 2px solid rgba(78, 205, 196, 0.3);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .music-controls:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.15);
+            border-color: rgba(78, 205, 196, 0.6);
+        }
+
+        .music-toggle {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .music-toggle:hover {
+            background: rgba(78, 205, 196, 0.1);
+            transform: scale(1.1);
+        }
+
+        .music-toggle.playing {
+            animation: musicPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes musicPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .volume-control {
+            width: 80px;
+            height: 4px;
+            background: rgba(78, 205, 196, 0.3);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            height: 100%;
+            background: linear-gradient(90deg, #4ECDC4, #45B7D1);
+            border-radius: 2px;
+            width: 70%;
+            transition: width 0.2s ease;
+            position: relative;
+        }
+
+        .volume-slider::after {
+            content: '';
+            position: absolute;
+            right: -6px;
+            top: -4px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border: 2px solid #4ECDC4;
+            border-radius: 50%;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .music-visualizer {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 20px;
+            opacity: 0.7;
+        }
+
+        .music-bar {
+            width: 3px;
+            background: linear-gradient(to top, #4ECDC4, #45B7D1);
+            border-radius: 1.5px;
+            animation: musicBar 1.5s ease-in-out infinite;
+        }
+
+        .music-bar:nth-child(1) { animation-delay: 0s; }
+        .music-bar:nth-child(2) { animation-delay: 0.1s; }
+        .music-bar:nth-child(3) { animation-delay: 0.2s; }
+        .music-bar:nth-child(4) { animation-delay: 0.3s; }
+        .music-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes musicBar {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+
+        /* Celebration Animations */
+        .celebration-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: celebrationFadeIn 0.5s ease-out;
+        }
+
+        @keyframes celebrationFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .celebration-content {
+            text-align: center;
+            color: white;
+            transform: scale(0);
+            animation: celebrationPop 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+
+        @keyframes celebrationPop {
+            0% { transform: scale(0) rotate(-180deg); }
+            70% { transform: scale(1.1) rotate(10deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+
+        .celebration-content h1 {
+            font-size: clamp(2rem, 8vw, 6rem);
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8);
+            animation: rainbow 2s linear infinite;
+        }
+
+        @keyframes rainbow {
+            0% { color: #ff6b6b; }
+            16% { color: #4ecdc4; }
+            32% { color: #45b7d1; }
+            48% { color: #96ceb4; }
+            64% { color: #ffeaa7; }
+            80% { color: #fd79a8; }
+            100% { color: #ff6b6b; }
+        }
+
+        /* Confetti Animation */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            animation: confettiFall 3s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        /* Round Win Animation */
+        .round-win-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #4ECDC4, #45B7D1);
+            color: white;
+            padding: 30px 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            z-index: 8888;
+            animation: roundWinBounce 2s ease-out forwards;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        @keyframes roundWinBounce {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(180deg);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.2) rotate(-10deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+        
+        .log-entry:hover {
+            transform: translateX(3px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .log-entry.human {
+            background: linear-gradient(135deg, rgba(33, 150, 243, 0.15), rgba(69, 183, 209, 0.1));
+            border-left: 4px solid #2196F3;
+            box-shadow: 0 2px 8px rgba(33, 150, 243, 0.1);
+        }
+
+        .log-entry.computer {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.15), rgba(255, 234, 167, 0.2));
+            border-left: 4px solid #FF9800;
+            box-shadow: 0 2px 8px rgba(255, 152, 0, 0.1);
+        }
+
+        .log-entry.result {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.15), rgba(150, 206, 180, 0.2));
+            border-left: 4px solid #4CAF50;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2);
+        }
+
+        .log-entry.error {
+            background: linear-gradient(135deg, rgba(244, 67, 54, 0.15), rgba(255, 107, 107, 0.1));
+            border-left: 4px solid #F44336;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .game-layout {
+                grid-template-areas: 
+                    "turn-info turn-info"
+                    "central-area central-area"
+                    "controls controls"
+                    "player-left player-right"
+                    "instructions instructions";
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: auto 1fr auto auto auto;
+                gap: 8px;
+                min-height: 85vh;
+            }
+            
+            .central-play-area {
+                padding: 15px;
+                gap: 12px;
+            }
+            
+            .tiles-grid {
+                grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+                gap: 6px;
+            }
+            
+            .dice-container {
+                grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+                gap: 6px;
+            }
+            
+            .controls {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            
+            .controls button {
+                padding: 10px 6px;
+                font-size: 13px;
+                white-space: nowrap;
+            }
+            
+            .widget {
+                padding: 10px;
+            }
+            
+            .player-left-widget, .player-right-widget {
+                padding: 8px;
+            }
+            
+            .turn-widget .turn-indicator {
+                padding: 10px;
+                font-size: 16px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .game-container {
+                padding: 40px;
+            }
+            
+            .tiles-grid {
+                grid-template-columns: repeat(8, 1fr);
+                gap: 10px;
+            }
+            
+            .dice-container {
+                grid-template-columns: repeat(4, 80px);
+                gap: 15px;
+                justify-content: center;
+            }
+            
+            .die {
+                width: 80px;
+                height: 80px;
+                font-size: 24px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-layout {
+                grid-template-areas: 
+                    "turn-info"
+                    "central-area"
+                    "controls"
+                    "player-left"
+                    "player-right"
+                    "instructions";
+                grid-template-columns: 1fr;
+                gap: 6px;
+            }
+            
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls button {
+                width: 100%;
+                margin-bottom: 4px;
+            }
+            
+            .tiles-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 4px;
+            }
+            
+            .dice-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 4px;
+            }
+            
+            .central-play-area {
+                padding: 12px;
+                gap: 10px;
+            }
+            
+            .widget {
+                padding: 8px;
+            }
+            
+            .game-log {
+                max-height: 120px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Music Controls -->
+    <div class="music-controls" id="musicControls">
+        <button class="music-toggle" id="musicToggle" title="Music aan/uit">
+            🎵
+        </button>
+        <div class="music-visualizer" id="musicVisualizer">
+            <div class="music-bar"></div>
+            <div class="music-bar"></div>
+            <div class="music-bar"></div>
+            <div class="music-bar"></div>
+            <div class="music-bar"></div>
+        </div>
+        <div class="volume-control" id="volumeControl" title="Volume">
+            <div class="volume-slider" id="volumeSlider"></div>
+        </div>
+    </div>
+
+    <div class="hint-overlay" id="hintOverlay" onclick="closeHints()"></div>
+    
+    <!-- Animated Worm Character -->
+    <div class="worm-character" id="wormCharacter">
+        <div class="speech-balloon" id="speechBalloon">
+            <span class="tip-category-icon" id="tipIcon">💡</span>
+            <span class="tip-text" id="tipText">Klik op de Strategietip knop voor handige tips!</span>
+        </div>
+        <div class="worm-body">
+            <div class="worm-segments"></div>
+            <div class="worm-legs">
+                <div class="worm-leg"></div>
+                <div class="worm-leg"></div>
+                <div class="worm-leg"></div>
+                <div class="worm-leg"></div>
+                <div class="worm-leg"></div>
+                <div class="worm-leg"></div>
+            </div>
+        </div>
+        <div class="worm-head">
+            <div class="worm-eyes">
+                <div class="worm-eye"></div>
+                <div class="worm-eye"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="game-container">
+        <h1>🐛 Regenwormen (Pickomino) 🐛</h1>
+        
+        <!-- Dutch Instructions for Beginners/Children -->
+        <div class="intro-section" style="background: rgba(255,255,255,0.9); padding: 20px; border-radius: 15px; margin: 20px 0; border: 3px solid #4ECDC4;">
+            <h2 style="color: #2c3e50; text-align: center; margin-bottom: 15px;">🎯 Hoe speel je Regenwormen? 🎯</h2>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                
+                <div style="background: #e8f8f5; padding: 15px; border-radius: 10px; border-left: 5px solid #4ECDC4;">
+                    <h3>🎲 Het Doel</h3>
+                    <p>Verzamel zoveel mogelijk <strong>regenwormen</strong> door tegels te pakken! De speler met de meeste regenwormen wint!</p>
+                </div>
+                
+                <div style="background: #fef9e7; padding: 15px; border-radius: 10px; border-left: 5px solid #f39c12;">
+                    <h3>🎯 Hoe Spelen</h3>
+                    <ol style="margin-left: 20px;">
+                        <li><strong>Gooi</strong> de dobbelstenen</li>
+                        <li><strong>Kies</strong> een symbool (cijfers of wormen)</li>
+                        <li><strong>Herhaal</strong> tot je een tegel kunt pakken</li>
+                        <li><strong>Stop</strong> op tijd om je punten te behouden!</li>
+                    </ol>
+                </div>
+                
+                <div style="background: #fdf2e9; padding: 15px; border-radius: 10px; border-left: 5px solid #e67e22;">
+                    <h3>⚠️ Belangrijke Regels</h3>
+                    <ul style="margin-left: 20px;">
+                        <li>Je <strong>moet</strong> minimaal 1 worm hebben</li>
+                        <li>Als je <strong>geen</strong> symbool kunt kiezen = <strong>VERLIES</strong></li>
+                        <li>Andere spelers kunnen jouw tegels <strong>stelen!</strong></li>
+                    </ul>
+                </div>
+                
+                <div style="background: #eaf2f8; padding: 15px; border-radius: 10px; border-left: 5px solid #3498db;">
+                    <h3>🧠 Slimme Tips</h3>
+                    <ul style="margin-left: 20px;">
+                        <li>Pak tegels met <strong>veel wormen</strong></li>
+                        <li><strong>Stop</strong> als je een goede tegel hebt</li>
+                        <li>Kijk naar wat de <strong>computer</strong> doet!</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div style="text-align: center; padding: 15px; background: #d5f4e6; border-radius: 10px; margin-top: 10px;">
+                <h3 style="color: #27ae60;">🚀 Klaar om te beginnen?</h3>
+                <p style="font-size: 18px; margin: 10px 0;">Klik op <strong>"Gooi Dobbelstenen"</strong> om te starten!</p>
+                <p style="font-size: 14px; color: #7f8c8d;">💡 Tip: Klik op de <strong>"💡 Strategische Hints"</strong> knop voor hulp tijdens het spel</p>
+            </div>
+        </div>
+        
+        <div class="game-layout">
+            <!-- Turn Indicator Widget -->
+            <div class="widget turn-widget">
+                <div class="turn-indicator" id="turnIndicator">
+                    <span class="turn-player-icon" id="turnIcon">👤</span>
+                    <span id="turnText">Jouw beurt!</span>
+                </div>
+            </div>
+            
+            <!-- Player Left Widget -->
+            <div class="widget player-left-widget">
+                <div class="score-area widget-content" id="humanScoreArea">
+                    <h3>👤 Jouw Stapel</h3>
+                    <div class="player-stack" id="humanStack"></div>
+                    <div class="current-score" id="humanScore">Regenwormen: 0</div>
+                </div>
+            </div>
+            
+            <!-- Central Play Area -->
+            <div class="central-play-area">
+                <div class="tiles-section">
+                    <h3>🎯 Beschikbare Tegels</h3>
+                    <div class="tiles-grid" id="tilesGrid"></div>
+                </div>
+                
+                <div class="dice-section">
+                    <h3>🎲 Dobbelstenen</h3>
+                    <div class="dice-container" id="diceContainer"></div>
+                    
+                    <div class="selected-dice" id="selectedDice">
+                        <strong>Geselecteerde dobbelstenen:</strong>
+                        <span id="selectedSummary">Nog geen dobbelstenen geselecteerd</span>
+                    </div>
+                </div>
+                
+                <div class="strategy-hints" id="strategyHints">
+                    <div class="hint-header">
+                        <h4>💡 Strategische Hints</h4>
+                        <button class="close-hint" onclick="closeHints()">✕</button>
+                    </div>
+                    <div class="hint-content" id="hintContent">
+                        <!-- Dynamic hint content will be inserted here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Player Right Widget -->
+            <div class="widget player-right-widget">
+                <div class="score-area widget-content" id="computerScoreArea">
+                    <h3>🤖 Computer Stapel</h3>
+                    <div class="player-stack" id="computerStack"></div>
+                    <div class="current-score" id="computerScore">Regenwormen: 0</div>
+                </div>
+            </div>
+            
+            <!-- Controls Widget -->
+            <div class="widget controls-widget">
+                <div class="controls">
+                    <button class="roll-btn" id="rollBtn" onclick="rollDice()">🎲 Gooi Dobbelstenen</button>
+                    <button class="end-turn-btn" id="endTurnBtn" onclick="endTurn()" disabled>Beëindig Beurt</button>
+                    <button class="roll-btn" onclick="initializeGame()">🔄 Nieuw Spel</button>
+                    <button class="hint-btn" id="hintBtn" onclick="showHint()">💡 Strategietip</button>
+                </div>
+            </div>
+            
+            <!-- Instructions Widget -->
+            <div class="widget instructions-widget">
+                <div class="info-panel widget-content">
+                    <div class="game-status" id="gameStatus">Druk op 'Gooi Dobbelstenen' om te beginnen!</div>
+                    
+                    <div class="rules-summary">
+                        <strong>📋 Spelregels:</strong><br>
+                        • Gooi dobbelstenen en selecteer een symbool<br>
+                        • Herhaal tot je een tegel kunt pakken<br>
+                        • Je hebt minimaal 1 🐛 nodig<br>
+                        • Score moet ≥ laagste tegel OF exact gelijk aan een tegel<br>
+                        • 🐛 = 5 punten • Wees niet te gulzig!
+                    </div>
+                    
+                    <h4>📋 Spellog</h4>
+                    <div class="game-log" id="gameLog">
+                        <div class="log-entry">Spel gestart! Jouw beurt...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State - Clean and Readable Algorithm
+        const gameState = {
+            tiles: [],           // Available tiles on the table
+            humanStack: [],      // Human player's collected tiles
+            computerStack: [],   // Computer player's collected tiles
+            currentPlayer: 'human', // 'human' or 'computer'
+            currentDice: [],     // Current dice roll
+            selectedGroups: [],  // Groups of dice selected this turn
+            usedSymbols: [],     // Symbols used this turn
+            turnScore: 0,        // Current turn total
+            hasWorm: false,      // Has player selected a worm this turn
+            gameOver: false,
+            computerThinking: false,
+            computerRollCount: 0,
+            computerDecisionTimeout: null
+        };
+
+        // Initialize Game - Clear Setup Algorithm
+        function initializeGame() {
+            // Create tiles 21-36 with appropriate worm counts
+            gameState.tiles = [];
+            for (let i = 21; i <= 36; i++) {
+                const wormCount = Math.floor((i - 21) / 4) + 1; // 1,2,3,4 worms
+                gameState.tiles.push({
+                    number: i,
+                    worms: wormCount,
+                    available: true
+                });
+            }
+            
+            gameState.humanStack = [];
+            gameState.computerStack = [];
+            gameState.currentPlayer = 'human';
+            resetTurn();
+            renderGame();
+            clearLog();
+            updateTurnIndicator();
+            updateStatus("Jouw beurt! Druk op 'Gooi Dobbelstenen' om te beginnen.");
+            addLogEntry("👤 Jouw beurt begint!", 'human');
+        }
+
+        // Dice Rolling Algorithm - Simple and Clear
+        async function rollDice() {
+            if (gameState.currentPlayer !== 'human' || gameState.computerThinking) {
+                return;
+            }
+            
+            const availableDiceCount = 8 - gameState.selectedGroups.reduce((sum, group) => sum + group.dice.length, 0);
+            
+            if (availableDiceCount <= 0) {
+                updateStatus("Alle dobbelstenen zijn gebruikt!");
+                return;
+            }
+
+            // Play dice rolling sound
+            playEventAudio('diceRoll');
+
+            // Show rolling animation first
+            const diceContainer = document.getElementById('diceContainer');
+            diceContainer.innerHTML = '';
+            
+            // Create animated dice elements
+            const animatedDice = [];
+            for (let i = 0; i < availableDiceCount; i++) {
+                const dieElement = document.createElement('div');
+                dieElement.className = 'die rolling';
+                dieElement.textContent = '⚀';
+                diceContainer.appendChild(dieElement);
+                animatedDice.push(dieElement);
+                
+                // Stagger the rolling animation
+                setTimeout(() => {
+                    dieElement.classList.add('rolling');
+                }, i * 100);
+            }
+            
+            // Wait for rolling animation to complete
+            await new Promise(resolve => setTimeout(resolve, 1300));
+
+            gameState.currentDice = [];
+            for (let i = 0; i < availableDiceCount; i++) {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                gameState.currentDice.push({
+                    value: roll === 6 ? 'worm' : roll,
+                    selected: false
+                });
+            }
+            
+            // Apply settling animation and show final results
+            animatedDice.forEach((dieElement, index) => {
+                setTimeout(() => {
+                    dieElement.classList.remove('rolling');
+                    dieElement.classList.add('settling');
+                    
+                    // Show final value
+                    const finalValue = gameState.currentDice[index].value;
+                    dieElement.textContent = finalValue === 'worm' ? '🐛' : finalValue;
+                    
+                    // Remove settling animation after it completes
+                    setTimeout(() => {
+                        dieElement.classList.remove('settling');
+                    }, 300);
+                }, index * 50);
+            });
+            
+            const diceValues = gameState.currentDice.map(d => d.value === 'worm' ? '🐛' : d.value).join(', ');
+            addLogEntry(`👤 Gooit ${availableDiceCount} dobbelstenen: ${diceValues}`, 'human');
+            
+            updateStatus("Selecteer een symbool om door te gaan of te stoppen.");
+            
+            // Wait for settling animation to complete before enabling interactions
+            setTimeout(() => {
+                renderDice();
+            }, 500);
+        }
+
+        // Dice Selection Algorithm - Clean Logic
+        function selectDice(symbol) {
+            if (gameState.currentPlayer !== 'human' || gameState.computerThinking) {
+                return;
+            }
+            
+            // Play dice click sound
+            playEventAudio('diceClick');
+            
+            // Convert symbol to string for consistent storage
+            const symbolAsString = symbol === 'worm' ? 'worm' : symbol.toString();
+            
+            // Check if symbol already used this turn
+            if (gameState.usedSymbols.includes(symbolAsString)) {
+                updateStatus("Je hebt dit symbool al gebruikt deze beurt!");
+                return;
+            }
+
+            // Find all dice with this symbol
+            const matchingDice = gameState.currentDice.filter(die => die.value === symbol);
+            
+            if (matchingDice.length === 0) {
+                updateStatus("Geen dobbelstenen met dit symbool gevonden!");
+                return;
+            }
+
+            // Add to selected groups
+            const points = matchingDice.length * (symbol === 'worm' ? 5 : symbol);
+            gameState.selectedGroups.push({
+                symbol: symbol,
+                dice: matchingDice,
+                points: points
+            });
+
+            // Store symbol as string for consistency
+            gameState.usedSymbols.push(symbolAsString);
+            
+            // Update turn state
+            if (symbol === 'worm') {
+                gameState.hasWorm = true;
+            }
+            
+            const symbolName = symbol === 'worm' ? '🐛' : symbol;
+            addLogEntry(`👤 Selecteert ${matchingDice.length}x ${symbolName} (${points} punten)`, 'human');
+            
+            calculateTurnScore();
+            checkTileEligibility();
+            renderSelectedDice();
+            
+            // Clear current dice for next roll
+            gameState.currentDice = [];
+            renderDice();
+        }
+
+        // Score Calculation - Compact and Readable
+        function calculateTurnScore() {
+            gameState.turnScore = gameState.selectedGroups.reduce((total, group) => total + group.points, 0);
+        }
+
+        // Tile Eligibility Check - Clear Algorithm
+        function checkTileEligibility() {
+            if (!gameState.hasWorm) {
+                updateStatus("Je hebt nog geen regenworm (🐛) geselecteerd!");
+                document.getElementById('endTurnBtn').disabled = true;
+                return;
+            }
+
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            const minTileValue = availableTiles.length > 0 ? Math.min(...availableTiles.map(t => t.number)) : null;
+            
+            // Check exact match first
+            const exactMatch = availableTiles.find(tile => tile.number === gameState.turnScore);
+            
+            if (exactMatch) {
+                updateStatus(`Perfect! Je kunt tegel ${exactMatch.number} pakken (exacte match)!`);
+                document.getElementById('endTurnBtn').disabled = false;
+                return;
+            }
+            
+            // Check minimum threshold
+            if (minTileValue && gameState.turnScore >= minTileValue) {
+                const highestPossible = availableTiles
+                    .filter(tile => tile.number <= gameState.turnScore)
+                    .reduce((max, tile) => tile.number > max.number ? tile : max);
+                
+                updateStatus(`Je kunt tegel ${highestPossible.number} pakken (hoogst mogelijke)!`);
+                document.getElementById('endTurnBtn').disabled = false;
+                return;
+            }
+            
+            updateStatus("Score te laag voor beschikbare tegels. Gooi verder of risico op verlies!");
+            document.getElementById('endTurnBtn').disabled = true;
+        }
+
+        // End Turn Logic - Clear Win/Lose Conditions
+        function endTurn() {
+            if (gameState.currentPlayer !== 'human' || gameState.computerThinking) {
+                return;
+            }
+            
+            if (!gameState.hasWorm) {
+                updateStatus("Je hebt geen regenworm! Kan geen tegel pakken.");
+                return;
+            }
+
+            const success = takeTileForPlayer(gameState.currentPlayer);
+            if (success) {
+                switchPlayer();
+            }
+        }
+
+        function takeTileForPlayer(player) {
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            
+            // Find best tile to take
+            const exactMatch = availableTiles.find(tile => tile.number === gameState.turnScore);
+            let tileToTake;
+            
+            if (exactMatch) {
+                tileToTake = exactMatch;
+            } else {
+                const eligibleTiles = availableTiles.filter(tile => tile.number <= gameState.turnScore);
+                if (eligibleTiles.length === 0) {
+                    loseTurn(player);
+                    return false;
+                }
+                tileToTake = eligibleTiles.reduce((max, tile) => tile.number > max.number ? tile : max);
+            }
+
+            // Take the tile
+            tileToTake.available = false;
+            const playerStack = player === 'human' ? gameState.humanStack : gameState.computerStack;
+            playerStack.push(tileToTake);
+            
+            const playerName = player === 'human' ? 'Je hebt' : 'Computer heeft';
+            const playerIcon = player === 'human' ? '👤' : '🤖';
+            const logType = player === 'human' ? 'human' : 'computer';
+            
+            updateStatus(`${playerName} tegel ${tileToTake.number} gepakt! (+${tileToTake.worms} regenwormen)`);
+            addLogEntry(`${playerIcon} Pakt tegel ${tileToTake.number} met ${gameState.turnScore} punten (+${tileToTake.worms} 🐛)`, 'result');
+            
+            // Show celebration for human player
+            if (player === 'human') {
+                showRoundWinCelebration(tileToTake.number, tileToTake.worms);
+            }
+            
+            resetTurn();
+            checkGameEnd();
+            renderGame();
+            return true;
+        }
+
+        // Lose Turn Logic - Punishment Algorithm
+        function loseTurn(player) {
+            const playerStack = player === 'human' ? gameState.humanStack : gameState.computerStack;
+            const playerName = player === 'human' ? 'Je hebt' : 'Computer heeft';
+            const playerIcon = player === 'human' ? '👤' : '🤖';
+            
+            if (playerStack.length > 0) {
+                const lostTile = playerStack.pop();
+                lostTile.available = true;
+                updateStatus(`Pech! ${playerName} tegel ${lostTile.number} teruggegeven aan tafel.`);
+                addLogEntry(`${playerIcon} Verliest tegel ${lostTile.number} (terug naar tafel)`, 'error');
+            } else {
+                updateStatus(`Pech! ${playerName} geen tegel verloren (had er geen).`);
+                addLogEntry(`${playerIcon} Verliest beurt maar had geen tegels`, 'error');
+            }
+            
+            resetTurn();
+            switchPlayer();
+            renderGame();
+        }
+
+        function switchPlayer() {
+            gameState.currentPlayer = gameState.currentPlayer === 'human' ? 'computer' : 'human';
+            
+            // Reset UI state
+            resetTurn();
+            renderGame();
+            updateTurnIndicator();
+            
+            if (gameState.currentPlayer === 'computer' && !gameState.gameOver) {
+                updateStatus("Computer is aan de beurt...");
+                addLogEntry("🤖 Computer beurt begint!", 'computer');
+                setTimeout(computerTurn, 1000);
+            } else if (gameState.currentPlayer === 'human' && !gameState.gameOver) {
+                updateStatus("Jouw beurt! Druk op 'Gooi Dobbelstenen'.");
+                addLogEntry("👤 Jouw beurt begint!", 'human');
+            }
+        }
+
+        // Turn Reset - Clean State Management
+        function resetTurn() {
+            gameState.selectedGroups = [];
+            gameState.usedSymbols = [];
+            gameState.turnScore = 0;
+            gameState.hasWorm = false;
+            gameState.currentDice = [];
+            gameState.computerThinking = false;
+            gameState.computerRollCount = 0;
+            
+            // Clear any pending computer timeouts
+            if (gameState.computerDecisionTimeout) {
+                clearTimeout(gameState.computerDecisionTimeout);
+                gameState.computerDecisionTimeout = null;
+            }
+            
+            // Update UI based on current player
+            const isHumanTurn = gameState.currentPlayer === 'human' && !gameState.gameOver;
+            document.getElementById('rollBtn').disabled = !isHumanTurn;
+            document.getElementById('endTurnBtn').disabled = true;
+        }
+
+        // Game End Check - Simple Condition
+        function checkGameEnd() {
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            if (availableTiles.length === 0) {
+                gameState.gameOver = true;
+                const humanWorms = gameState.humanStack.reduce((sum, tile) => sum + tile.worms, 0);
+                const computerWorms = gameState.computerStack.reduce((sum, tile) => sum + tile.worms, 0);
+                
+                let winner;
+                if (humanWorms > computerWorms) {
+                    winner = `🎉 Je hebt gewonnen! ${humanWorms} vs ${computerWorms} regenwormen!`;
+                    // Show epic game win celebration
+                    setTimeout(() => showGameWinCelebration(humanWorms, computerWorms), 500);
+                } else if (computerWorms > humanWorms) {
+                    winner = `🤖 Computer heeft gewonnen! ${computerWorms} vs ${humanWorms} regenwormen!`;
+                } else {
+                    winner = `🤝 Gelijkspel! Beide ${humanWorms} regenwormen!`;
+                }
+                
+                updateStatus(`Spel afgelopen! ${winner}`);
+                updateTurnIndicator();
+                document.getElementById('rollBtn').disabled = true;
+                document.getElementById('endTurnBtn').disabled = true;
+            }
+        }
+
+        // Computer AI Logic - Simple but Effective Strategy
+        function computerTurn() {
+            if (gameState.gameOver || gameState.currentPlayer !== 'computer') return;
+            
+            gameState.computerThinking = true;
+            gameState.computerRollCount = 0; // Reset roll count at start of turn
+            document.getElementById('rollBtn').disabled = true;
+            document.getElementById('endTurnBtn').disabled = true;
+            updateStatus("🤖 Computer denkt na...");
+            
+            setTimeout(() => {
+                computerRollDice();
+            }, 1500);
+        }
+
+        async function computerRollDice() {
+            const availableDiceCount = 8 - gameState.selectedGroups.reduce((sum, group) => sum + group.dice.length, 0);
+            
+            // Safety check - prevent infinite loops (more generous in early game)
+            gameState.computerRollCount++;
+            const maxRolls = gameState.hasWorm ? 15 : 25; // More persistent when no worm yet
+            if (gameState.computerRollCount > maxRolls) {
+                updateStatus("🤖 Computer geeft op na te veel pogingen!");
+                addLogEntry(`🤖 Computer geeft op na ${gameState.computerRollCount} pogingen`, 'error');
+                setTimeout(() => loseTurn('computer'), 1000);
+                return;
+            }
+            
+            if (availableDiceCount <= 0) {
+                computerEndTurn();
+                return;
+            }
+
+            // Show rolling animation for computer dice
+            const diceContainer = document.getElementById('diceContainer');
+            diceContainer.innerHTML = '';
+            
+            updateStatus(`🤖 Computer gooit ${availableDiceCount} dobbelstenen...`);
+            
+            // Create animated dice elements
+            const animatedDice = [];
+            for (let i = 0; i < availableDiceCount; i++) {
+                const dieElement = document.createElement('div');
+                dieElement.className = 'die rolling';
+                dieElement.textContent = '⚀';
+                diceContainer.appendChild(dieElement);
+                animatedDice.push(dieElement);
+                
+                // Stagger the rolling animation
+                setTimeout(() => {
+                    dieElement.classList.add('rolling');
+                }, i * 80); // Slightly faster for computer
+            }
+            
+            // Wait for rolling animation to complete
+            await new Promise(resolve => setTimeout(resolve, 1100)); // Slightly faster
+
+            gameState.currentDice = [];
+            for (let i = 0; i < availableDiceCount; i++) {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                gameState.currentDice.push({
+                    value: roll === 6 ? 'worm' : roll,
+                    selected: false
+                });
+            }
+            
+            addLogEntry(`🤖 Debug: Nieuwe dobbelstenen aangemaakt: ${gameState.currentDice.length} stuks`, 'computer');
+            
+            // Verify all dice are properly initialized
+            const invalidDice = gameState.currentDice.filter(d => d.selected === undefined || d.selected === true);
+            if (invalidDice.length > 0) {
+                addLogEntry(`🤖 WAARSCHUWING: ${invalidDice.length} dobbelstenen hebben verkeerde selected status!`, 'error');
+            }
+            
+            // Apply settling animation and show final results
+            animatedDice.forEach((dieElement, index) => {
+                setTimeout(() => {
+                    dieElement.classList.remove('rolling');
+                    dieElement.classList.add('settling');
+                    
+                    // Show final value
+                    const finalValue = gameState.currentDice[index].value;
+                    dieElement.textContent = finalValue === 'worm' ? '🐛' : finalValue;
+                    
+                    // Remove settling animation after it completes
+                    setTimeout(() => {
+                        dieElement.classList.remove('settling');
+                    }, 300);
+                }, index * 40); // Faster for computer
+            });
+            
+            const diceValues = gameState.currentDice.map(d => d.value === 'worm' ? '🐛' : d.value).join(', ');
+            const rollContext = gameState.hasWorm ? `(poging ${gameState.computerRollCount})` : `(zoekt regenworm, poging ${gameState.computerRollCount})`;
+            
+            // Check if any valid moves exist before proceeding
+            const uniqueValues = [...new Set(gameState.currentDice.map(d => d.value))];
+            const availableSymbols = uniqueValues.filter(symbol => !gameState.usedSymbols.includes(symbol));
+            
+            addLogEntry(`🤖 Gooit ${availableDiceCount} dobbelstenen ${rollContext}: ${diceValues}`, 'computer');
+            
+            if (availableSymbols.length === 0) {
+                addLogEntry(`🤖 Alle symbolen al gebruikt deze beurt - verliest beurt`, 'error');
+                setTimeout(() => loseTurn('computer'), 1500);
+                return;
+            }
+            
+            updateStatus(`🤖 Computer analyseert dobbelstenen... ${rollContext}`);
+            
+            // Wait for settling animation to complete before computer makes decision
+            setTimeout(() => {
+                renderDice();
+                setTimeout(() => {
+                    computerSelectDice();
+                }, 800);
+            }, 400);
+        }
+
+        function computerSelectDice() {
+            // Computer AI Strategy: Simple but effective
+            const symbolCounts = {};
+            
+            // Count available symbols from current dice roll that haven't been used this turn
+            gameState.currentDice.forEach(die => {
+                // Convert die value to string for consistent comparison with usedSymbols
+                const dieValueAsString = die.value === 'worm' ? 'worm' : die.value.toString();
+                if (!gameState.usedSymbols.includes(dieValueAsString)) {
+                    symbolCounts[dieValueAsString] = (symbolCounts[dieValueAsString] || 0) + 1;
+                }
+            });
+            
+            // Debug: log the actual dice state
+            const allDiceValues = gameState.currentDice.map(d => `${d.value === 'worm' ? '🐛' : d.value}${d.selected ? '(selected)' : ''}`);
+            addLogEntry(`🤖 Debug: Alle dobbelstenen: [${allDiceValues.join(', ')}], totaal: ${gameState.currentDice.length}`, 'computer');
+            
+            // Debug logging to see what's available
+            const availableSymbols = Object.keys(symbolCounts);
+            const usedSymbols = gameState.usedSymbols.map(s => s === 'worm' ? '🐛' : s).join(', ') || 'geen';
+            addLogEntry(`🤖 Beschikbare symbolen: ${availableSymbols.map(s => s === 'worm' ? '🐛' : s).join(', ') || 'geen'}, al gebruikt: ${usedSymbols}`, 'computer');
+            
+            // No valid moves - must lose turn
+            if (Object.keys(symbolCounts).length === 0) {
+                updateStatus("🤖 Computer kan geen dobbelstenen selecteren!");
+                const rollInfo = `na ${gameState.computerRollCount} worpen`;
+                const wormStatus = gameState.hasWorm ? "had wel regenworm" : "had geen regenworm";
+                addLogEntry(`🤖 Geen geldige keuzes meer (${rollInfo}, ${wormStatus}) - verliest beurt`, 'error');
+                setTimeout(() => loseTurn('computer'), 1500);
+                return;
+            }
+            
+            // Computer strategy: More human-like decision making
+            let bestSymbol = null;
+            let bestScore = -1;
+            
+            for (const [symbol, count] of Object.entries(symbolCounts)) {
+                const value = symbol === 'worm' ? 5 : parseInt(symbol);
+                let score = count * value;
+                
+                // Debug: log each symbol being considered
+                addLogEntry(`🤖 Debug: Overweeg symbool "${symbol}" (type: ${typeof symbol}), count: ${count}, score: ${score}`, 'computer');
+                
+                // Strategic worm priority - very important early game
+                if (symbol === 'worm') {
+                    if (!gameState.hasWorm) {
+                        score += 15; // High priority for first worm
+                    } else {
+                        score += 4; // Still valuable but less critical
+                    }
+                }
+                
+                // Bonus for good combinations
+                if (count >= 3) score += 4;
+                if (count >= 4) score += 3; // Extra for really good rolls
+                
+                // When no worm yet, be less picky about other symbols
+                if (!gameState.hasWorm && symbol !== 'worm') {
+                    score *= 0.7; // Reduce attractiveness of non-worms early
+                }
+                
+                // Slight preference for higher values when counts are equal
+                if (symbol !== 'worm' && parseInt(symbol) >= 4) score += 1;
+                
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestSymbol = symbol;
+                }
+            }
+            
+            // Select the best symbol - convert string to correct type for comparison
+            const symbolToMatch = bestSymbol === 'worm' ? 'worm' : parseInt(bestSymbol);
+            const matchingDice = gameState.currentDice.filter(die => 
+                die.value === symbolToMatch && !die.selected
+            );
+            
+            // Debug: show the filtering process and data types
+            const allMatches = gameState.currentDice.filter(die => die.value === symbolToMatch);
+            addLogEntry(`🤖 Debug: Symbool "${bestSymbol === 'worm' ? '🐛' : bestSymbol}" -> ${symbolToMatch} - totaal matches: ${allMatches.length}, beschikbaar: ${matchingDice.length}`, 'computer');
+            
+            // Debug data types
+            gameState.currentDice.forEach((die, i) => {
+                if (i < 3) { // Only log first 3 to avoid spam
+                    addLogEntry(`🤖 Debug: Die ${i}: value="${die.value}" (type: ${typeof die.value}), selected=${die.selected}`, 'computer');
+                }
+            });
+            
+            // Verify selection is valid (should always be true due to earlier filtering)  
+            if (matchingDice.length > 0 && !gameState.usedSymbols.includes(bestSymbol)) {
+                const points = matchingDice.length * (bestSymbol === 'worm' ? 5 : parseInt(bestSymbol));
+                
+                gameState.selectedGroups.push({
+                    symbol: bestSymbol,
+                    dice: matchingDice,
+                    points: points
+                });
+
+                // Store used symbol as string for consistency
+                gameState.usedSymbols.push(bestSymbol);
+                
+                if (bestSymbol === 'worm') {
+                    gameState.hasWorm = true;
+                }
+                
+                calculateTurnScore();
+                renderSelectedDice();
+                
+                const symbolName = bestSymbol === 'worm' ? '🐛' : bestSymbol;
+                const wormStatus = bestSymbol === 'worm' && gameState.selectedGroups.filter(g => g.symbol === 'worm').length === 1 ? " (eerste regenworm!)" : "";
+                updateStatus(`🤖 Computer selecteert ${matchingDice.length}x ${symbolName} (${points} punten)`);
+                addLogEntry(`🤖 Selecteert ${matchingDice.length}x ${symbolName} (${points} punten)${wormStatus}, totaal nu: ${gameState.turnScore}`, 'computer');
+                
+                // Clear current dice for next roll
+                gameState.currentDice = [];
+                renderDice();
+                
+                addLogEntry(`🤖 Debug: Dobbelstenen gecleared, ga naar beslissing`, 'computer');
+                
+                // Decide whether to continue or stop
+                setTimeout(() => {
+                    computerDecideNextMove();
+                }, 1500);
+            } else {
+                // This indicates a logic error - should not happen with fixed logic
+                const currentDiceValues = gameState.currentDice.map(d => d.value === 'worm' ? '🐛' : d.value).join(', ');
+                const usedSymbolsList = gameState.usedSymbols.map(s => s === 'worm' ? '🐛' : s).join(', ') || 'geen';
+                const bestSymbolDisplay = bestSymbol === 'worm' ? '🐛' : bestSymbol;
+                const alreadyUsed = gameState.usedSymbols.includes(bestSymbol) ? 'JA' : 'NEE';
+                addLogEntry(`🤖 LOGICA FOUT: Symbool ${bestSymbolDisplay}, matchende dobbelstenen: ${matchingDice.length}, al gebruikt: ${alreadyUsed}`, 'error');
+                addLogEntry(`🤖 Huidige dobbelstenen: ${currentDiceValues}, gebruikt: ${usedSymbolsList}`, 'error');
+                setTimeout(() => loseTurn('computer'), 1000);
+            }
+        }
+
+        function computerDecideNextMove() {
+            const remainingDice = 8 - gameState.selectedGroups.reduce((sum, group) => sum + group.dice.length, 0);
+            
+            addLogEntry(`🤖 Beslissingspunt: ${gameState.turnScore} punten, ${remainingDice} dobbelstenen over, heeft worm: ${gameState.hasWorm}`, 'computer');
+            
+            // If no dice left, must end turn
+            if (remainingDice <= 0) {
+                addLogEntry("🤖 Geen dobbelstenen meer - moet stoppen", 'computer');
+                computerEndTurn();
+                return;
+            }
+            
+            if (!gameState.hasWorm) {
+                // Must continue if no worm yet - be more persistent in early game
+                addLogEntry(`🤖 Nog geen regenworm (${gameState.computerRollCount} pogingen) - moet doorgaan`, 'computer');
+                updateStatus("🤖 Computer zoekt naar regenworm, gaat door...");
+                setTimeout(() => computerRollDice(), 800);
+                return;
+            }
+            
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            const minTileValue = availableTiles.length > 0 ? Math.min(...availableTiles.map(t => t.number)) : null;
+            
+            // Check if can claim a tile
+            const exactMatch = availableTiles.find(tile => tile.number === gameState.turnScore);
+            const canClaimTile = exactMatch || (minTileValue && gameState.turnScore >= minTileValue);
+            
+            if (!canClaimTile) {
+                // Must continue rolling
+                addLogEntry(`🤖 Score ${gameState.turnScore} te laag voor minimale tegel ${minTileValue} - gaat door`, 'computer');
+                updateStatus("🤖 Computer score te laag, gaat door...");
+                setTimeout(() => computerRollDice(), 1000);
+                return;
+            }
+            
+            // Balanced human-like strategy: Take calculated risks
+            const eligibleTiles = availableTiles.filter(tile => tile.number <= gameState.turnScore);
+            const currentBestTile = exactMatch || (eligibleTiles.length > 0 ? 
+                eligibleTiles.reduce((max, tile) => tile.number > max.number ? tile : max) : null);
+            
+            // Add some human-like randomness to decisions
+            const riskTolerance = Math.random(); // 0-1, higher = more risk-taking
+            
+            // More aggressive stopping conditions - like a human player
+            let shouldStop = 
+                exactMatch || // Always stop for perfect match
+                (remainingDice <= 1) || // Must stop with no dice
+                (remainingDice <= 2 && riskTolerance < 0.3) || // Sometimes stop with 2 dice if cautious
+                (currentBestTile && currentBestTile.worms >= 4) || // Stop for excellent tiles
+                (gameState.turnScore >= 33 && currentBestTile && currentBestTile.worms >= 3 && riskTolerance < 0.6) || // Stop for good combos if not too greedy
+                (gameState.turnScore >= 35 && riskTolerance < 0.8); // Usually stop at very high scores
+            
+            // Sometimes be a bit greedy (like humans often are)
+            if (!shouldStop && currentBestTile && currentBestTile.worms >= 2 && gameState.turnScore >= 28 && riskTolerance > 0.7) {
+                shouldStop = true; // Occasionally take decent tiles earlier
+            }
+            
+            if (shouldStop) {
+                const reason = exactMatch ? "exacte match" : 
+                             remainingDice <= 1 ? "geen dobbelstenen meer" :
+                             remainingDice <= 2 ? "te weinig dobbelstenen (risicovol)" :
+                             (currentBestTile && currentBestTile.worms >= 4) ? "uitstekende tegel" : 
+                             gameState.turnScore >= 35 ? "zeer hoge score - te risicovol" :
+                             "besluit om veilig te spelen";
+                addLogEntry(`🤖 Besluit te stoppen (${reason}) - pakt tegel ${currentBestTile ? currentBestTile.number : 'onbekend'}`, 'computer');
+                updateStatus(`🤖 Computer stopt en pakt tegel ${currentBestTile ? currentBestTile.number : 'onbekend'}...`);
+                setTimeout(() => computerEndTurn(), 1000);
+            } else {
+                const currentTileInfo = currentBestTile ? `huidige beste: ${currentBestTile.number} (${currentBestTile.worms}🐛)` : "geen tegel beschikbaar";
+                addLogEntry(`🤖 Voelt zich gelukkig - ${currentTileInfo}, probeert betere tegel!`, 'computer');
+                updateStatus("🤖 Computer voelt zich gelukkig en gaat door...");
+                setTimeout(() => computerRollDice(), 800); // Faster, more human-like timing
+            }
+        }
+
+        function computerEndTurn() {
+            gameState.computerThinking = false;
+            
+            if (!gameState.hasWorm) {
+                updateStatus("🤖 Computer heeft geen regenworm! Verliest beurt.");
+                setTimeout(() => loseTurn('computer'), 1500);
+                return;
+            }
+            
+            // Check if computer can actually take a tile
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            const minTileValue = availableTiles.length > 0 ? Math.min(...availableTiles.map(t => t.number)) : null;
+            const exactMatch = availableTiles.find(tile => tile.number === gameState.turnScore);
+            const canClaimTile = exactMatch || (minTileValue && gameState.turnScore >= minTileValue);
+            
+            if (!canClaimTile) {
+                updateStatus("🤖 Computer kan geen tegel pakken! Verliest beurt.");
+                setTimeout(() => loseTurn('computer'), 1500);
+                return;
+            }
+            
+            const success = takeTileForPlayer('computer');
+            if (success) {
+                setTimeout(() => switchPlayer(), 2000);
+            } else {
+                // This shouldn't happen, but just in case
+                setTimeout(() => switchPlayer(), 1000);
+            }
+        }
+
+        // Rendering Functions - Visual Updates
+        function renderGame() {
+            renderTiles();
+            renderDice();
+            renderSelectedDice();
+            renderPlayerStack();
+        }
+
+        function renderTiles() {
+            const grid = document.getElementById('tilesGrid');
+            grid.innerHTML = '';
+            
+            gameState.tiles.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.className = `tile ${!tile.available ? 'taken' : ''}`;
+                
+                // Add hover sound to available tiles
+                if (tile.available) {
+                    tileEl.addEventListener('mouseenter', () => playEventAudio('hover'));
+                }
+                
+                const numberEl = document.createElement('div');
+                numberEl.className = 'tile-number';
+                numberEl.textContent = tile.number;
+                
+                const wormsEl = document.createElement('div');
+                wormsEl.className = 'worms';
+                
+                for (let i = 0; i < tile.worms; i++) {
+                    const wormEl = document.createElement('div');
+                    wormEl.className = 'worm';
+                    wormsEl.appendChild(wormEl);
+                }
+                
+                tileEl.appendChild(numberEl);
+                tileEl.appendChild(wormsEl);
+                grid.appendChild(tileEl);
+            });
+        }
+
+        function renderDice() {
+            const container = document.getElementById('diceContainer');
+            container.innerHTML = '';
+            
+            gameState.currentDice.forEach((die, index) => {
+                const dieEl = document.createElement('div');
+                dieEl.className = 'die';
+                dieEl.onclick = () => selectDice(die.value);
+                
+                // Add hover sound to dice
+                dieEl.addEventListener('mouseenter', () => playEventAudio('hover'));
+                
+                if (die.value === 'worm') {
+                    dieEl.innerHTML = '<span class="worm-symbol">🐛</span>';
+                } else {
+                    dieEl.textContent = die.value;
+                }
+                
+                container.appendChild(dieEl);
+            });
+        }
+
+        function renderSelectedDice() {
+            const summary = document.getElementById('selectedSummary');
+            
+            if (gameState.selectedGroups.length === 0) {
+                summary.textContent = 'Nog geen dobbelstenen geselecteerd';
+                return;
+            }
+            
+            const parts = gameState.selectedGroups.map(group => {
+                const symbol = group.symbol === 'worm' ? '🐛' : group.symbol;
+                return `${group.dice.length}x ${symbol} (${group.points} punten)`;
+            });
+            
+            summary.innerHTML = `${parts.join(', ')}<br><strong>Totaal: ${gameState.turnScore} punten</strong>`;
+        }
+
+        function renderPlayerStack() {
+            // Render human stack
+            const humanStackEl = document.getElementById('humanStack');
+            humanStackEl.innerHTML = '';
+            
+            gameState.humanStack.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.className = 'stack-tile';
+                
+                const numberEl = document.createElement('span');
+                numberEl.textContent = tile.number;
+                
+                const wormsEl = document.createElement('span');
+                wormsEl.textContent = '🐛'.repeat(tile.worms);
+                
+                tileEl.appendChild(numberEl);
+                tileEl.appendChild(wormsEl);
+                humanStackEl.appendChild(tileEl);
+            });
+            
+            // Render computer stack
+            const computerStackEl = document.getElementById('computerStack');
+            computerStackEl.innerHTML = '';
+            
+            gameState.computerStack.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.className = 'stack-tile';
+                
+                const numberEl = document.createElement('span');
+                numberEl.textContent = tile.number;
+                
+                const wormsEl = document.createElement('span');
+                wormsEl.textContent = '🐛'.repeat(tile.worms);
+                
+                tileEl.appendChild(numberEl);
+                tileEl.appendChild(wormsEl);
+                computerStackEl.appendChild(tileEl);
+            });
+            
+            // Update scores
+            const humanWorms = gameState.humanStack.reduce((sum, tile) => sum + tile.worms, 0);
+            const computerWorms = gameState.computerStack.reduce((sum, tile) => sum + tile.worms, 0);
+            
+            document.getElementById('humanScore').textContent = `Regenwormen: ${humanWorms}`;
+            document.getElementById('computerScore').textContent = `Regenwormen: ${computerWorms}`;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('gameStatus').textContent = message;
+        }
+
+        function updateTurnIndicator() {
+            const turnIndicator = document.getElementById('turnIndicator');
+            const turnIcon = document.getElementById('turnIcon');
+            const turnText = document.getElementById('turnText');
+            const humanScoreArea = document.getElementById('humanScoreArea');
+            const computerScoreArea = document.getElementById('computerScoreArea');
+            
+            // Remove all previous classes
+            turnIndicator.classList.remove('human-turn', 'computer-turn', 'active');
+            humanScoreArea.classList.remove('active-player', 'human-active', 'computer-active');
+            computerScoreArea.classList.remove('active-player', 'human-active', 'computer-active');
+            
+            if (gameState.currentPlayer === 'human') {
+                turnIndicator.classList.add('human-turn');
+                turnIcon.textContent = '👤';
+                turnText.textContent = 'Jouw beurt!';
+                
+                humanScoreArea.classList.add('active-player', 'human-active');
+                
+                // Add shine effect
+                setTimeout(() => {
+                    turnIndicator.classList.add('active');
+                }, 100);
+                
+            } else if (gameState.currentPlayer === 'computer') {
+                turnIndicator.classList.add('computer-turn');
+                turnIcon.textContent = '🤖';
+                turnText.textContent = 'Computer beurt...';
+                
+                computerScoreArea.classList.add('active-player', 'computer-active');
+                
+                // Add shine effect
+                setTimeout(() => {
+                    turnIndicator.classList.add('active');
+                }, 100);
+            } else {
+                // Game not started or ended
+                turnIcon.textContent = '🎮';
+                turnText.textContent = 'Spel Klaar!';
+            }
+        }
+
+        // Celebration Functions
+        function createConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#fd79a8', '#e17055'];
+            
+            for (let i = 0; i < 150; i++) {
+                setTimeout(() => {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.animationDelay = Math.random() * 2 + 's';
+                    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                    
+                    // Random shapes
+                    if (Math.random() > 0.5) {
+                        confetti.style.borderRadius = '0';
+                        confetti.style.width = '8px';
+                        confetti.style.height = '12px';
+                    }
+                    
+                    document.body.appendChild(confetti);
+                    
+                    setTimeout(() => {
+                        if (confetti.parentNode) {
+                            confetti.parentNode.removeChild(confetti);
+                        }
+                    }, 4000);
+                }, Math.random() * 1000);
+            }
+        }
+
+        function playAudio(type) {
+            // Create audio context for sound effects
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                if (type === 'roundWin') {
+                    // Happy ding sound for round win
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime); // C5
+                    oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.1); // E5
+                    oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.2); // G5
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    
+                } else if (type === 'gameWin') {
+                    // Victory fanfare for game win
+                    const notes = [523.25, 659.25, 783.99, 1046.50, 783.99, 1046.50, 1318.51]; // C5, E5, G5, C6, G5, C6, E6
+                    
+                    notes.forEach((freq, index) => {
+                        setTimeout(() => {
+                            const oscillator = audioContext.createOscillator();
+                            const gainNode = audioContext.createGain();
+                            
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioContext.destination);
+                            
+                            oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
+                            gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                            
+                            oscillator.start(audioContext.currentTime);
+                            oscillator.stop(audioContext.currentTime + 0.3);
+                        }, index * 150);
+                    });
+                }
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        // Interactive Audio Events System
+        function playEventAudio(eventType) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                switch(eventType) {
+                    case 'diceRoll':
+                        // Rolling dice sound - multiple quick clicks
+                        for (let i = 0; i < 8; i++) {
+                            setTimeout(() => {
+                                const oscillator = audioContext.createOscillator();
+                                const gainNode = audioContext.createGain();
+                                const filter = audioContext.createBiquadFilter();
+                                
+                                oscillator.connect(filter);
+                                filter.connect(gainNode);
+                                gainNode.connect(audioContext.destination);
+                                
+                                // Random pitch for dice tumbling effect
+                                oscillator.frequency.setValueAtTime(200 + Math.random() * 400, audioContext.currentTime);
+                                oscillator.type = 'square';
+                                
+                                filter.type = 'highpass';
+                                filter.frequency.setValueAtTime(300, audioContext.currentTime);
+                                
+                                gainNode.gain.setValueAtTime(0.45, audioContext.currentTime);
+                                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                                
+                                oscillator.start(audioContext.currentTime);
+                                oscillator.stop(audioContext.currentTime + 0.1);
+                            }, i * 50);
+                        }
+                        break;
+                        
+                    case 'diceClick':
+                        // Single dice click - satisfying click sound
+                        const clickOsc = audioContext.createOscillator();
+                        const clickGain = audioContext.createGain();
+                        const clickFilter = audioContext.createBiquadFilter();
+                        
+                        clickOsc.connect(clickFilter);
+                        clickFilter.connect(clickGain);
+                        clickGain.connect(audioContext.destination);
+                        
+                        clickOsc.frequency.setValueAtTime(800, audioContext.currentTime);
+                        clickOsc.frequency.exponentialRampToValueAtTime(400, audioContext.currentTime + 0.05);
+                        clickOsc.type = 'triangle';
+                        
+                        clickFilter.type = 'bandpass';
+                        clickFilter.frequency.setValueAtTime(600, audioContext.currentTime);
+                        
+                        clickGain.gain.setValueAtTime(0.9, audioContext.currentTime);
+                        clickGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.15);
+                        
+                        clickOsc.start(audioContext.currentTime);
+                        clickOsc.stop(audioContext.currentTime + 0.15);
+                        break;
+                        
+                    case 'hover':
+                        // Gentle hover sound - soft beep
+                        const hoverOsc = audioContext.createOscillator();
+                        const hoverGain = audioContext.createGain();
+                        
+                        hoverOsc.connect(hoverGain);
+                        hoverGain.connect(audioContext.destination);
+                        
+                        hoverOsc.frequency.setValueAtTime(440, audioContext.currentTime);
+                        hoverOsc.type = 'sine';
+                        
+                        hoverGain.gain.setValueAtTime(0.18, audioContext.currentTime);
+                        hoverGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                        
+                        hoverOsc.start(audioContext.currentTime);
+                        hoverOsc.stop(audioContext.currentTime + 0.2);
+                        break;
+                        
+                    case 'buttonClick':
+                        // Button click - more prominent than hover
+                        const btnOsc = audioContext.createOscillator();
+                        const btnGain = audioContext.createGain();
+                        
+                        btnOsc.connect(btnGain);
+                        btnGain.connect(audioContext.destination);
+                        
+                        btnOsc.frequency.setValueAtTime(523.25, audioContext.currentTime);
+                        btnOsc.frequency.exponentialRampToValueAtTime(261.63, audioContext.currentTime + 0.1);
+                        btnOsc.type = 'triangle';
+                        
+                        btnGain.gain.setValueAtTime(0.72, audioContext.currentTime);
+                        btnGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                        
+                        btnOsc.start(audioContext.currentTime);
+                        btnOsc.stop(audioContext.currentTime + 0.2);
+                        break;
+                }
+            } catch (e) {
+                console.log('Event audio not supported');
+            }
+        }
+
+        // Audio Event Listeners Setup
+        function setupAudioEvents() {
+            // Add hover sounds to all interactive elements
+            const interactiveElements = document.querySelectorAll('button, .die, .tile, .widget');
+            
+            interactiveElements.forEach(element => {
+                // Hover sound
+                element.addEventListener('mouseenter', () => {
+                    if (!element.disabled && !element.classList.contains('unavailable')) {
+                        playEventAudio('hover');
+                    }
+                });
+                
+                // Click sound for buttons
+                if (element.tagName === 'BUTTON') {
+                    element.addEventListener('click', () => {
+                        if (!element.disabled) {
+                            playEventAudio('buttonClick');
+                        }
+                    });
+                }
+            });
+        }
+
+        // Button Ripple Effect System
+        function createRippleEffect(event) {
+            const button = event.currentTarget;
+            const rect = button.getBoundingClientRect();
+            const size = Math.max(rect.width, rect.height);
+            const x = event.clientX - rect.left - size / 2;
+            const y = event.clientY - rect.top - size / 2;
+            
+            const ripple = document.createElement('span');
+            ripple.classList.add('button-ripple');
+            ripple.style.width = ripple.style.height = size + 'px';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            
+            button.appendChild(ripple);
+            
+            // Remove ripple after animation
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    ripple.parentNode.removeChild(ripple);
+                }
+            }, 600);
+        }
+
+        // Enhanced Button Effects Setup
+        function setupButtonEffects() {
+            const buttons = document.querySelectorAll('button');
+            
+            buttons.forEach(button => {
+                // Add ripple effect on click
+                button.addEventListener('click', createRippleEffect);
+                
+                // Add extra engaging hover effects
+                button.addEventListener('mouseenter', () => {
+                    if (!button.disabled) {
+                        button.style.transform = 'translateY(-3px) scale(1.02)';
+                    }
+                });
+                
+                button.addEventListener('mouseleave', () => {
+                    if (!button.disabled) {
+                        button.style.transform = '';
+                    }
+                });
+                
+                // Add focus effects for keyboard navigation
+                button.addEventListener('focus', () => {
+                    if (!button.disabled) {
+                        button.style.animation = 'buttonPulse 1s ease-in-out infinite';
+                    }
+                });
+                
+                button.addEventListener('blur', () => {
+                    button.style.animation = '';
+                });
+            });
+        }
+
+        // 80s Synthesizer Background Music System
+        class SynthMusic {
+            constructor() {
+                this.audioContext = null;
+                this.isPlaying = false;
+                this.volume = 0.15;
+                this.currentPattern = 0;
+                this.nextNoteTime = 0;
+                this.tempo = 120;
+                this.baseTempo = 120;
+                this.noteIndex = 0;
+                this.oscillators = [];
+                
+                // Extended 80s Synthesizer Sequences - More Variety!
+                this.sequences = [
+                    // Sequence 1: "Oxygène" style - Ambient flowing
+                    {
+                        bass: [130.81, 146.83, 164.81, 130.81, 110.00, 123.47, 146.83, 130.81],
+                        melody: [523.25, 587.33, 659.25, 523.25, 440.00, 493.88, 587.33, 523.25],
+                        rhythm: [1, 0.5, 0.5, 1, 1, 0.5, 0.5, 1]
+                    },
+                    // Sequence 2: "Blade Runner" style - Dark atmospheric
+                    {
+                        bass: [98.00, 110.00, 123.47, 98.00, 87.31, 98.00, 110.00, 98.00],
+                        melody: [392.00, 440.00, 493.88, 392.00, 349.23, 392.00, 440.00, 392.00],
+                        rhythm: [1.5, 0.5, 1, 1, 1.5, 0.5, 1, 1]
+                    },
+                    // Sequence 3: Arcade style - Fast gaming
+                    {
+                        bass: [146.83, 164.81, 185.00, 146.83, 130.81, 146.83, 164.81, 146.83],
+                        melody: [587.33, 659.25, 739.99, 587.33, 523.25, 587.33, 659.25, 587.33],
+                        rhythm: [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
+                    },
+                    // Sequence 4: "Kraftwerk" style - Robotic rhythmic
+                    {
+                        bass: [110.00, 110.00, 146.83, 146.83, 130.81, 130.81, 123.47, 123.47],
+                        melody: [440.00, 440.00, 587.33, 587.33, 523.25, 523.25, 493.88, 493.88],
+                        rhythm: [0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25]
+                    },
+                    // Sequence 5: "Vangelis Epic" - Cinematic soaring
+                    {
+                        bass: [87.31, 98.00, 110.00, 130.81, 146.83, 164.81, 185.00, 207.65],
+                        melody: [349.23, 392.00, 440.00, 523.25, 587.33, 659.25, 739.99, 830.61],
+                        rhythm: [2, 1.5, 1, 0.5, 1, 1.5, 1, 2]
+                    },
+                    // Sequence 6: "Tangerine Dream" - Pulsing sequencer
+                    {
+                        bass: [164.81, 130.81, 164.81, 196.00, 164.81, 146.83, 130.81, 146.83],
+                        melody: [659.25, 523.25, 659.25, 783.99, 659.25, 587.33, 523.25, 587.33],
+                        rhythm: [0.75, 0.25, 0.75, 0.25, 0.75, 0.25, 0.75, 0.25]
+                    },
+                    // Sequence 7: "Space Ambient" - Floating ethereal
+                    {
+                        bass: [73.42, 82.41, 92.50, 103.83, 116.54, 130.81, 146.83, 164.81],
+                        melody: [293.66, 329.63, 369.99, 415.30, 466.16, 523.25, 587.33, 659.25],
+                        rhythm: [3, 2, 1.5, 1, 0.75, 0.5, 0.75, 1.5]
+                    },
+                    // Sequence 8: "Retro Gaming" - Chiptune inspired
+                    {
+                        bass: [130.81, 164.81, 196.00, 164.81, 146.83, 185.00, 220.00, 185.00],
+                        melody: [523.25, 659.25, 783.99, 659.25, 587.33, 739.99, 880.00, 739.99],
+                        rhythm: [0.5, 0.25, 0.25, 0.5, 0.5, 0.25, 0.25, 0.5]
+                    }
+                ];
+                
+                this.initializeControls();
+            }
+
+            async initializeAudio() {
+                if (!this.audioContext) {
+                    try {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        
+                        // Create master volume
+                        this.masterGain = this.audioContext.createGain();
+                        this.masterGain.connect(this.audioContext.destination);
+                        this.masterGain.gain.value = this.volume;
+                        
+                        // Create reverb effect
+                        this.reverbGain = this.audioContext.createGain();
+                        this.reverbGain.gain.value = 0.3;
+                        this.reverbGain.connect(this.masterGain);
+                        
+                        return true;
+                    } catch (e) {
+                        console.log('Audio not supported');
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            createSynthVoice(frequency, type = 'sawtooth', duration = 1) {
+                if (!this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+                
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                
+                // 80s style filter sweep
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(frequency * 4, this.audioContext.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(frequency * 0.8, this.audioContext.currentTime + duration);
+                
+                oscillator.connect(filter);
+                filter.connect(gainNode);
+                gainNode.connect(this.reverbGain);
+                
+                // 80s style envelope
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.3, this.audioContext.currentTime + 0.02);
+                gainNode.gain.exponentialRampToValueAtTime(0.1, this.audioContext.currentTime + duration * 0.7);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+                
+                return oscillator;
+            }
+
+            playNextNote() {
+                if (!this.isPlaying || !this.audioContext) return;
+
+                const sequence = this.sequences[this.currentPattern];
+                const noteTime = this.audioContext.currentTime;
+                
+                // Play bass note with occasional variation
+                const bassFreq = sequence.bass[this.noteIndex % sequence.bass.length];
+                const bassType = Math.random() < 0.1 ? 'triangle' : 'sawtooth'; // 10% chance for different bass sound
+                this.createSynthVoice(bassFreq, bassType, sequence.rhythm[this.noteIndex % sequence.rhythm.length] * 0.4);
+                
+                // Play melody note (octave higher, different timbre)
+                const melodyFreq = sequence.melody[this.noteIndex % sequence.melody.length];
+                const melodyType = Math.random() < 0.15 ? 'sine' : 'square'; // 15% chance for smoother melody
+                this.createSynthVoice(melodyFreq, melodyType, sequence.rhythm[this.noteIndex % sequence.rhythm.length] * 0.3);
+                
+                // Occasionally add harmony layer (20% chance)
+                if (Math.random() < 0.2) {
+                    const harmonyFreq = melodyFreq * 1.25; // Perfect fourth above
+                    this.createSynthVoice(harmonyFreq, 'sine', sequence.rhythm[this.noteIndex % sequence.rhythm.length] * 0.15);
+                }
+                
+                // Calculate next note time
+                const noteDuration = (60 / this.tempo) * sequence.rhythm[this.noteIndex % sequence.rhythm.length];
+                this.nextNoteTime = noteTime + noteDuration;
+                this.noteIndex++;
+                
+                // Switch sequence more frequently with randomness
+                const switchInterval = Math.random() < 0.3 ? 8 : 12; // Vary between 8 and 12 notes
+                if (this.noteIndex % switchInterval === 0) {
+                    // Sometimes random jump, sometimes sequential
+                    if (Math.random() < 0.4) {
+                        // Random sequence selection (40% chance)
+                        this.currentPattern = Math.floor(Math.random() * this.sequences.length);
+                    } else {
+                        // Sequential progression (60% chance)
+                        this.currentPattern = (this.currentPattern + 1) % this.sequences.length;
+                    }
+                    
+                    // Vary tempo with sequence changes for more dynamics
+                    const tempoVariation = 0.85 + (Math.random() * 0.3); // 85% to 115% of base tempo
+                    this.tempo = this.baseTempo * tempoVariation;
+                }
+                
+                // Schedule next note
+                setTimeout(() => this.playNextNote(), noteDuration * 1000);
+            }
+
+            async start() {
+                if (this.isPlaying) return;
+                
+                const initialized = await this.initializeAudio();
+                if (!initialized) return;
+                
+                if (this.audioContext.state === 'suspended') {
+                    await this.audioContext.resume();
+                }
+                
+                this.isPlaying = true;
+                this.noteIndex = 0;
+                this.nextNoteTime = this.audioContext.currentTime;
+                
+                // Update UI
+                document.getElementById('musicToggle').classList.add('playing');
+                document.getElementById('musicVisualizer').style.opacity = '1';
+                
+                this.playNextNote();
+            }
+
+            stop() {
+                this.isPlaying = false;
+                
+                // Update UI
+                document.getElementById('musicToggle').classList.remove('playing');
+                document.getElementById('musicVisualizer').style.opacity = '0.3';
+            }
+
+            setVolume(volume) {
+                this.volume = Math.max(0, Math.min(1, volume));
+                if (this.masterGain) {
+                    this.masterGain.gain.value = this.volume;
+                }
+                
+                // Update volume slider
+                const slider = document.getElementById('volumeSlider');
+                slider.style.width = (this.volume * 100) + '%';
+            }
+
+            initializeControls() {
+                // Music toggle button
+                document.addEventListener('DOMContentLoaded', () => {
+                    const musicToggle = document.getElementById('musicToggle');
+                    const volumeControl = document.getElementById('volumeControl');
+                    
+                    musicToggle.addEventListener('click', () => {
+                        if (this.isPlaying) {
+                            this.stop();
+                            musicToggle.textContent = '🎵';
+                            musicToggle.title = 'Music aan';
+                        } else {
+                            this.start();
+                            musicToggle.textContent = '🎶';
+                            musicToggle.title = 'Music uit';
+                        }
+                    });
+                    
+                    // Volume control
+                    volumeControl.addEventListener('click', (e) => {
+                        const rect = volumeControl.getBoundingClientRect();
+                        const x = e.clientX - rect.left;
+                        const width = rect.width;
+                        const volume = x / width;
+                        this.setVolume(volume);
+                    });
+                    
+                    // Initialize volume display
+                    this.setVolume(this.volume);
+                });
+            }
+        }
+
+        // Initialize synthesizer
+        const synthMusic = new SynthMusic();
+
+        function showRoundWinCelebration(tileNumber, worms) {
+            // Round win popup
+            const popup = document.createElement('div');
+            popup.className = 'round-win-popup';
+            popup.innerHTML = `
+                <div>🎉 GEWELDIG! 🎉</div>
+                <div style="font-size: 1.2rem; margin: 10px 0;">
+                    Tegel ${tileNumber} gepakt!
+                </div>
+                <div style="font-size: 1rem; color: rgba(255,255,255,0.9);">
+                    +${worms} 🐛 Regenwormen!
+                </div>
+            `;
+            
+            document.body.appendChild(popup);
+            
+            // Play round win sound
+            playAudio('roundWin');
+            
+            // Remove after animation
+            setTimeout(() => {
+                popup.style.animation = 'celebrationFadeIn 0.5s ease-out reverse';
+                setTimeout(() => {
+                    if (popup.parentNode) {
+                        popup.parentNode.removeChild(popup);
+                    }
+                }, 500);
+            }, 2000);
+        }
+
+        function showGameWinCelebration(humanWorms, computerWorms) {
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'celebration-overlay';
+            
+            const content = document.createElement('div');
+            content.className = 'celebration-content';
+            content.innerHTML = `
+                <h1>🏆 GEFELICITEERD! 🏆</h1>
+                <div style="font-size: 2rem; margin: 20px 0;">
+                    JE HEBT GEWONNEN!
+                </div>
+                <div style="font-size: 1.5rem; margin: 15px 0; color: #ffeaa7;">
+                    ${humanWorms} vs ${computerWorms} regenwormen
+                </div>
+                <div style="font-size: 1.2rem; margin-top: 30px; opacity: 0.8;">
+                    🎊 Fantastisch gespeeld! 🎊
+                </div>
+                <div style="font-size: 1rem; margin-top: 20px; opacity: 0.6;">
+                    Klik ergens om door te gaan...
+                </div>
+            `;
+            
+            overlay.appendChild(content);
+            document.body.appendChild(overlay);
+            
+            // Create confetti
+            createConfetti();
+            
+            // Play victory sound
+            playAudio('gameWin');
+            
+            // Remove on click
+            overlay.addEventListener('click', () => {
+                overlay.style.animation = 'celebrationFadeIn 0.5s ease-out reverse';
+                setTimeout(() => {
+                    if (overlay.parentNode) {
+                        overlay.parentNode.removeChild(overlay);
+                    }
+                }, 500);
+            });
+            
+            // Auto-remove after 10 seconds
+            setTimeout(() => {
+                if (overlay.parentNode) {
+                    overlay.click();
+                }
+            }, 10000);
+        }
+
+        // Logging Functions
+        function addLogEntry(message, type = '') {
+            const log = document.getElementById('gameLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            log.appendChild(entry);
+            
+            // Auto-scroll to bottom
+            log.scrollTop = log.scrollHeight;
+            
+            // Keep log reasonable size (max 50 entries)
+            while (log.children.length > 50) {
+                log.removeChild(log.firstChild);
+            }
+        }
+
+        function clearLog() {
+            const log = document.getElementById('gameLog');
+            log.innerHTML = '<div class="log-entry">Nieuw spel gestart!</div>';
+        }
+
+        // Enhanced Strategic Hints System with Worm Character
+        const strategicHints = {
+            general: [
+                { text: "Worm-symbool is essentieel - zonder regenworm kun je geen tegels winnen!", icon: "🐛", category: "Basis" },
+                { text: "Hoge tegels (36-40) leveren meer punten maar zijn riskanter om te behalen", icon: "🎯", category: "Scoring" },
+                { text: "Bewaar lage tegels (21-25) als veilige keuze wanneer je risico wilt vermijden", icon: "🛡️", category: "Veiligheid" },
+                { text: "Observeer welke tegels je tegenstander heeft - steel tegels strategisch!", icon: "👁️", category: "Tactiek" }
+            ],
+            riskManagement: [
+                { text: "Stop tijdig! Het is beter om een lage tegel te pakken dan je beurt te verliezen", icon: "⏰", category: "Timing" },
+                { text: "Bereken je kansen: Met 6+ dobbelstenen heb je ~67% kans op een regenworm", icon: "🎲", category: "Kansen" },
+                { text: "Vermijd te veel risico als je al een hoge tegel hebt deze beurt", icon: "⚖️", category: "Risico" },
+                { text: "Als je 3+ dobbelstenen van hetzelfde symbool hebt, overweeg om te stoppen", icon: "🛑", category: "Beslissing" }
+            ],
+            earlygame: [
+                { text: "Begin voorzichtig - focus eerst op het krijgen van regenwormen", icon: "🐣", category: "Start" },
+                { text: "Lage tegels zijn prima in het begin om momentum op te bouwen", icon: "🏁", category: "Momentum" },
+                { text: "Probeer niet meteen de hoogste tegels - bouw eerst een basis op", icon: "🏗️", category: "Basis" },
+                { text: "Let op welke symbolen vaak vallen om je strategie aan te passen", icon: "👀", category: "Observatie" }
+            ],
+            midgame: [
+                { text: "Ga voor middentegels (26-35) als je een solide basis hebt", icon: "🎯", category: "Doelen" },
+                { text: "Overweeg om tegels van tegenstanders te stelen als ze kwetsbaar zijn", icon: "🦹", category: "Aanval" },
+                { text: "Balanceer tussen veiligheid en ambitie - te voorzichtig is ook slecht", icon: "⚖️", category: "Balans" },
+                { text: "Houd rekening met welke tegels nog beschikbaar zijn", icon: "📊", category: "Planning" }
+            ],
+            endgame: [
+                { text: "In de eindspurt: ga voor hoge tegels als je achterloopt", icon: "🚀", category: "Comeback" },
+                { text: "Als je voorligt, speel het veilig en pak lage maar zekere tegels", icon: "🛡️", category: "Verdediging" },
+                { text: "Blokkeer tegenstanders door hun hoogste tegels weg te nemen", icon: "🚧", category: "Blokkade" },
+                { text: "Elke tegel telt - verlies geen beurten door te gierig te zijn!", icon: "💎", category: "Finish" }
+            ],
+            probability: [
+                { text: "Kans op regenworm met 8 dobbelstenen: ~67%", icon: "📈", category: "Stats" },
+                { text: "Kans op regenworm met 4 dobbelstenen: ~52%", icon: "📊", category: "Stats" },
+                { text: "Kans op regenworm met 2 dobbelstenen: ~31%", icon: "📉", category: "Stats" },
+                { text: "Symbool 1-5 heeft elk 1/6 kans (16.7%) per dobbelsteen", icon: "🎲", category: "Math" }
+            ]
+        };
+
+        // Worm Character Management
+        let wormTipInterval;
+        let currentTipIndex = 0;
+        let allTips = [];
+
+        function startWormCharacter() {
+            const wormCharacter = document.getElementById('wormCharacter');
+            wormCharacter.classList.add('walking');
+            
+            // Collect all tips into one array
+            allTips = [
+                ...strategicHints.general,
+                ...strategicHints.riskManagement,
+                ...strategicHints.probability
+            ];
+            
+            // Show one tip per walk cycle (12 seconds)
+            wormTipInterval = setInterval(() => {
+                showWormTipForWalkCycle();
+            }, 12000);
+            
+            // Show first tip after worm appears
+            setTimeout(() => {
+                showWormTipForWalkCycle();
+            }, 1000);
+        }
+
+        function showWormTipForWalkCycle() {
+            const speechBalloon = document.getElementById('speechBalloon');
+            const tipIcon = document.getElementById('tipIcon');
+            const tipText = document.getElementById('tipText');
+            
+            // Get contextual tips first, then fallback to general tips
+            const contextualTips = getContextualHints();
+            let tip;
+            
+            if (contextualTips.length > 0) {
+                tip = contextualTips[Math.floor(Math.random() * contextualTips.length)];
+            } else {
+                tip = allTips[currentTipIndex % allTips.length];
+                currentTipIndex++;
+            }
+            
+            // Update balloon content
+            if (typeof tip === 'string') {
+                tipIcon.textContent = '💡';
+                tipText.textContent = tip;
+            } else {
+                tipIcon.textContent = tip.icon;
+                tipText.textContent = tip.text;
+            }
+            
+            // Show balloon when worm is at 20% of screen (after 2.4 seconds)
+            setTimeout(() => {
+                speechBalloon.classList.add('show');
+            }, 2400);
+            
+            // Hide balloon when worm reaches 80% of screen (after 9.6 seconds)
+            setTimeout(() => {
+                speechBalloon.classList.remove('show');
+            }, 9600);
+        }
+
+        function showWormTip(customTip = null) {
+            const speechBalloon = document.getElementById('speechBalloon');
+            const tipIcon = document.getElementById('tipIcon');
+            const tipText = document.getElementById('tipText');
+            
+            let tip;
+            if (customTip) {
+                tip = customTip;
+            } else {
+                // Get contextual tips first, then fallback to general tips
+                const contextualTips = getContextualHints();
+                if (contextualTips.length > 0) {
+                    tip = contextualTips[Math.floor(Math.random() * contextualTips.length)];
+                } else {
+                    tip = allTips[currentTipIndex % allTips.length];
+                    currentTipIndex++;
+                }
+            }
+            
+            // Update balloon content
+            if (typeof tip === 'string') {
+                tipIcon.textContent = '💡';
+                tipText.textContent = tip;
+            } else {
+                tipIcon.textContent = tip.icon;
+                tipText.textContent = tip.text;
+            }
+            
+            // Animate balloon immediately for manual triggers
+            speechBalloon.classList.remove('show');
+            setTimeout(() => {
+                speechBalloon.classList.add('show');
+            }, 100);
+            
+            // Hide balloon after 4 seconds for manual triggers
+            setTimeout(() => {
+                speechBalloon.classList.remove('show');
+            }, 4000);
+        }
+
+        function getContextualHints() {
+            const hints = [];
+            const availableTiles = gameState.tiles.filter(t => t.available);
+            const myTiles = gameState.humanStack;
+            const computerTiles = gameState.computerStack;
+            
+            // Game phase detection
+            const totalClaimed = myTiles.length + computerTiles.length;
+            let phase = 'early';
+            if (totalClaimed > 4) phase = 'mid';
+            if (totalClaimed > 8) phase = 'end';
+            
+            // Add phase-specific hints
+            if (phase === 'early') hints.push(...strategicHints.earlygame);
+            else if (phase === 'mid') hints.push(...strategicHints.midgame);
+            else hints.push(...strategicHints.endgame);
+            
+            // Current situation hints
+            if (gameState.currentPlayer === 'human' && gameState.selectedGroups.length === 0) {
+                hints.push({ text: "Je hebt nog geen symbolen geselecteerd - zoek eerst naar een regenworm!", icon: "🔍", category: "Actie" });
+            }
+            
+            if (gameState.hasWorm && gameState.selectedGroups.length > 0) {
+                const totalValue = gameState.selectedGroups.reduce((sum, group) => sum + group.value, 0);
+                if (totalValue >= 21) {
+                    hints.push({ text: `Je hebt al ${totalValue} punten - overweeg om te stoppen voor een veilige tegel!`, icon: "✋", category: "Waarschuwing" });
+                }
+            }
+            
+            // Risk assessment
+            const availableDice = 8 - gameState.selectedGroups.reduce((sum, group) => sum + group.dice.length, 0);
+            if (availableDice <= 3) {
+                hints.push({ text: "Weinig dobbelstenen over - hoog risico om door te gaan!", icon: "⚠️", category: "Risico" });
+            }
+            
+            return hints;
+        }
+
+        function showHint() {
+            // Show a specific contextual tip via the worm character
+            const contextualTips = getContextualHints();
+            let selectedTip;
+            
+            if (contextualTips.length > 0) {
+                // Prioritize contextual tips
+                selectedTip = contextualTips[Math.floor(Math.random() * contextualTips.length)];
+            } else {
+                // Fallback to general strategy tips
+                const allGeneralTips = [...strategicHints.general, ...strategicHints.riskManagement];
+                selectedTip = allGeneralTips[Math.floor(Math.random() * allGeneralTips.length)];
+            }
+            
+            showWormTip(selectedTip);
+            
+            // Also show the detailed modal for comprehensive tips
+            showDetailedHints();
+        }
+
+        function showDetailedHints() {
+            const overlay = document.getElementById('hintOverlay');
+            const hintsPanel = document.getElementById('strategyHints');
+            const hintContent = document.getElementById('hintContent');
+            
+            // Get contextual hints
+            const contextualHints = getContextualHints();
+            
+            // Build hint content with enhanced formatting
+            let content = '<div class="hint-category">';
+            content += '<h5>🎯 Algemene Strategie</h5>';
+            content += '<ul class="hint-list">';
+            strategicHints.general.forEach(hint => {
+                content += `<li><strong>${hint.category}:</strong> ${hint.text}</li>`;
+            });
+            content += '</ul></div>';
+            
+            content += '<div class="hint-category">';
+            content += '<h5>⚖️ Risicobeheer</h5>';
+            content += '<ul class="hint-list">';
+            strategicHints.riskManagement.forEach(hint => {
+                content += `<li><strong>${hint.category}:</strong> ${hint.text}</li>`;
+            });
+            content += '</ul></div>';
+            
+            content += '<div class="hint-category">';
+            content += '<h5>📊 Kansberekening</h5>';
+            content += '<ul class="hint-list">';
+            strategicHints.probability.forEach(hint => {
+                content += `<li><strong>${hint.category}:</strong> ${hint.text}</li>`;
+            });
+            content += '</ul></div>';
+            
+            if (contextualHints.length > 0) {
+                content += '<div class="hint-category">';
+                content += '<h5>🔥 Situatiespecifieke Tips</h5>';
+                content += '<ul class="hint-list">';
+                contextualHints.slice(0, 3).forEach(hint => {
+                    const hintText = typeof hint === 'string' ? hint : hint.text;
+                    content += `<li class="hint-emphasis">${hintText}</li>`;
+                });
+                content += '</ul></div>';
+            }
+            
+            hintContent.innerHTML = content;
+            
+            // Show the hints panel
+            overlay.classList.add('show');
+            hintsPanel.classList.add('show');
+        }
+
+        function closeHints() {
+            const overlay = document.getElementById('hintOverlay');
+            const hintsPanel = document.getElementById('strategyHints');
+            
+            overlay.classList.remove('show');
+            hintsPanel.classList.remove('show');
+        }
+
+        // Initialize the game when page loads
+        window.onload = function() {
+            initializeGame();
+            startWormCharacter();
+            setupAudioEvents();
+            setupButtonEffects();
+            
+            // Auto-start music after first user interaction (required by browsers)
+            document.addEventListener('click', function autoStartMusic() {
+                synthMusic.start();
+                document.removeEventListener('click', autoStartMusic);
+            }, { once: true });
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REGENWORMEN ARCADE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #00ff00;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* 80s Arcade CRT Effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 255, 0, 0.03),
+                    rgba(0, 255, 0, 0.03) 1px,
+                    transparent 1px,
+                    transparent 2px
+                );
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Neon Glow Text Effect */
+        .neon {
+            text-shadow: 
+                0 0 5px currentColor,
+                0 0 10px currentColor,
+                0 0 15px currentColor,
+                0 0 20px #ff00ff,
+                0 0 35px #ff00ff,
+                0 0 40px #ff00ff;
+        }
+
+        /* Header */
+        .arcade-header {
+            background: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff);
+            padding: 10px 0;
+            text-align: center;
+            border-bottom: 3px solid #00ff00;
+            position: relative;
+            animation: headerPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes headerPulse {
+            0%, 100% { box-shadow: 0 0 10px #ff00ff; }
+            50% { box-shadow: 0 0 20px #00ffff, 0 0 30px #ff00ff; }
+        }
+
+        .arcade-title {
+            font-size: clamp(20px, 4vw, 32px);
+            font-weight: bold;
+            color: #000;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin: 0;
+        }
+
+        /* Main Game Area */
+        .arcade-container {
+            flex: 1;
+            display: grid;
+            grid-template-areas: 
+                "score tiles crosshair"
+                "player-area tiles controls"
+                "status tiles ammo";
+            grid-template-columns: 200px 1fr 200px;
+            grid-template-rows: 100px 1fr 80px;
+            gap: 10px;
+            padding: 10px;
+            height: calc(100vh - 80px);
+        }
+
+        /* Score Area */
+        .score-panel {
+            grid-area: score;
+            background: linear-gradient(135deg, #001122, #003366);
+            border: 2px solid #00ff00;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        .score-title {
+            color: #00ffff;
+            font-size: 14px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
+        .score-value {
+            color: #ffff00;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 5px 0;
+        }
+
+        /* Central Tiles Area */
+        .tiles-arena {
+            grid-area: tiles;
+            background: radial-gradient(ellipse at center, #1a1a2e, #0f0f23);
+            border: 3px solid #ff00ff;
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tiles-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .arcade-tile {
+            background: linear-gradient(45deg, #2a2a3e, #3a3a5e);
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s ease;
+            cursor: crosshair;
+        }
+
+        .arcade-tile:hover {
+            border-color: #ffff00;
+            box-shadow: 0 0 15px #ffff00;
+            transform: scale(1.05);
+        }
+
+        .arcade-tile.taken {
+            background: linear-gradient(45deg, #4a0000, #2a0000);
+            border-color: #ff0000;
+            opacity: 0.5;
+        }
+
+        .tile-number {
+            font-size: 18px;
+            color: #00ffff;
+            margin-bottom: 3px;
+        }
+
+        .tile-worms {
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tile-worm {
+            width: 8px;
+            height: 8px;
+            background: #ff00ff;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #ff00ff;
+        }
+
+        /* Crosshair Area */
+        .crosshair-panel {
+            grid-area: crosshair;
+            background: linear-gradient(135deg, #330011, #660022);
+            border: 2px solid #ff00ff;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crosshair {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #ff00ff;
+            border-radius: 50%;
+            position: relative;
+            animation: crosshairPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes crosshairPulse {
+            0%, 100% { 
+                transform: scale(1);
+                box-shadow: 0 0 10px #ff00ff;
+            }
+            50% { 
+                transform: scale(1.1);
+                box-shadow: 0 0 20px #ff00ff, 0 0 30px #ff00ff;
+            }
+        }
+
+        .crosshair::before,
+        .crosshair::after {
+            content: '';
+            position: absolute;
+            background: #ff00ff;
+            box-shadow: 0 0 5px #ff00ff;
+        }
+
+        .crosshair::before {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        .crosshair::after {
+            width: 100%;
+            height: 2px;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Player Area */
+        .player-panel {
+            grid-area: player-area;
+            background: linear-gradient(135deg, #112200, #336600);
+            border: 2px solid #00ff00;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .player-stack {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            align-content: flex-start;
+        }
+
+        .stack-tile {
+            width: 30px;
+            height: 20px;
+            background: linear-gradient(45deg, #00ff00, #00aa00);
+            border: 1px solid #ffffff;
+            border-radius: 3px;
+            font-size: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Controls Area */
+        .controls-panel {
+            grid-area: controls;
+            background: linear-gradient(135deg, #220011, #440022);
+            border: 2px solid #ff00ff;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .arcade-button {
+            padding: 8px 12px;
+            background: linear-gradient(45deg, #ff00ff, #aa00aa);
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.2s ease;
+            font-size: 12px;
+        }
+
+        .arcade-button:hover {
+            background: linear-gradient(45deg, #ffffff, #ffff00);
+            color: #000;
+            box-shadow: 0 0 15px #ffff00;
+            transform: translateY(-2px);
+        }
+
+        .arcade-button:active {
+            transform: translateY(0);
+            box-shadow: 0 0 5px #ffff00;
+        }
+
+        .arcade-button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Status Area */
+        .status-panel {
+            grid-area: status;
+            background: linear-gradient(90deg, #001133, #002266);
+            border: 2px solid #00ffff;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-text {
+            color: #00ffff;
+            font-size: 12px;
+            text-transform: uppercase;
+            animation: textScroll 15s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes textScroll {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* Ammo Area */
+        .ammo-panel {
+            grid-area: ammo;
+            background: linear-gradient(135deg, #330000, #660000);
+            border: 2px solid #ff0000;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ammo-title {
+            color: #ff0000;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .ammo-count {
+            color: #ffff00;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        /* Dice in Flight */
+        .flying-dice {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ffff00, #ff8800);
+            border: 3px solid #ffffff;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 24px;
+            color: #000;
+            z-index: 100;
+            animation: diceFly 1s linear;
+            box-shadow: 0 0 15px #ffff00;
+            cursor: crosshair;
+        }
+        
+        .flying-dice:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 25px #ffff00, 0 0 35px #ff8800;
+        }
+
+        @keyframes diceFly {
+            from {
+                transform: scale(0.5) rotate(0deg);
+                opacity: 0.8;
+            }
+            to {
+                transform: scale(1.2) rotate(360deg);
+                opacity: 1;
+            }
+        }
+
+        /* Explosion Effect */
+        .explosion {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ffff00, #ff8800, transparent);
+            animation: explode 0.5s ease-out forwards;
+            z-index: 99;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .arcade-container {
+                grid-template-areas: 
+                    "tiles tiles"
+                    "score crosshair"
+                    "player-area controls"
+                    "status ammo";
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 1fr 80px 100px 60px;
+            }
+            
+            .tiles-grid {
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(4, 1fr);
+                gap: 4px;
+                padding: 8px;
+            }
+        }
+
+        /* Sound Indicator */
+        .sound-indicator {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            color: #00ff00;
+            font-size: 20px;
+            z-index: 1001;
+            cursor: pointer;
+            animation: soundPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes soundPulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sound Indicator -->
+    <div class="sound-indicator" id="soundToggle" onclick="toggleSound()">🔊</div>
+
+    <!-- Header -->
+    <div class="arcade-header">
+        <h1 class="arcade-title neon">🎮 REGENWORMEN ARCADE 🎮</h1>
+    </div>
+
+    <!-- Main Game Container -->
+    <div class="arcade-container">
+        
+        <!-- Score Panel -->
+        <div class="score-panel">
+            <div class="score-title neon">SPELER</div>
+            <div class="score-value neon" id="playerScore">0 🐛</div>
+            <div class="score-title neon" style="margin-top: 10px;">COMPUTER</div>
+            <div class="score-value neon" id="computerScore">0 🐛</div>
+            <div class="score-title neon" style="margin-top: 10px;">BEURT</div>
+            <div class="score-value" id="turnDisplay">SPELER</div>
+        </div>
+
+        <!-- Central Tiles Arena -->
+        <div class="tiles-arena">
+            <div class="tiles-grid" id="tilesGrid">
+                <!-- Tiles will be generated here -->
+            </div>
+        </div>
+
+        <!-- Crosshair Panel -->
+        <div class="crosshair-panel">
+            <div class="crosshair" id="crosshair"></div>
+            <div style="margin-top: 10px; color: #ff00ff; font-size: 12px; text-align: center;">
+                DOEL<br>& SCHIET!
+            </div>
+        </div>
+
+        <!-- Player Panel -->
+        <div class="player-panel">
+            <div class="score-title neon">JOUW TEGELS</div>
+            <div class="player-stack" id="playerStack">
+                <!-- Player tiles will appear here -->
+            </div>
+        </div>
+
+        <!-- Controls Panel -->
+        <div class="controls-panel">
+            <button class="arcade-button" id="rollBtn" onclick="rollDice()">🎲 GOOI</button>
+            <button class="arcade-button" id="endTurnBtn" onclick="endTurn()" disabled>⏹️ STOP</button>
+            <button class="arcade-button" onclick="newGame()">🔄 NIEUW</button>
+        </div>
+
+        <!-- Status Panel -->
+        <div class="status-panel">
+            <div class="status-text" id="gameStatus">
+                WELKOM BIJ REGENWORMEN ARCADE! ★ SCHIET OP DE DOBBELSTENEN OM ZE TE SELECTEREN! ★ VERZAMEL REGENWORMEN EN WIN! ★
+            </div>
+        </div>
+
+        <!-- Ammo Panel -->
+        <div class="ammo-panel">
+            <div class="ammo-title neon">MUNITIE</div>
+            <div class="ammo-count neon" id="ammoCount">∞</div>
+        </div>
+
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            tiles: [],
+            playerStack: [],
+            computerStack: [],
+            currentDice: [],
+            selectedGroups: [],
+            usedSymbols: [],
+            turnScore: 0,
+            hasWorm: false,
+            currentPlayer: 'human',
+            gameOver: false,
+            soundEnabled: true,
+            shootingMode: true,
+            crosshairPosition: { x: 50, y: 50 }
+        };
+
+        // Initialize Game
+        function initializeGame() {
+            // Create tiles (21-36)
+            gameState.tiles = [];
+            for (let i = 21; i <= 36; i++) {
+                const worms = Math.floor((i - 21) / 4) + 1;
+                gameState.tiles.push({
+                    number: i,
+                    worms: worms,
+                    available: true
+                });
+            }
+
+            // Reset game state
+            gameState.playerStack = [];
+            gameState.computerStack = [];
+            gameState.currentDice = [];
+            gameState.selectedGroups = [];
+            gameState.usedSymbols = [];
+            gameState.turnScore = 0;
+            gameState.hasWorm = false;
+            gameState.currentPlayer = 'human';
+            gameState.gameOver = false;
+
+            renderTiles();
+            updateDisplay();
+            updateStatus("RICHT OP EEN DOBBELSTEEN EN SCHIET! 🎯");
+        }
+
+        // Render tiles
+        function renderTiles() {
+            const grid = document.getElementById('tilesGrid');
+            grid.innerHTML = '';
+            
+            gameState.tiles.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.className = `arcade-tile ${!tile.available ? 'taken' : ''}`;
+                
+                const numberEl = document.createElement('div');
+                numberEl.className = 'tile-number';
+                numberEl.textContent = tile.number;
+                
+                const wormsEl = document.createElement('div');
+                wormsEl.className = 'tile-worms';
+                
+                for (let i = 0; i < tile.worms; i++) {
+                    const wormEl = document.createElement('div');
+                    wormEl.className = 'tile-worm';
+                    wormsEl.appendChild(wormEl);
+                }
+                
+                tileEl.appendChild(numberEl);
+                tileEl.appendChild(wormsEl);
+                grid.appendChild(tileEl);
+            });
+        }
+
+        // Roll Dice
+        function rollDice() {
+            if (gameState.currentPlayer !== 'human') return;
+            
+            // Can only roll if no current dice or all dice selected
+            if (gameState.currentDice.length > 0 && !gameState.currentDice.every(d => d.selected)) {
+                updateStatus("SELECTEER EERST DOBBELSTENEN VOORDAT JE OPNIEUW GOOIT! ⚠️");
+                return;
+            }
+
+            const availableDiceCount = 8 - gameState.selectedGroups.reduce((sum, group) => sum + group.dice.length, 0);
+            if (availableDiceCount <= 0) {
+                updateStatus("ALLE DOBBELSTENEN GEBRUIKT! BEËINDIG BEURT! 💥");
+                document.getElementById('rollBtn').disabled = true;
+                return;
+            }
+
+            // Play sound
+            playSound('diceRoll');
+
+            // Generate new dice (all remaining dice)
+            gameState.currentDice = [];
+            for (let i = 0; i < availableDiceCount; i++) {
+                const roll = Math.floor(Math.random() * 6) + 1;
+                const value = roll === 6 ? 'worm' : roll;
+                gameState.currentDice.push({ value, selected: false });
+            }
+
+            // Clear old dice from arena
+            clearDiceFromArena();
+
+            // Animate dice appearing
+            setTimeout(() => {
+                animateDiceRoll();
+                updateStatus("SCHIET OP DOBBELSTENEN OM ZE TE SELECTEREN! 🔫");
+            }, 100);
+            
+            // Disable roll button temporarily while dice are appearing
+            document.getElementById('rollBtn').disabled = true;
+            document.getElementById('endTurnBtn').disabled = !gameState.hasWorm;
+            
+            // Re-enable roll button after dice animation completes
+            setTimeout(() => {
+                document.getElementById('rollBtn').disabled = false;
+            }, gameState.currentDice.length * 150 + 500);
+        }
+
+        // Clear dice from arena
+        function clearDiceFromArena() {
+            const arena = document.querySelector('.tiles-arena');
+            const dice = arena.querySelectorAll('.flying-dice, .explosion');
+            dice.forEach(die => die.remove());
+        }
+
+        // Animate dice roll
+        function animateDiceRoll() {
+            const arena = document.querySelector('.tiles-arena');
+            gameState.currentDice.forEach((die, index) => {
+                setTimeout(() => {
+                    const diceEl = document.createElement('div');
+                    diceEl.className = 'flying-dice';
+                    diceEl.textContent = die.value === 'worm' ? '🐛' : die.value;
+                    
+                    // Better positioning to avoid overlap
+                    const cols = Math.ceil(Math.sqrt(gameState.currentDice.length));
+                    const row = Math.floor(index / cols);
+                    const col = index % cols;
+                    const x = (col + 0.5) / cols * 70 + 15; // 15-85%
+                    const y = (row + 0.5) / Math.ceil(gameState.currentDice.length / cols) * 60 + 20; // 20-80%
+                    
+                    diceEl.style.left = x + '%';
+                    diceEl.style.top = y + '%';
+                    diceEl.dataset.index = index;
+                    
+                    // Add click handler for shooting
+                    diceEl.addEventListener('click', (e) => shootDice(e, index));
+                    
+                    arena.appendChild(diceEl);
+                }, index * 150);
+            });
+        }
+
+        // Shoot dice
+        function shootDice(event, diceIndex) {
+            const diceEl = event.target;
+            const die = gameState.currentDice[diceIndex];
+            
+            if (die.selected) return;
+
+            // Play shoot sound
+            playSound('shoot');
+            
+            // Create explosion effect
+            createExplosion(diceEl);
+            
+            // Select the dice
+            selectDiceByIndex(diceIndex);
+            
+            // Remove dice element
+            setTimeout(() => {
+                if (diceEl.parentNode) {
+                    diceEl.parentNode.removeChild(diceEl);
+                }
+            }, 300);
+        }
+
+        // Create explosion effect
+        function createExplosion(element) {
+            const explosion = document.createElement('div');
+            explosion.className = 'explosion';
+            explosion.style.left = element.style.left;
+            explosion.style.top = element.style.top;
+            
+            element.parentNode.appendChild(explosion);
+            
+            setTimeout(() => {
+                if (explosion.parentNode) {
+                    explosion.parentNode.removeChild(explosion);
+                }
+            }, 500);
+        }
+
+        // Select dice by index
+        function selectDiceByIndex(index) {
+            const die = gameState.currentDice[index];
+            if (die.selected) return;
+            
+            const symbol = die.value === 'worm' ? 'worm' : die.value.toString();
+            
+            // Check if symbol already used in this turn
+            if (gameState.usedSymbols.includes(symbol)) {
+                updateStatus("SYMBOOL AL GEBRUIKT DEZE BEURT! PROBEER EEN ANDER! ⚠️");
+                return;
+            }
+
+            // Check if there are any of this symbol available
+            const availableDiceWithSymbol = gameState.currentDice.filter(d => {
+                const dSymbol = d.value === 'worm' ? 'worm' : d.value.toString();
+                return dSymbol === symbol && !d.selected;
+            });
+
+            if (availableDiceWithSymbol.length === 0) {
+                updateStatus("GEEN DOBBELSTENEN MET DIT SYMBOOL BESCHIKBAAR! ⚠️");
+                return;
+            }
+
+            // Select all dice with same symbol (must take all)
+            const matchingDice = gameState.currentDice.filter(d => {
+                const dSymbol = d.value === 'worm' ? 'worm' : d.value.toString();
+                return dSymbol === symbol && !d.selected;
+            });
+
+            // Mark dice as selected
+            matchingDice.forEach(d => d.selected = true);
+            
+            // Calculate points
+            const points = symbol === 'worm' ? matchingDice.length * 5 : matchingDice.length * parseInt(symbol);
+            
+            // Add to selected groups
+            gameState.selectedGroups.push({
+                symbol: symbol,
+                dice: matchingDice,
+                points: points
+            });
+
+            gameState.usedSymbols.push(symbol);
+            gameState.turnScore += points;
+            
+            if (symbol === 'worm') {
+                gameState.hasWorm = true;
+            }
+
+            // Remove selected dice from arena with explosion effect
+            const arena = document.querySelector('.tiles-arena');
+            const diceElements = arena.querySelectorAll('.flying-dice');
+            diceElements.forEach(diceEl => {
+                const diceIndex = parseInt(diceEl.dataset.index);
+                if (gameState.currentDice[diceIndex].selected && diceEl.parentNode) {
+                    createExplosion(diceEl);
+                    setTimeout(() => {
+                        if (diceEl.parentNode) {
+                            diceEl.parentNode.removeChild(diceEl);
+                        }
+                    }, 300);
+                }
+            });
+
+            updateDisplay();
+            updateStatus(`GOED! ${matchingDice.length}x ${symbol === 'worm' ? 'REGENWORM' : symbol} = +${points} PUNTEN! TOTAAL: ${gameState.turnScore} 🎯`);
+
+            // Enable end turn if has worm
+            if (gameState.hasWorm) {
+                document.getElementById('endTurnBtn').disabled = false;
+            }
+
+            // Enable roll button after selecting dice (can always roll remaining dice)
+            setTimeout(() => {
+                document.getElementById('rollBtn').disabled = false;
+                if (gameState.currentDice.every(d => d.selected)) {
+                    updateStatus(`ALLE DOBBELSTENEN GEBRUIKT! GOOI OPNIEUW OF BEËINDIG BEURT! TOTAAL: ${gameState.turnScore} 🎲`);
+                } else {
+                    updateStatus(`GOOI OPNIEUW VOOR MEER DOBBELSTENEN OF BEËINDIG BEURT! TOTAAL: ${gameState.turnScore} 🎲`);
+                }
+            }, 500);
+
+            // Check if no valid moves left (all remaining symbols used)
+            const remainingDice = gameState.currentDice.filter(d => !d.selected);
+            const availableSymbols = [...new Set(remainingDice.map(d => d.value === 'worm' ? 'worm' : d.value.toString()))];
+            const hasValidMoves = availableSymbols.some(sym => !gameState.usedSymbols.includes(sym));
+            
+            if (remainingDice.length > 0 && !hasValidMoves) {
+                updateStatus(`GEEN GELDIGE ZETTEN MEER! BEURT VERLOREN! 💀`);
+                setTimeout(() => {
+                    loseTurn('human');
+                    switchToComputer();
+                }, 2000);
+            }
+        }
+
+        // End turn
+        function endTurn() {
+            if (!gameState.hasWorm) {
+                updateStatus("GEEN REGENWORM GESELECTEERD! KAN GEEN TEGEL PAKKEN! 🐛");
+                return;
+            }
+
+            if (gameState.turnScore === 0) {
+                updateStatus("GEEN PUNTEN! SELECTEER EERST DOBBELSTENEN! ⚠️");
+                return;
+            }
+
+            const success = takeTileForPlayer('human');
+            if (success) {
+                setTimeout(() => {
+                    switchToComputer();
+                }, 1500);
+            }
+        }
+
+        // Take tile for player
+        function takeTileForPlayer(player) {
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            
+            // Check if exact match exists
+            const exactMatch = availableTiles.find(tile => tile.number === gameState.turnScore);
+            
+            let tileToTake;
+            if (exactMatch) {
+                // Take exact match
+                tileToTake = exactMatch;
+            } else {
+                // Find highest available tile that's less than or equal to score
+                const eligibleTiles = availableTiles.filter(tile => tile.number <= gameState.turnScore);
+                if (eligibleTiles.length === 0) {
+                    // No eligible tiles - lose turn
+                    if (player === 'human') {
+                        updateStatus(`SCORE ${gameState.turnScore} TE LAAG! GEEN TEGELS BESCHIKBAAR! 💀`);
+                    }
+                    loseTurn(player);
+                    return false;
+                }
+                // Take the highest eligible tile
+                tileToTake = eligibleTiles.reduce((max, tile) => tile.number > max.number ? tile : max);
+            }
+
+            // Remove tile from available tiles
+            tileToTake.available = false;
+            const playerStack = player === 'human' ? gameState.playerStack : gameState.computerStack;
+            
+            // Special rule: if taking from the right end, steal opponent's top tile
+            const rightmostTile = gameState.tiles.filter(t => t.available).reduce((max, tile) => 
+                tile.number > max.number ? tile : max, { number: 0 });
+            
+            if (tileToTake === rightmostTile) {
+                const opponentStack = player === 'human' ? gameState.computerStack : gameState.playerStack;
+                if (opponentStack.length > 0) {
+                    const stolenTile = opponentStack.pop();
+                    playerStack.push(stolenTile);
+                    if (player === 'human') {
+                        playSound('victory');
+                        updateStatus(`RECHTSE TEGEL! GESTOLEN: ${stolenTile.number} VAN COMPUTER! +${stolenTile.worms} REGENWORMEN! 🏆`);
+                    }
+                }
+            }
+            
+            playerStack.push(tileToTake);
+            
+            if (player === 'human') {
+                playSound('victory');
+                const message = tileToTake === exactMatch ? 
+                    `EXACT! TEGEL ${tileToTake.number} GEPAKT! +${tileToTake.worms} REGENWORMEN! 🎯` :
+                    `TEGEL ${tileToTake.number} GEPAKT! +${tileToTake.worms} REGENWORMEN! 🏆`;
+                updateStatus(message);
+            }
+
+            resetTurn();
+            renderTiles();
+            updateDisplay();
+            checkGameEnd();
+            return true;
+        }
+
+        // Lose turn
+        function loseTurn(player) {
+            const playerStack = player === 'human' ? gameState.playerStack : gameState.computerStack;
+            
+            if (playerStack.length > 0) {
+                const lostTile = playerStack.pop();
+                lostTile.available = true;
+                if (player === 'human') {
+                    playSound('lose');
+                    updateStatus(`VERLOREN! TEGEL ${lostTile.number} TERUGGEGEVEN! 💀`);
+                }
+            } else {
+                if (player === 'human') {
+                    updateStatus("GEEN PUNTEN! PROBEER OPNIEUW! ⚡");
+                }
+            }
+            
+            resetTurn();
+            renderTiles();
+            updateDisplay();
+        }
+
+        // Reset turn
+        function resetTurn() {
+            gameState.selectedGroups = [];
+            gameState.usedSymbols = [];
+            gameState.turnScore = 0;
+            gameState.hasWorm = false;
+            gameState.currentDice = [];
+            
+            // Clear arena of dice
+            clearDiceFromArena();
+            
+            document.getElementById('rollBtn').disabled = false;
+            document.getElementById('endTurnBtn').disabled = true;
+        }
+
+        // Switch to computer
+        function switchToComputer() {
+            gameState.currentPlayer = 'computer';
+            updateDisplay();
+            updateStatus("COMPUTER SPEELT... 🤖");
+            
+            setTimeout(() => {
+                computerPlay();
+            }, 2000);
+        }
+
+        // Computer AI
+        function computerPlay() {
+            // Simple AI logic
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            while (attempts < maxAttempts && !gameState.gameOver) {
+                // Roll dice
+                const availableDiceCount = 8 - gameState.selectedGroups.reduce((sum, group) => sum + group.dice.length, 0);
+                if (availableDiceCount <= 0) break;
+                
+                gameState.currentDice = [];
+                for (let i = 0; i < availableDiceCount; i++) {
+                    const roll = Math.floor(Math.random() * 6) + 1;
+                    const value = roll === 6 ? 'worm' : roll;
+                    gameState.currentDice.push({ value, selected: false });
+                }
+                
+                // Select best option
+                computerSelectDice();
+                
+                // Decide whether to continue or stop
+                const shouldStop = gameState.hasWorm && (gameState.turnScore >= 21 || Math.random() < 0.4);
+                if (shouldStop) {
+                    takeTileForPlayer('computer');
+                    break;
+                }
+                
+                attempts++;
+            }
+            
+            // Switch back to human
+            gameState.currentPlayer = 'human';
+            updateDisplay();
+            updateStatus("JOUW BEURT! GOOI DE DOBBELSTENEN! 🎲");
+        }
+
+        // Computer select dice
+        function computerSelectDice() {
+            const symbolCounts = {};
+            gameState.currentDice.forEach(die => {
+                const symbol = die.value === 'worm' ? 'worm' : die.value.toString();
+                if (!gameState.usedSymbols.includes(symbol)) {
+                    symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+                }
+            });
+            
+            // Choose best symbol
+            let bestSymbol = null;
+            let bestScore = 0;
+            
+            Object.keys(symbolCounts).forEach(symbol => {
+                const count = symbolCounts[symbol];
+                const points = symbol === 'worm' ? count * 5 : count * parseInt(symbol);
+                if (points > bestScore) {
+                    bestScore = points;
+                    bestSymbol = symbol;
+                }
+            });
+            
+            if (bestSymbol) {
+                const matchingDice = gameState.currentDice.filter(d => {
+                    const dSymbol = d.value === 'worm' ? 'worm' : d.value.toString();
+                    return dSymbol === bestSymbol;
+                });
+                
+                matchingDice.forEach(d => d.selected = true);
+                
+                gameState.selectedGroups.push({
+                    symbol: bestSymbol,
+                    dice: matchingDice,
+                    points: bestScore
+                });
+                
+                gameState.usedSymbols.push(bestSymbol);
+                gameState.turnScore += bestScore;
+                
+                if (bestSymbol === 'worm') {
+                    gameState.hasWorm = true;
+                }
+            }
+        }
+
+        // Check game end
+        function checkGameEnd() {
+            const availableTiles = gameState.tiles.filter(tile => tile.available);
+            if (availableTiles.length === 0) {
+                gameState.gameOver = true;
+                
+                const playerWorms = gameState.playerStack.reduce((sum, tile) => sum + tile.worms, 0);
+                const computerWorms = gameState.computerStack.reduce((sum, tile) => sum + tile.worms, 0);
+                
+                if (playerWorms > computerWorms) {
+                    playSound('gameWin');
+                    updateStatus(`🏆 GEFELICITEERD! JE WINT MET ${playerWorms} REGENWORMEN! 🏆`);
+                } else if (computerWorms > playerWorms) {
+                    updateStatus(`💀 COMPUTER WINT MET ${computerWorms} REGENWORMEN! PROBEER OPNIEUW! 💀`);
+                } else {
+                    updateStatus(`🤝 GELIJKSPEL! BEIDE ${playerWorms} REGENWORMEN! 🤝`);
+                }
+                
+                document.getElementById('rollBtn').disabled = true;
+                document.getElementById('endTurnBtn').disabled = true;
+            }
+        }
+
+        // Update display
+        function updateDisplay() {
+            const playerWorms = gameState.playerStack.reduce((sum, tile) => sum + tile.worms, 0);
+            const computerWorms = gameState.computerStack.reduce((sum, tile) => sum + tile.worms, 0);
+            
+            document.getElementById('playerScore').textContent = `${playerWorms} 🐛`;
+            document.getElementById('computerScore').textContent = `${computerWorms} 🐛`;
+            document.getElementById('turnDisplay').textContent = gameState.currentPlayer === 'human' ? 'SPELER' : 'COMPUTER';
+            document.getElementById('turnDisplay').style.color = gameState.currentPlayer === 'human' ? '#00ff00' : '#ff0000';
+            
+            // Update player stack
+            const stackEl = document.getElementById('playerStack');
+            stackEl.innerHTML = '';
+            gameState.playerStack.forEach(tile => {
+                const tileEl = document.createElement('div');
+                tileEl.className = 'stack-tile';
+                tileEl.textContent = tile.number;
+                stackEl.appendChild(tileEl);
+            });
+        }
+
+        // Update status
+        function updateStatus(message) {
+            document.getElementById('gameStatus').textContent = message;
+        }
+
+        // New game
+        function newGame() {
+            initializeGame();
+            playSound('start');
+        }
+
+        // Sound system
+        function playSound(type) {
+            if (!gameState.soundEnabled) return;
+            
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                switch(type) {
+                    case 'shoot':
+                        createBeep(audioContext, 800, 0.1, 0.3);
+                        break;
+                    case 'diceRoll':
+                        for (let i = 0; i < 5; i++) {
+                            setTimeout(() => createBeep(audioContext, 200 + Math.random() * 400, 0.05, 0.2), i * 50);
+                        }
+                        break;
+                    case 'victory':
+                        createBeep(audioContext, 523, 0.2, 0.5);
+                        setTimeout(() => createBeep(audioContext, 659, 0.2, 0.5), 150);
+                        setTimeout(() => createBeep(audioContext, 784, 0.3, 0.5), 300);
+                        break;
+                    case 'lose':
+                        createBeep(audioContext, 200, 0.5, 0.3);
+                        break;
+                    case 'start':
+                        createBeep(audioContext, 440, 0.2, 0.4);
+                        break;
+                    case 'gameWin':
+                        const notes = [523, 659, 784, 1047];
+                        notes.forEach((freq, i) => {
+                            setTimeout(() => createBeep(audioContext, freq, 0.3, 0.6), i * 150);
+                        });
+                        break;
+                }
+            } catch (e) {
+                console.log('Audio not supported');
+            }
+        }
+
+        function createBeep(audioContext, frequency, duration, volume) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = 'square';
+            
+            gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Toggle sound
+        function toggleSound() {
+            gameState.soundEnabled = !gameState.soundEnabled;
+            document.getElementById('soundToggle').textContent = gameState.soundEnabled ? '🔊' : '🔇';
+        }
+
+        // Initialize game on load
+        window.onload = function() {
+            initializeGame();
+            
+            // Auto-enable audio on first click
+            document.addEventListener('click', function enableAudio() {
+                playSound('start');
+                document.removeEventListener('click', enableAudio);
+            }, { once: true });
+        };
+    </script>
+</body>
+</html>
