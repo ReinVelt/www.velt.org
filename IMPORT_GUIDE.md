@@ -44,6 +44,8 @@ git remote add origin https://github.com/ReinVelt/velt.org.git
 
 ### Step 6: Pull Existing Files (README, LICENSE)
 
+⚠️ **Warning**: This step may create merge conflicts if you have files with the same names (e.g., README.md). Consider backing up your files before proceeding.
+
 ```bash
 git pull origin main --allow-unrelated-histories
 ```
