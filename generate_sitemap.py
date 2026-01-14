@@ -240,6 +240,18 @@ def generate_sitemap():
         50%, 100% {{ opacity: 0; }}
     }}
     
+    .disclaimer {{
+        background-color: #001100;
+        border: 1px solid #00ff00;
+        padding: 0.5rem 1rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9em;
+    }}
+    
+    .disclaimer p {{
+        margin: 0.3rem 0;
+    }}
+    
     /* Mobile optimizations */
     @media (max-width: 768px) {{
         body {{
@@ -279,6 +291,9 @@ def generate_sitemap():
 </head>
 <body>
 <h1>Rein's Cyberspaceplace - Site Map</h1>
+<div class="disclaimer">
+<p>This is the personal website of Rein Velt. A space for experiments, ideas, and projects — shared freely, without expectation of response, liking, or sharing.</p>
+</div>
 <ul>{''.join(structure_html)}
 </ul>
 <div class="footer">

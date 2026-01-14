@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rein's Collection voor Ledder</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        font-family: 'Courier New', 'Courier', monospace;
+        line-height: 1.6;
+        background-color: #000;
+        color: #ff0000;
+        padding: 1rem;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* LED Matrix background effect */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.3) 0px, transparent 1px, transparent 4px, rgba(0, 0, 0, 0.3) 5px),
+            repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.3) 0px, transparent 1px, transparent 4px, rgba(0, 0, 0, 0.3) 5px);
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.5;
+    }
+    
+    /* LED glow effect */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    
+    .container {
+        max-width: 1000px;
+        margin: 0 auto;
+        background-color: rgba(0, 0, 0, 0.9);
+        border: 3px solid #ff0000;
+        padding: 2rem;
+        box-shadow: 
+            0 0 20px rgba(255, 0, 0, 0.5),
+            inset 0 0 30px rgba(255, 0, 0, 0.1);
+        position: relative;
+        z-index: 10;
+    }
+    
+    /* Scrolling text marquee */
+    .marquee-container {
+        width: 100%;
+        overflow: hidden;
+        background-color: #1a0000;
+        border: 2px solid #ff0000;
+        padding: 0.5rem 0;
+        margin-bottom: 2rem;
+        box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.3);
+    }
+    
+    .marquee {
+        display: inline-block;
+        white-space: nowrap;
+        animation: scroll 20s linear infinite;
+        color: #ff3333;
+        font-size: 1.2em;
+        font-weight: bold;
+        text-shadow: 0 0 5px #ff0000;
+    }
+    
+    @keyframes scroll {
+        0% { transform: translateX(100%); }
+        100% { transform: translateX(-100%); }
+    }
+    
+    h1 {
+        color: #ff0000;
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        text-shadow: 
+            0 0 10px #ff0000,
+            0 0 20px #ff0000,
+            0 0 30px #ff0000;
+        animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000; }
+        50% { text-shadow: 0 0 20px #ff0000, 0 0 40px #ff0000, 0 0 60px #ff0000; }
+    }
+    
+    .subtitle {
+        color: #ff6666;
+        font-size: 1.2em;
+        margin-bottom: 2rem;
+        font-weight: bold;
+    }
+    
+    h2 {
+        color: #ffff00;
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        margin: 2rem 0 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-left: 5px solid #ffff00;
+        padding-left: 1rem;
+        text-shadow: 0 0 10px #ffff00;
+    }
+    
+    h3 {
+        color: #00ff00;
+        font-size: clamp(1rem, 3vw, 1.3rem);
+        margin: 1.5rem 0 0.5rem 0;
+        text-shadow: 0 0 5px #00ff00;
+    }
+    
+    p {
+        margin-bottom: 1rem;
+        color: #ff9999;
+        text-shadow: 0 0 2px rgba(255, 0, 0, 0.3);
+    }
+    
+    ul {
+        margin: 1rem 0 1rem 2rem;
+        list-style-type: none;
+    }
+    
+    ul li {
+        margin: 0.5rem 0;
+        color: #ff6666;
+        position: relative;
+        padding-left: 1.5rem;
+    }
+    
+    ul li::before {
+        content: '█';
+        position: absolute;
+        left: 0;
+        color: #ff0000;
+        animation: blink 1s infinite;
+    }
+    
+    @keyframes blink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0.3; }
+    }
+    
+    strong {
+        color: #00ffff;
+        font-weight: bold;
+        text-shadow: 0 0 3px #00ffff;
+    }
+    
+    em {
+        color: #ff00ff;
+        font-style: italic;
+    }
+    
+    blockquote {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        border-left: 4px solid #ff0000;
+        background-color: rgba(255, 0, 0, 0.1);
+        color: #ffcccc;
+        font-style: italic;
+    }
+    
+    hr {
+        border: none;
+        border-top: 2px solid #ff0000;
+        margin: 2rem 0;
+        box-shadow: 0 0 5px #ff0000;
+    }
+    
+    a {
+        color: #00ff00;
+        text-decoration: none;
+        text-shadow: 0 0 5px #00ff00;
+        transition: all 0.3s ease;
+    }
+    
+    a:hover {
+        color: #00ffff;
+        text-shadow: 0 0 10px #00ffff;
+        background-color: rgba(0, 255, 255, 0.1);
+    }
+    
+    .links-section {
+        margin-top: 2rem;
+        padding: 1rem;
+        border: 2px solid #ffff00;
+        background-color: rgba(255, 255, 0, 0.05);
+    }
+    
+    .links-section a {
+        display: block;
+        margin: 0.5rem 0;
+        padding: 0.5rem;
+        background-color: rgba(0, 255, 0, 0.1);
+        border: 1px solid #00ff00;
+    }
+    
+    .back-link {
+        display: inline-block;
+        margin-top: 2rem;
+        padding: 0.7rem 1.5rem;
+        background-color: rgba(255, 0, 0, 0.2);
+        color: #ff0000;
+        text-decoration: none;
+        border: 2px solid #ff0000;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+    }
+    
+    .back-link:hover {
+        background-color: #ff0000;
+        color: #000;
+        box-shadow: 0 0 20px #ff0000;
+    }
+    
+    /* Pixel effect */
+    .pixel-corners {
+        position: relative;
+    }
+    
+    .pixel-corners::before,
+    .pixel-corners::after {
+        content: '';
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #ff0000;
+        box-shadow: 0 0 5px #ff0000;
+    }
+    
+    .pixel-corners::before {
+        top: -5px;
+        left: -5px;
+    }
+    
+    .pixel-corners::after {
+        bottom: -5px;
+        right: -5px;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        body {
+            padding: 0.5rem;
+        }
+        
+        .container {
+            padding: 1.5rem;
+            border-width: 2px;
+        }
+        
+        .marquee {
+            font-size: 1em;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+        }
+        
+        h2 {
+            font-size: 1.2rem;
+        }
+        
+        ul {
+            margin-left: 1rem;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        body {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            padding: 1rem;
+        }
+        
+        h1 {
+            font-size: 1.3rem;
+            letter-spacing: 0.05em;
+        }
+        
+        .marquee {
+            font-size: 0.9em;
+        }
+    }
+</style>
+</head>
+<body>
+
+<div class="marquee-container">
+    <div class="marquee">🎮 LED MATRIX ANIMATIONS • PIXEL ART • RETRO GAMING • 3D GRAPHICS • PROCEDURAL GENERATION • REAL-TIME STREAMING 🎮</div>
+</div>
+
+<div class="container pixel-corners">
+    <h1>Rein's Collection for Ledder</h1>
+    
+    <p class="subtitle"><strong>Contribution to the Ledder Project</strong></p>
+    
+    <hr>
+    
+    <p>Ledder is a framework for creating pixel animations on LED matrices, developed by psy0rz. Within this project, I've contributed "Rein's Collection" – a collection of more than 40 animations and experiments that explore the possibilities of the framework.</p>
+    
+    <h2>About Ledder</h2>
+    
+    <p>Ledder enables you to create real-time animated pixel art and stream it to LED matrix displays. Through a web interface, you can control and adjust animations in real-time. The project supports various hardware drivers and output methods, including web browser displays, video streaming, and physical LED panels (such as Ws2812B, Hub75 and more experemental like Colorlight-5A75B FPGA controller and Chromecast).</p>
+    <p>Ledder can work on a RaspBerry Pi, a Docker instance, or bare metal: 'npm run build' and 'npm run start' will do the startup magic.</p>
+    <p><strong>Live demo:</strong> <a href="https://ledder.datux.nl" target="_blank">https://ledder.datux.nl</a><br>
+    <strong>GitHub:</strong> <a href="https://github.com/psy0rz/ledder" target="_blank">https://github.com/psy0rz/ledder</a></p>
+    
+    <h3>Live Animation Preview</h3>
+    
+    <div style="text-align: center; margin: 2rem 0; padding: 1rem; background-color: rgba(0, 0, 0, 0.5); border: 2px solid #ff0000;">
+        <p style="margin-bottom: 1rem; color: #ffff00;"><strong>Watch Ledder in action!</strong> The iframe below shows the live demo streaming real-time animations:</p>
+        <iframe src="https://ledder.datux.nl" 
+                style="width: 100%; min-height: 600px; border: 3px solid #00ff00; box-shadow: 0 0 20px rgba(0, 255, 0, 0.5); background: #000;" 
+                title="Ledder Live Demo"
+                loading="lazy"></iframe>
+        <p style="margin-top: 1rem; font-size: 0.9em; color: #ff9999;"><em>Interact with the demo above to switch between different animations and adjust parameters in real-time!</em></p>
+    </div>
+    
+    <h2>Rein's Collection</h2>
+    
+    <p>My contribution consists of proof-of-concept animations that demonstrate how you can create complex visual effects with relatively little code. The collection includes:</p>
+    
+    <h3>3D Graphics</h3>
+    <ul>
+        <li><strong>Cube, Cubevec3, Cube2</strong> – 3D cube animations with rotations (some with intentional "bugs" that create interesting effects)</li>
+        <li><strong>DNA, Grasmaaier</strong> – 3D objects with fade effects</li>
+        <li><strong>Vwlt35</strong> – Retro racing game aesthetic with perspective and horizon effects</li>
+    </ul>
+    
+    <h3>Retro Game Aesthetics</h3>
+    <ul>
+        <li><strong>Digger</strong> – Inspired by the VIC-20 classic</li>
+        <li><strong>Jetfighter</strong> – ASCII-art sprite animations</li>
+        <li><strong>Eightiesdemo</strong> – 1980s demo-scene style with 3D objects, fire effects and walking sprites</li>
+        <li><strong>Slotmachine</strong> – Casino-themed animation with ASCII-art symbols</li>
+    </ul>
+    
+    <h3>Fractals & Generative Art</h3>
+    <ul>
+        <li><strong>Julibrot</strong> – Mandelbrot and Julia fractal sets with animated zoom</li>
+        <li><strong>Rainbowzero, Rainbowsquare</strong> – Color-geometry experiments</li>
+        <li><strong>Fireworks</strong> – Procedural fireworks effects</li>
+    </ul>
+    
+    <h3>Simulations</h3>
+    <ul>
+        <li><strong>Beleep, Beleep2</strong> – Life simulations (memory-intensive)</li>
+        <li><strong>Weiland</strong> – Simulation of cloud layers and grasslands</li>
+        <li><strong>Snow</strong> – Snowfall with wind effects</li>
+    </ul>
+    
+    <h3>MQTT Integrations</h3>
+    <ul>
+        <li><strong>Sensorclock32x8</strong> – Digital clock with sensor visualization for temperature, humidity and pressure</li>
+        <li><strong>MQTTClimate</strong> – MQTT sensor visualization</li>
+        <li><strong>Pong, Tankwars</strong> – Multiplayer games via MQTT</li>
+    </ul>
+    
+    <h3>Text & Media</h3>
+    <ul>
+        <li><strong>Headlines</strong> – RSS-feed display met achtergrondeffecten</li>
+        <li><strong>Photon</strong> – Marquee met meerdere kleurrijke achtergrond-animaties</li>
+        <li><strong>RemoteImages, RemoteVideo, RemotePlaylist</strong> – Laden van externe media (vereist FFmpeg voor video)</li>
+        <li><strong>Vectorfont</strong> – Vector-gebaseerde text rendering</li>
+    </ul>
+    
+    <h3>Other Experiments</h3>
+    <ul>
+        <li><strong>XmasSantaReindeer</strong> – Christmas theme with ASCII-art sprites</li>
+        <li><strong>Love</strong> – Composite animation created for a wedding</li>
+        <li><strong>Kong</strong> – ASCII animation</li>
+        <li><strong>Pixelfan</strong> – LED fan effect</li>
+    </ul>
+    
+    <h2>Technical Contributions</h2>
+    
+    <p>In addition to the animations, I also contributed to the HUB75 LED Panel Control documentation for Colorlight 5A-75B hardware, including firmware-flashing guides and hardware integration.</p>
+    
+    <h3>Techniques Used</h3>
+    <ul>
+        <li><strong>3D Projection</strong> – Custom implementation of perspective calculations and vector transformations</li>
+        <li><strong>ASCII Art Rendering</strong> – Custom DrawAsciiArtColor class for sprite animations</li>
+        <li><strong>Particle Systems</strong> – For fire, snow and explosion effects</li>
+        <li><strong>Procedural Generation</strong> – Fractals, landscapes, cloudlayers</li>
+        <li><strong>MQTT Integration</strong> – Real-time sensor data and multiplayer gaming</li>
+        <li><strong>Vector Graphics</strong> – Custom vector-font system with transformations</li>
+    </ul>
+    
+    <h2>Philosophy</h2>
+    
+    <p>This collection is meant as inspiration and a learning resource. The goal is to showcase what's possible with <strong>psy0rz's Ledder framework</strong>, not necessarily to provide production-ready code.</p>
+    
+    <p>As stated in the collection's README:</p>
+    <blockquote>
+        "These examples are just proof-of-concepts to show how easy it is to create a ledder animation. Some animations are really nice, but some suck and will steal your computers processortime and memory to create ten-thousands of obsolete pixels. You can use this code for your own animations under the condition that you (try to) make things more pretty than i did ;-)"
+    </blockquote>
+    
+    <hr>
+    
+    <h2>Credits & Thanks</h2>
+    Explore Ledder:</strong>
+        <a href="https://ledder.datux.nl" target="_blank">→ Live Demo - See Ledder in Action!</a>
+        <a href="https://github.com/psy0rz/ledder" target="_blank">→ Ledder GitHub - Main Repository by psy0rz</a>
+        <a href="https://github.com/psy0rz/ledder/wiki" target="_blank">→ Ledder Wiki - Documentation</a>
+        <a href="https://github.com/psy0rz/ledder/tree/main/ledder/animations/ReinsCollection" target="_blank">→ Rein's Collection - Source Codewerful tool that's accessible, well-documented, and constantly evolving thanks to community contributions.</p>
+    
+    <hr>
+    
+    <div class="links-section">
+        <strong>Links:</strong>
+        <a href="https://github.com/psy0rz/ledder/tree/main/ledder/animations/ReinsCollection" target="_blank">→ Rein's Collection op GitHub</a>
+        <a href="https://github.com/psy0rz/ledder/wiki" target="_blank">→ Ledder Wiki</a>
+        <a href="https://ledder.datux.nl" target="_blank">→ Live Demo</a>
+    </div>
+    
+    <a href="../../sitemap.html" class="back-link">◀ Back</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terug naar het Begin - Rein Velt</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        font-family: 'Courier New', 'Courier', monospace;
+        line-height: 1.6;
+        background-color: #3e31a2;
+        color: #7c71da;
+        padding: 1rem;
+        text-shadow: 0 0 3px rgba(124, 113, 218, 0.5);
+    }
+    
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: #352879;
+        border: 4px solid #7c71da;
+        padding: 2rem;
+        box-shadow: 0 0 20px rgba(124, 113, 218, 0.3);
+    }
+    
+    h1 {
+        color: #a8fffe;
+        font-size: clamp(1.5rem, 5vw, 2.5rem);
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-bottom: 2px solid #a8fffe;
+        padding-bottom: 0.5rem;
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    @keyframes glow {
+        from { text-shadow: 0 0 5px #a8fffe, 0 0 10px #a8fffe; }
+        to { text-shadow: 0 0 10px #a8fffe, 0 0 20px #a8fffe, 0 0 30px #a8fffe; }
+    }
+    
+    .date {
+        color: #50459b;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        font-size: 0.9em;
+    }
+    
+    h2 {
+        color: #a8fffe;
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        margin: 2rem 0 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    p {
+        margin-bottom: 1.2rem;
+        text-align: justify;
+        hyphens: auto;
+    }
+    
+    strong {
+        color: #a8fffe;
+    }
+    
+    hr {
+        border: none;
+        border-top: 2px solid #7c71da;
+        margin: 2rem 0;
+        opacity: 0.5;
+    }
+    
+    .author {
+        text-align: right;
+        font-style: italic;
+        color: #a8fffe;
+        margin-top: 3rem;
+    }
+    
+    .back-link {
+        display: inline-block;
+        margin-top: 2rem;
+        padding: 0.5rem 1rem;
+        background-color: #7c71da;
+        color: #352879;
+        text-decoration: none;
+        border: 2px solid #a8fffe;
+        font-weight: bold;
+        transition: all 0.3s ease;
+    }
+    
+    .back-link:hover {
+        background-color: #a8fffe;
+        color: #352879;
+        box-shadow: 0 0 15px #a8fffe;
+    }
+    
+    /* Scanline effect */
+    .container::before {
+        content: "";
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        pointer-events: none;
+        z-index: 1000;
+    }
+    
+    /* CRT screen curvature effect */
+    .container {
+        border-radius: 10px;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        body {
+            padding: 0.5rem;
+        }
+        
+        .container {
+            padding: 1.5rem;
+            border-width: 3px;
+        }
+        
+        h1 {
+            font-size: 1.5rem;
+        }
+        
+        h2 {
+            font-size: 1.2rem;
+        }
+        
+        p {
+            text-align: left;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        body {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            padding: 1rem;
+            border-width: 2px;
+        }
+        
+        h1 {
+            font-size: 1.3rem;
+            letter-spacing: 0.05em;
+        }
+        
+        h2 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Terug naar het Begin</h1>
+    
+    <p class="date"><strong>12 januari 2026</strong></p>
+    
+    <hr>
+    
+    <p>Het internet is volgegroeid. Wat ooit een wirwar van persoonlijke homepages was, is verworden tot een gestroomlijnd landschap van platforms en algoritmes. Wie nu een plek wil claimen in de digitale ruimte, moet zich schikken naar de wetten van Google, Facebook, Instagram, LinkedIn. Of niet.</p>
+    
+    <p>Deze website is een bewuste terugkeer naar de begintijd. Geen framework, geen contentmanagementsysteem, geen sociale media, geen advertenties, geen gedoe. Enkel HTML, CSS en JavaScript. Zoals het internet bedoeld was: open, zelfstandig, persoonlijk. Een Experiment!</p>
+    
+    <h2>De Esthetiek als Statement</h2>
+    
+    <p>De vormgeving van deze site – de blokkerige pixels, de beperkte kleurpaletten die doen denken aan de Commodore 64 – is meer dan een nostalgisch gebaar. Het is een statement tegen de vlakke uniformiteit van het hedendaagse web. Waar alles glad en geoptimaliseerd is, kiest deze site voor scherpte en eigenheid.</p>
+    
+    <p>Het is ook een herinnering aan wat verloren is gegaan: de noodzaak om te begrijpen hoe iets werkt voordat je het kunt gebruiken. In die frictie lag waarde.</p>
+    
+    <h2>De Hardware van Toen</h2>
+    
+    <p>Ik ben geboren begin jaren zeventig, softwareontwikkelaar en maker van dingen die de grens opzoeken tussen nuttig en absurd. In de jaren tachtig was een computer in huis nog geen vanzelfsprekendheid. Toen mijn vader, elektronicus van beroep, thuiskwam met een VIC-20, veranderde er iets fundamenteels. De machine stond op de eettafel, aangesloten op de televisie. Het was een toegangspoort tot een wereld waarin je niet alleen consumeerde, maar ook creëerde.</p>
+    
+    <p>Bij mijn vriend Marten in Jisp stond een C64, waar we urenlang voor zaten. Op school leerde ik programmeren op een TRS-80. De Vroom & Dreesmann in Zaandam was een bedevaartsoord waar je de nieuwste computers kon bekijken en er zelf aan mocht zitten. In Wormer bezocht ik de computerclub, waar je code uitwisselde en tips deelde. Daar heb ik Rop Gongrijp voor de eerst keer ontmoet. Later is hij bekend geworden als mede-oprichter van Hack-Tic en XS4ALL in de jaren 90.</p>
+    
+    <p>Op een gegeven moment ontstond er een heel netwerk van VIC-20-bezitters. Je stuurde per post bandjes op – cassettes vol programma's, games, experimenten. En dan was er Hobbyscope, het radioprogramma op de middengolf, waarmee je met een cassettedeck naast de radio software uit de ether kon binnenhalen. Het piepen en kraken van de datatoon, wachtend tot het laden voltooid was. Het was magie.</p>
+    
+    <p>Later volgde de Tulip Extend PC met S-DOS 3.0, een Nederlandse computer van het inmiddels verdwenen bedrijf Tulip Computers. Windows 0.X kwam erbij, op een stapel diskettes die je met bevende vingers installeerde. De upgrade naar versie 1.0 was een gebeurtenis op zich, en meestal aanleiding tot veel frustratie.</p>
+    
+    <p>Er waren geen YouTube-tutorials, geen Stack Overflow om op terug te vallen. Je las handleidingen, experimenteerde, faalde, probeerde opnieuw.</p>
+    
+    <h2>Wat Volgt</h2>
+    
+    <p>Deze plek wordt een archief van verhalen. Over cassettebandjes die weigerden te laden. Over installatieprocedures die uren duurden. Over de eerste keer dat een stukje code deed wat je wilde dat het deed.</p>
+    
+    <p>Ook: experimenten, projecten, meningen over technologie en het maken van dingen in een tijd waarin consumeren de norm is geworden.</p>
+    
+    <p>Het is een begin. Meer volgt. Alles op zijn eigen tijd.</p>
+    
+    <hr>
+    
+    <p class="author"><em>Rein Velt</em></p>
+    
+    <a href="../sitemap.html" class="back-link">◀ TERUG</a>
+</div>
+</body>
+</html>
