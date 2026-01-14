@@ -35,6 +35,65 @@ const ctx = canvas.getContext('2d');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+// Hacker info state
+let showHackerInfo = false;
+let mnemonicLines = [];
+let mnemonicUpdateCounter = 0;
+
+// Assembly mnemonics and hacker terms
+const mnemonics = [
+    'LDA', 'STA', 'LDX', 'STX', 'LDY', 'STY', 'JMP', 'JSR', 'RTS',
+    'BEQ', 'BNE', 'BCC', 'BCS', 'BPL', 'BMI', 'CMP', 'CPX', 'CPY',
+    'INC', 'DEC', 'INX', 'DEX', 'INY', 'DEY', 'AND', 'ORA', 'EOR',
+    'ASL', 'LSR', 'ROL', 'ROR', 'BIT', 'NOP', 'BRK', 'RTI', 'CLC',
+    'SEC', 'CLI', 'SEI', 'CLV', 'CLD', 'SED', 'TAX', 'TXA', 'TAY',
+    'TYA', 'TSX', 'TXS', 'PHA', 'PLA', 'PHP', 'PLP', 'ADC', 'SBC'
+];
+
+const registers = ['$00', '$01', '$FF', '$A0', '$D0', '$C0', 'A', 'X', 'Y', 'SP'];
+
+function generateMnemonicLine() {
+    const addr = '$' + Math.floor(Math.random() * 65536).toString(16).toUpperCase().padStart(4, '0');
+    const mnemonic = mnemonics[Math.floor(Math.random() * mnemonics.length)];
+    const operand = Math.random() > 0.5 ? registers[Math.floor(Math.random() * registers.length)] : 
+                   '$' + Math.floor(Math.random() * 256).toString(16).toUpperCase().padStart(2, '0');
+    const bytes = Array.from({length: Math.floor(Math.random() * 3) + 1}, () => 
+                  Math.floor(Math.random() * 256).toString(16).toUpperCase().padStart(2, '0')).join(' ');
+    
+    return `${addr}  ${bytes.padEnd(10)}  ${mnemonic} ${operand}`;
+}
+
+function addMnemonicLine() {
+    mnemonicLines.push(generateMnemonicLine());
+    
+    // Keep only last 20 lines
+    if (mnemonicLines.length > 20) {
+        mnemonicLines.shift();
+    }
+}
+
+function drawHackerInfo() {
+    if (!showHackerInfo) return;
+    
+    ctx.font = '11px "Courier New", monospace';
+    ctx.fillStyle = '#00ff00';
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = '#00ff00';
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const lineHeight = 15;
+    const startY = centerY - (mnemonicLines.length * lineHeight) / 2;
+    
+    mnemonicLines.forEach((line, index) => {
+        const y = startY + (index * lineHeight);
+        const textWidth = ctx.measureText(line).width;
+        ctx.fillText(line, centerX - textWidth / 2, y);
+    });
+    
+    ctx.shadowBlur = 0;
+}
+
 // Mouse position
 let mouseX = canvas.width / 2;
 let mouseY = canvas.height / 2;
@@ -42,10 +101,22 @@ let mouseY = canvas.height / 2;
 // Vizier opacity (controlled by parent page)
 let vizierOpacity = 1.0;
 
-// Track mouse movement
+// Track mouse movement and detect hexagon hover
 document.addEventListener('mousemove', (e) => {
     mouseX = e.clientX;
     mouseY = e.clientY;
+    
+    // Check if mouse is near center (hexagon area)
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
+    
+    if (distance < 200) {
+        showHackerInfo = true;
+    } else {
+        showHackerInfo = false;
+        mnemonicLines = [];
+    }
 });
 
 // Listen for opacity changes from parent window
@@ -271,6 +342,15 @@ function animate() {
     
     // Draw hexagon
     drawHexagon(rotatedHexagon);
+    
+    // Update and draw hacker info if hovering
+    if (showHackerInfo) {
+        mnemonicUpdateCounter++;
+        if (mnemonicUpdateCounter % 6 === 0) {  // Add new line every 6 frames (~100ms at 60fps)
+            addMnemonicLine();
+        }
+        drawHackerInfo();
+    }
     
     requestAnimationFrame(animate);
 }
