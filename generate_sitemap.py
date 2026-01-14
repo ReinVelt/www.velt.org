@@ -105,6 +105,61 @@ def generate_sitemap():
         background-color: #000;
         color: #00ff00;
         text-shadow: 0 0 2px #00ff00;
+        position: relative;
+    }}
+    
+    body::before {{
+        content: '';
+        position: fixed;
+        right: 4px;
+        bottom: 4px;
+        width: calc(100% - 8px);
+        height: calc(100% - 8px);
+        background-image: url('cv/rein.jpg');
+        background-position: right bottom;
+        background-repeat: no-repeat;
+        background-size: auto 70%;
+        opacity: 0.15;
+        filter: grayscale(100%) contrast(1.2);
+        mix-blend-mode: screen;
+        pointer-events: none;
+        z-index: 0;
+    }}
+    
+    /* CRT scanlines effect */
+    body::after {{
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        pointer-events: none;
+        z-index: 9999;
+    }}
+    
+    /* CRT vignette and curvature */
+    html {{
+        background: radial-gradient(ellipse at center, #000000 0%, #0a0a0a 50%, #000000 100%);
+    }}
+    
+    html::before {{
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+        pointer-events: none;
+        z-index: 9998;
     }}
     
     h1 {{
@@ -131,6 +186,8 @@ def generate_sitemap():
         list-style-type: none;
         padding-left: 0;
         margin-left: 0;
+        position: relative;
+        z-index: 10;
     }}
     
     ul ul {{
