@@ -60,7 +60,7 @@ def generate_index():
     # Find all article HTML files
     articles = []
     for filename in os.listdir(ARCHIEF_DIR):
-        if filename.endswith('.html') and filename != 'index.html':
+        if filename.endswith('.html') and filename not in ['index.html', '0-index.html']:
             filepath = os.path.join(ARCHIEF_DIR, filename)
             metadata = extract_article_metadata(filepath)
             if metadata:
@@ -330,12 +330,12 @@ def generate_index():
 </html>
 """
     
-    # Write index.html
-    index_path = os.path.join(ARCHIEF_DIR, 'index.html')
+    # Write 0-index.html (prefixed with 0 to show first in file listings)
+    index_path = os.path.join(ARCHIEF_DIR, '0-index.html')
     with open(index_path, 'w', encoding='utf-8') as f:
         f.write(html)
     
-    print(f"✓ Generated index.html with {len(articles)} articles")
+    print(f"✓ Generated 0-index.html with {len(articles)} articles")
     print(f"  Location: {index_path}")
 
 if __name__ == '__main__':
