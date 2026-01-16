@@ -17,12 +17,135 @@
         background-color: #fafafa;
         color: #1a1a1a;
         padding: 0;
+        overflow-x: hidden;
+        position: relative;
+    }
+    
+    /* Animated background */
+    /* Code screen styling */
+    .code-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+        overflow: hidden;
+        opacity: 0.35;
+        background: rgba(0, 0, 0, 0.85);
+    }
+    
+    .code-screen::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: repeating-linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.15),
+            rgba(0, 0, 0, 0.15) 1px,
+            transparent 1px,
+            transparent 2px
+        );
+        pointer-events: none;
+    }
+    
+    .code-column {
+        position: absolute;
+        font-family: 'Courier New', monospace;
+        line-height: 1.5;
+        color: #ffb000;
+        text-shadow: 
+            0 0 5px #ff8800,
+            0 0 10px #ff8800,
+            0 0 20px rgba(255, 136, 0, 0.5),
+            0 0 40px rgba(255, 136, 0, 0.3);
+        white-space: pre;
+        animation: scroll-code linear infinite;
+        padding: 0 10px;
+        filter: blur(0.3px);
+    }
+    
+    .code-column.depth-1 {
+        font-size: 0.7rem;
+        opacity: 0.4;
+        filter: blur(0.8px);
+    }
+    
+    .code-column.depth-2 {
+        font-size: 0.85rem;
+        opacity: 0.6;
+        filter: blur(0.5px);
+    }
+    
+    .code-column.depth-3 {
+        font-size: 1rem;
+        opacity: 0.9;
+        filter: blur(0.3px);
+        text-shadow: 
+            0 0 8px #ff8800,
+            0 0 15px #ff8800,
+            0 0 25px rgba(255, 136, 0, 0.6),
+            0 0 50px rgba(255, 136, 0, 0.4);
+    }
+    
+    @keyframes scroll-code {
+        from { transform: translateY(-100%); }
+        to { transform: translateY(100vh); }
+    }
+    
+    /* Ensure content is above background */
+    header, .container, footer {
+        position: relative;
+        z-index: 10;
+        background-color: rgba(255, 255, 255, 0.92);
+    }
+    
+    header {
+        background-color: transparent;
+    }
+    
+    /* Parallax container */
+    .parallax-section {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    /* Fade in animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .fade-in {
+        opacity: 0;
+        animation: fadeInUp 0.8s ease-out forwards;
+    }
+    
+    .fade-in-delay-1 {
+        animation-delay: 0.2s;
+    }
+    
+    .fade-in-delay-2 {
+        animation-delay: 0.4s;
+    }
+    
+    .fade-in-delay-3 {
+        animation-delay: 0.6s;
     }
     
     /* NRC-style header */
     header {
-        background-color: #fff;
-        border-bottom: 3px solid #000;
+        background-color: transparent;
         padding: 2rem 1rem;
         text-align: center;
     }
@@ -30,16 +153,27 @@
     .site-title {
         font-size: clamp(2rem, 5vw, 3.5rem);
         font-weight: 700;
-        color: #000;
+        color: #fff;
         letter-spacing: -0.02em;
         margin-bottom: 0.5rem;
+        text-shadow: 
+            0 0 10px rgba(255, 255, 255, 0.8),
+            0 0 20px rgba(255, 255, 255, 0.6),
+            0 0 30px rgba(255, 255, 255, 0.4),
+            0 0 40px rgba(255, 176, 0, 0.5),
+            2px 2px 4px rgba(0, 0, 0, 0.8);
     }
     
     .site-subtitle {
         font-size: 1.2rem;
-        color: #666;
+        color: #ffd700;
         font-weight: 400;
         font-style: italic;
+        text-shadow: 
+            0 0 8px rgba(255, 215, 0, 0.8),
+            0 0 15px rgba(255, 215, 0, 0.5),
+            0 0 25px rgba(255, 176, 0, 0.3),
+            1px 1px 3px rgba(0, 0, 0, 0.8);
     }
     
     /* Main container */
@@ -52,7 +186,6 @@
     
     /* Introduction section */
     .intro {
-        border-left: 4px solid #000;
         padding-left: 1.5rem;
         margin-bottom: 3rem;
         font-size: 1.1rem;
@@ -70,11 +203,6 @@
     .project {
         margin-bottom: 4rem;
         padding-bottom: 3rem;
-        border-bottom: 1px solid #ddd;
-    }
-    
-    .project:last-child {
-        border-bottom: none;
     }
     
     .project-date {
@@ -104,7 +232,21 @@
         width: 100%;
         height: auto;
         margin: 1.5rem 0;
-        border: 1px solid #ddd;
+        transition: transform 0.3s ease-out;
+    }
+    
+    figure {
+        position: relative;
+        overflow: hidden;
+        margin: 2.5rem 0;
+    }
+    
+    figure img {
+        display: block;
+    }
+    
+    figure:hover img {
+        transform: scale(1.02);
     }
     
     .project-link {
@@ -169,11 +311,80 @@
         }
     }
 </style>
+<script>
+    // Generate scrolling code screen
+    document.addEventListener('DOMContentLoaded', function() {
+        const codeSnippets = [
+            'def calculate_distance(x1, y1, x2, y2):\n    return sqrt((x2-x1)**2 + (y2-y1)**2)',
+            'class Robot:\n    def __init__(self, name):\n        self.name = name\n        self.battery = 100',
+            'function processSignal(data) {\n    const filtered = data.filter(x => x > 0);\n    return filtered.map(x => x * 2);\n}',
+            'import numpy as np\nimport matplotlib.pyplot as plt\n\ndata = np.random.randn(1000)',
+            'for (int i = 0; i < sensors.length; i++) {\n    readings[i] = sensors[i].read();\n    if (readings[i] > threshold) alert();\n}',
+            'const ws = new WebSocket(\'ws://localhost:8080\');\nws.onmessage = (event) => {\n    console.log(event.data);\n};',
+            'async def fetch_data(url):\n    async with aiohttp.ClientSession() as session:\n        async with session.get(url) as response:\n            return await response.json()',
+            '#define LED_PIN 13\nvoid setup() {\n    pinMode(LED_PIN, OUTPUT);\n}\nvoid loop() {\n    digitalWrite(LED_PIN, HIGH);\n}',
+            'SELECT * FROM sensors\nWHERE timestamp > NOW() - INTERVAL 1 HOUR\nORDER BY value DESC;',
+            'git commit -m "Fix motor control"\ngit push origin feature/robotics',
+            'docker run -d -p 8080:8080\n    --name robot-api\n    robot-control:latest',
+            'model.fit(train_data, labels)\naccuracy = model.evaluate(test_data)',
+        ];
+        
+        const codeScreen = document.createElement('div');
+        codeScreen.className = 'code-screen';
+        
+        const numColumns = 8;
+        const columnWidth = 100 / numColumns;
+        
+        for (let i = 0; i < numColumns; i++) {
+            const column = document.createElement('div');
+            const depthClass = `depth-${Math.floor(Math.random() * 3) + 1}`;
+            column.className = `code-column ${depthClass}`;
+            column.style.left = `${i * columnWidth}%`;
+            column.style.width = `${columnWidth}%`;
+            
+            let codeContent = '';
+            for (let j = 0; j < 20; j++) {
+                codeContent += codeSnippets[Math.floor(Math.random() * codeSnippets.length)] + '\n\n';
+            }
+            column.textContent = codeContent;
+            
+            const duration = 40 + Math.random() * 30;
+            const delay = -Math.random() * duration;
+            column.style.animationDuration = `${duration}s`;
+            column.style.animationDelay = `${delay}s`;
+            
+            codeScreen.appendChild(column);
+        }
+        
+        document.body.insertBefore(codeScreen, document.body.firstChild);
+    });
+    
+    // Fade in on scroll
+    document.addEventListener('DOMContentLoaded', function() {
+        const fadeElements = document.querySelectorAll('p, h3, figure');
+        
+        function fadeInOnScroll() {
+            fadeElements.forEach(element => {
+                const rect = element.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight - 100;
+                
+                if (isVisible && !element.classList.contains('fade-in')) {
+                    element.classList.add('fade-in');
+                }
+            });
+        }
+        
+        window.addEventListener('scroll', fadeInOnScroll);
+        fadeInOnScroll(); // Initial call
+    });
+</script>
 </head>
 <body>
+<div class="code-screen" id="codeScreen"></div>
+
 <header>
     <h1 class="site-title">Villa Grijpsheert</h1>
-    <p class="site-subtitle">Van Koloniaal Handelshuis tot Hackspace (2010-2019)</p>
+    <p class="site-subtitle">Van Koloniaal Handelshuis tot Hackerspace (2010-2019)</p>
 </header>
 
 <div class="container">
@@ -224,7 +435,7 @@
             <img src="../projects/theos-mechanische-aap-archief/images/lassie200_0_b91dd39a.jpg" 
                  alt="Villa Grijpsheert circa 1911" 
                  class="project-image"
-                 style="width: 100%; height: auto; border: 1px solid #ddd;">
+                 style="width: 100%; height: auto;">
             <figcaption style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 0.75rem; font-style: italic;">
                 Villa Grijpsheert circa 1911, vlak na de bouw
             </figcaption>
@@ -234,7 +445,7 @@
             <img src="images/villa-front-recent.jpg" 
                  alt="Villa Grijpsheert voorzijde 2025" 
                  class="project-image"
-                 style="width: 100%; height: auto; border: 1px solid #ddd;">
+                 style="width: 100%; height: auto;">
             <figcaption style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 0.75rem; font-style: italic;">
                 Villa Grijpsheert voorzijde, juni 2025
             </figcaption>
@@ -244,7 +455,7 @@
             <img src="images/villa-side-recent.jpg" 
                  alt="Villa Grijpsheert zijkant 2025" 
                  class="project-image"
-                 style="width: 100%; height: auto; border: 1px solid #ddd;">
+                 style="width: 100%; height: auto;">
             <figcaption style="text-align: center; font-size: 0.9rem; color: #666; margin-top: 0.75rem; font-style: italic;">
                 Villa Grijpsheert zijkant, juni 2025
             </figcaption>
@@ -313,7 +524,7 @@
             dat blijft bestaan.
         </p>
         
-        <div style="background-color: #f9f9f9; padding: 2rem; margin: 2.5rem 0; border-left: 4px solid #000;">
+        <div style="background-color: #f9f9f9; padding: 2rem; margin: 2.5rem 0;">
             <p style="font-style: italic; font-size: 1.1rem; line-height: 1.8; margin: 0;">
                 "Villa Grijpsheert blijft, ondanks zijn controversiële koloniale geschiedenis, een 
                 gebouw dat werelden verbond. De ironie is niet te missen: waar eens het kapitaal 
@@ -381,7 +592,7 @@
             begint het verhaal van voren af aan.
         </p>
         
-        <p style="margin-top: 2rem; font-size: 0.95rem; color: #666; padding-top: 2rem; border-top: 1px solid #ddd;">
+        <p style="margin-top: 2rem; font-size: 0.95rem; color: #666; padding-top: 2rem;">
             <strong>Bronnen:</strong><br>
             Monumentenzorg Den Haag, <em>Sporen van Smaragd: Alexander Gogelweg</em><br>
             Nederlands Architectuur Instituut, <em>Archieven Eduard Cuypers</em><br>
