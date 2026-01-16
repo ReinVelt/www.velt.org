@@ -41,6 +41,24 @@
             text-transform: uppercase;
         }
         
+        .back-button {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 25px;
+            background: #fff;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
+        }
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
@@ -141,14 +159,32 @@
             margin-top: 60px;
         }
         
-        footer a {
+        footer .back-button {
+            display: inline-block;
+            padding: 12px 30px;
+            background: #fff;
+            color: #000;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 0.95em;
+            font-weight: 600;
+            border: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        footer .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(255,255,255,0.3);
+        }
+        
+        footer a:not(.back-button) {
             color: #fff;
             text-decoration: none;
             border-bottom: 1px solid #fff;
             padding-bottom: 2px;
         }
         
-        footer a:hover {
+        footer a:not(.back-button):hover {
             border-bottom: 2px solid #fff;
         }
         
@@ -175,7 +211,7 @@
     </div>
     
     <footer>
-        <p><a href="../../sitemap.html">← Terug naar sitemap</a></p>
+        <p><a href="../../sitemap.html" class="back-button">← Terug naar Sitemap</a></p>
     </footer>
     
     <script>
