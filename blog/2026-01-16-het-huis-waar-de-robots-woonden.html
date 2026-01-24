@@ -21,7 +21,7 @@
         position: relative;
     }
     
-    /* Animated background */
+    /* Static background */
     /* Code screen styling */
     .code-screen {
         position: fixed;
@@ -53,50 +53,6 @@
         pointer-events: none;
     }
     
-    .code-column {
-        position: absolute;
-        font-family: 'Courier New', monospace;
-        line-height: 1.5;
-        color: #ffb000;
-        text-shadow: 
-            0 0 5px #ff8800,
-            0 0 10px #ff8800,
-            0 0 20px rgba(255, 136, 0, 0.5),
-            0 0 40px rgba(255, 136, 0, 0.3);
-        white-space: pre;
-        animation: scroll-code linear infinite;
-        padding: 0 10px;
-        filter: blur(0.3px);
-    }
-    
-    .code-column.depth-1 {
-        font-size: 0.7rem;
-        opacity: 0.4;
-        filter: blur(0.8px);
-    }
-    
-    .code-column.depth-2 {
-        font-size: 0.85rem;
-        opacity: 0.6;
-        filter: blur(0.5px);
-    }
-    
-    .code-column.depth-3 {
-        font-size: 1rem;
-        opacity: 0.9;
-        filter: blur(0.3px);
-        text-shadow: 
-            0 0 8px #ff8800,
-            0 0 15px #ff8800,
-            0 0 25px rgba(255, 136, 0, 0.6),
-            0 0 50px rgba(255, 136, 0, 0.4);
-    }
-    
-    @keyframes scroll-code {
-        from { transform: translateY(-100%); }
-        to { transform: translateY(100vh); }
-    }
-    
     /* Ensure content is above background */
     header, .container, footer {
         position: relative;
@@ -112,35 +68,6 @@
     .parallax-section {
         position: relative;
         overflow: hidden;
-    }
-    
-    /* Fade in animation */
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    .fade-in {
-        opacity: 0;
-        animation: fadeInUp 0.8s ease-out forwards;
-    }
-    
-    .fade-in-delay-1 {
-        animation-delay: 0.2s;
-    }
-    
-    .fade-in-delay-2 {
-        animation-delay: 0.4s;
-    }
-    
-    .fade-in-delay-3 {
-        animation-delay: 0.6s;
     }
     
     /* NRC-style header */
@@ -311,77 +238,9 @@
         }
     }
 </style>
-<script>
-    // Generate scrolling code screen
-    document.addEventListener('DOMContentLoaded', function() {
-        const codeSnippets = [
-            'def calculate_distance(x1, y1, x2, y2):\n    return sqrt((x2-x1)**2 + (y2-y1)**2)',
-            'class Robot:\n    def __init__(self, name):\n        self.name = name\n        self.battery = 100',
-            'function processSignal(data) {\n    const filtered = data.filter(x => x > 0);\n    return filtered.map(x => x * 2);\n}',
-            'import numpy as np\nimport matplotlib.pyplot as plt\n\ndata = np.random.randn(1000)',
-            'for (int i = 0; i < sensors.length; i++) {\n    readings[i] = sensors[i].read();\n    if (readings[i] > threshold) alert();\n}',
-            'const ws = new WebSocket(\'ws://localhost:8080\');\nws.onmessage = (event) => {\n    console.log(event.data);\n};',
-            'async def fetch_data(url):\n    async with aiohttp.ClientSession() as session:\n        async with session.get(url) as response:\n            return await response.json()',
-            '#define LED_PIN 13\nvoid setup() {\n    pinMode(LED_PIN, OUTPUT);\n}\nvoid loop() {\n    digitalWrite(LED_PIN, HIGH);\n}',
-            'SELECT * FROM sensors\nWHERE timestamp > NOW() - INTERVAL 1 HOUR\nORDER BY value DESC;',
-            'git commit -m "Fix motor control"\ngit push origin feature/robotics',
-            'docker run -d -p 8080:8080\n    --name robot-api\n    robot-control:latest',
-            'model.fit(train_data, labels)\naccuracy = model.evaluate(test_data)',
-        ];
-        
-        const codeScreen = document.createElement('div');
-        codeScreen.className = 'code-screen';
-        
-        const numColumns = 8;
-        const columnWidth = 100 / numColumns;
-        
-        for (let i = 0; i < numColumns; i++) {
-            const column = document.createElement('div');
-            const depthClass = `depth-${Math.floor(Math.random() * 3) + 1}`;
-            column.className = `code-column ${depthClass}`;
-            column.style.left = `${i * columnWidth}%`;
-            column.style.width = `${columnWidth}%`;
-            
-            let codeContent = '';
-            for (let j = 0; j < 20; j++) {
-                codeContent += codeSnippets[Math.floor(Math.random() * codeSnippets.length)] + '\n\n';
-            }
-            column.textContent = codeContent;
-            
-            const duration = 40 + Math.random() * 30;
-            const delay = -Math.random() * duration;
-            column.style.animationDuration = `${duration}s`;
-            column.style.animationDelay = `${delay}s`;
-            
-            codeScreen.appendChild(column);
-        }
-        
-        document.body.insertBefore(codeScreen, document.body.firstChild);
-    });
-    
-    // Fade in on scroll
-    document.addEventListener('DOMContentLoaded', function() {
-        const fadeElements = document.querySelectorAll('p, h3, figure');
-        
-        function fadeInOnScroll() {
-            fadeElements.forEach(element => {
-                const rect = element.getBoundingClientRect();
-                const isVisible = rect.top < window.innerHeight - 100;
-                
-                if (isVisible && !element.classList.contains('fade-in')) {
-                    element.classList.add('fade-in');
-                }
-            });
-        }
-        
-        window.addEventListener('scroll', fadeInOnScroll);
-        fadeInOnScroll(); // Initial call
-    });
-</script>
+
 </head>
 <body>
-<div class="code-screen" id="codeScreen"></div>
-
 <header>
     <h1 class="site-title">Villa Grijpsheert</h1>
     <p class="site-subtitle">Van Koloniaal Handelshuis tot Hackerspace (2010-2019)</p>
