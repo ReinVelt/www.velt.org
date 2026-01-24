@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mijn Eerste Computerliefde - Rein Velt</title>
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        font-family: 'Courier New', 'Courier', monospace;
+        line-height: 1.7;
+        background: #3aaeff; /* VIC-20 light blue screen */
+        color: #ffffff;
+        padding: 1rem;
+        overflow-x: hidden;
+        position: relative;
+        min-height: 100vh;
+    }
+    
+    /* Canvas for centipede game */
+    #game-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 1;
+        opacity: 0.15;
+    }
+    
+    /* VIC-20 screen effect with scanlines */
+    body::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: 
+            repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15) 0px,
+                transparent 1px,
+                transparent 2px,
+                rgba(0, 0, 0, 0.15) 3px
+            );
+        pointer-events: none;
+        z-index: 1000;
+    }
+    
+    /* CRT screen curvature effect */
+    body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+        pointer-events: none;
+        z-index: 999;
+    }
+    
+    .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background-color: #3aaeff;
+        border: 20px solid #9966cc; /* VIC-20 purple border */
+        padding: 2.5rem;
+        box-shadow: 
+            0 0 40px rgba(58, 174, 255, 0.6),
+            inset 0 0 100px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 10;
+    }
+    
+    h1 {
+        color: #ffffff;
+        font-size: clamp(1.3rem, 4vw, 2rem);
+        margin-bottom: 2rem;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        border-bottom: 3px solid #ffffff;
+        padding-bottom: 1rem;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+        line-height: 1.3;
+        font-weight: bold;
+    }
+    
+    h3 {
+        color: #ffff00; /* VIC-20 yellow */
+        font-size: clamp(1.1rem, 3vw, 1.5rem);
+        margin: 2.5rem 0 1rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        border-left: 4px solid #ffff00;
+        padding-left: 1rem;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+        font-weight: bold;
+    }
+    
+    p {
+        margin-bottom: 1.3rem;
+        text-align: justify;
+        hyphens: auto;
+        text-shadow: 1px 1px 0px rgba(0, 0, 0, 0.2);
+        color: #ffffff;
+    }
+    
+    strong, b {
+        color: #ffff00; /* VIC-20 yellow for emphasis */
+        font-weight: bold;
+    }
+    
+    em, i {
+        color: #66ffcc; /* VIC-20 cyan */
+        font-style: italic;
+    }
+    
+    code {
+        background-color: rgba(0, 0, 0, 0.3);
+        padding: 0.2rem 0.4rem;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: #66ffcc;
+        font-family: 'Courier New', monospace;
+        font-weight: bold;
+    }
+    
+    .code-block {
+        background-color: rgba(0, 0, 0, 0.4);
+        border: 2px solid #ffffff;
+        padding: 1rem;
+        margin: 1.5rem 0;
+        font-family: 'Courier New', monospace;
+        color: #ffff00;
+        overflow-x: auto;
+        font-weight: bold;
+        letter-spacing: 0.05em;
+    }
+    
+    hr {
+        border: none;
+        border-top: 2px solid #ffffff;
+        margin: 2.5rem 0;
+        opacity: 0.7;
+    }
+    
+    .back-link {
+        display: inline-block;
+        margin-top: 2rem;
+        padding: 0.6rem 1.5rem;
+        background-color: #9966cc; /* VIC-20 purple */
+        color: #ffffff;
+        text-decoration: none;
+        border: 3px solid #ffffff;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        transition: all 0.3s ease;
+        text-shadow: 2px 2px 0px rgba(0, 0, 0, 0.3);
+    }
+    
+    .back-link:hover {
+        background-color: #ffff00;
+        color: #9966cc;
+        box-shadow: 0 0 20px rgba(255, 255, 0, 0.8);
+    }
+    
+    /* VIC-20 cursor blink */
+    .cursor {
+        display: inline-block;
+        width: 0.6em;
+        height: 1em;
+        background-color: #ffffff;
+        animation: blink 1s infinite;
+        margin-left: 0.2em;
+    }
+    
+    @keyframes blink {
+        0%, 49% { opacity: 1; }
+        50%, 100% { opacity: 0; }
+    }
+    
+    /* VIC-20 screen flicker */
+    @keyframes flicker {
+        0% { opacity: 1; }
+        50% { opacity: 0.98; }
+        100% { opacity: 1; }
+    }
+    
+    .container {
+        animation: flicker 0.15s infinite;
+    }
+    
+    /* References section */
+    .references {
+        font-size: 0.85em;
+        color: #66ffcc; /* VIC-20 cyan */
+        margin-top: 2rem;
+        padding-top: 1.5rem;
+        border-top: 2px solid #ffffff;
+    }
+    
+    .references h3 {
+        color: #ffff00;
+    }
+    
+    .references p {
+        margin-bottom: 0.8rem;
+        text-align: left;
+        font-size: 0.9em;
+        color: #ffffff;
+    }
+    
+    /* Image styling */
+    .article-image {
+        max-width: 100%;
+        height: auto;
+        margin: 2rem auto;
+        display: block;
+        border: 4px solid #9966cc;
+        box-shadow: 0 0 20px rgba(58, 174, 255, 0.5);
+    }
+    
+    .image-caption {
+        text-align: center;
+        font-size: 0.9em;
+        color: #66ffcc;
+        margin-top: 0.5rem;
+        font-style: italic;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        body {
+            padding: 0.5rem;
+            font-size: 0.95rem;
+        }
+        
+        .container {
+            padding: 1.5rem;
+            border-width: 1px;
+        }
+        
+        h1 {
+            font-size: 1.4rem;
+        }
+        
+        h3 {
+            font-size: 1.2rem;
+        }
+        
+        p {
+            text-align: left;
+        }
+    }
+    
+    @media (max-width: 480px) {
+        body {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .container {
+            padding: 1rem;
+        }
+        
+        h1 {
+            font-size: 1.2rem;
+            letter-spacing: 0.02em;
+        }
+        
+        h3 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+</head>
+<body>
+<canvas id="game-canvas"></canvas>
+
+<div class="container">
+    <h1>Mijn Eerste Computerliefde: De VIC-20 van Knijnenberg<span class="cursor"></span></h1>
+    
+    <p>Er zijn momenten in een kinderleven die zich met een helderheid in het geheugen etsen die later, volwassen ervaringen ontberen. Voor mij was dat de dag waarop mijn vader thuiskwam met een beige doos onder zijn arm. Niet uit een hypermoderne computerzaak — die bestonden nog niet in het Krommenie van begin jaren tachtig — maar van boekhandel Knijnenberg, waar je tussen de potloden en agenda's ook een revolutie kon kopen. In die doos bevond zich mijn eerste computer: de <strong>Commodore VIC-20</strong>.</p>
+    
+    <img src="images/Vic-20.jpg" alt="Commodore VIC-20 computer" class="article-image">
+    <p class="image-caption">De Commodore VIC-20 - mijn eerste computer (1981)</p>
+    
+    <p>We woonden in Assendelft, en de computer kreeg zijn plek op zolder, naast het soldeerbureau van mijn vader. Die zolder was zijn domein — een werkplaats waar hij als elektronicus thuis aan projecten knutselde, waar de geur van soldeertin hing en waar components in bakjes geordend lagen. Tussen de oscilloscoop en de multimeter stond nu een Commodore, aangesloten via een RF-modulator op de 8-inch zwart-wit televisie die mijn ouders hadden gewonnen met de kerstloten van de hervormde kerk. Het beeld flikkerde, golfde zelfs een beetje, maar dat deed er niet toe. Ik was acht, misschien negen jaar oud, en dit — met zijn crèmekleurige toetsen en dat scherm dat straalde in tinten grijs die mijn fantasie zonder moeite omzette in een bijna metafysisch blauw — dit was een machine die <em>met jou sprak</em>.</p>
+    
+    <h3>De Kantoorvakhandel als Poort naar de Toekomst</h3>
+    
+    <p>In 1982 was de computerwereld nog niet gescheiden van de gewone wereld. Er waren geen MediaMarkten met meters aan schappen vol randapparatuur, geen GeekSquad-hoekjes met servicebureaus. Als je een computer wilde, ging je naar de kantoorvakhandel. Tussen de schrijfmachines, carbonpapier en archiefsystemen stond daar ineens het toekomstbeeld: een apparaat dat elk kind tot programmeur kon transformeren.</p>
+    
+    <p>Boekhandel Knijnenberg was zo'n plek waar traditie en vooruitgang elkaar ontmoetten. Een zaak die zijn autoriteit ontleende aan decennia van potloodslijperij en orderboekjes, maar nu — gedreven door ondernemersdurf of simpele nieuwsgierigheid — ook in technologie handelde. Mijn vader was elektronicus van beroep. Hij had de papiervakschool gedaan en later elektronica gestudeerd op de avond-HTS, terwijl hij overdag bij <strong>Van Gelder Papier in Wormer</strong> werkte, waarheen hij elke dag fietste. Hij was geen computerkenner in de moderne zin, maar wel iemand die techniek begreep, die waarde zag in innovatie. Hij kocht de VIC-20 niet uit noodzaak, maar uit een intuïtie die geworteld was in zijn eigen pad van technische scholing: <em>dit is iets wat mijn zoon moet hebben</em>.</p>
+    
+    <h3>10 Aanslagen per Minuut</h3>
+    
+    <p>Het begon met de handleiding. Een dik boekje vol met voorbeeldprogramma's in <strong>BASIC</strong>, die mysterieuze taal vol <code>PRINT</code> en <code>GOTO</code> commando's. De eerste opdracht was simpel: typ het over. Maar voor een kind zonder enige typervaring was zelfs dat een marathonproject. Mijn vingers zochten de toetsen als een blinde die een onbekend landschap aftast. Tien aanslagen per minuut, als het meezat. Elk karakter een overwinning, elke regel code een klein wonder.</p>
+    
+    <div class="code-block">10 PRINT "HELLO WORLD"<br>
+20 GOTO 10<br>
+RUN</div>
+    
+    <p>De simpelheid van deze regels maskeert hun magie. Dit was de eerste keer dat ik iets <em>creëerde</em> dat vervolgens zelfstandig tot leven kwam. Het scherm vulde zich met de woorden HELLO WORLD, eindeloos, onvermoeibaar, totdat je op de STOP-toets drukte. Het was geen passieve consumptie zoals televisiekijken of lezen. Dit was macht over de machine. Dit was taal die de werkelijkheid vormgaf.</p>
+    
+    <h3>De Cassette Datarecorder en de Kunst van het Wachten</h3>
+    
+    <img src="images/commodore-1530-datasette.jpg" alt="Commodore 1530 Datasette" class="article-image">
+    <p class="image-caption">De Commodore 1530 Datasette - uren wachten voor één programma</p>
+    
+    <p>Naast de computer stond de <strong>Commodore 1530 Datasette</strong>, een apparaat dat even essentieel was als archaïsch. Je stopte een cassette in de gleuf, typte het rituele commando <code>LOAD "*",1,1</code>, en drukte op PLAY. Dan begon het wachten. De datarecorder maakte een karakteristiek geluid — een mechanisch gezoem vermengd met de hoge pieptonen van data die als audio-signalen op het magneetlint werden gelezen. Minuten verstreken. Het was een oefening in geduld die de moderne generatie, gewend aan instant-gratificatie, volkomen vreemd zou zijn.</p>
+    
+    <p>Als het laden eindelijk klaar was, typte je <code>RUN</code> en kwam het programma tot leven. Soms werkte het niet. Dan moest je de koppen van de datarecorder schoonmaken met een wattenstaafje en alcohol, de tape terugspoelen, en opnieuw beginnen. Elk succesvol geladen programma voelde als een technische overwinning.</p>
+    
+    <h3>Software via de Radio: NOS Hobbyscoop</h3>
+    
+    <p>Maar er was nog een andere, bijna magische manier om aan software te komen: <strong>NOS Hobbyscoop</strong>. Elke zaterdag zond de NOS op Hilversum 3 computerprogramma's uit als audiosignalen. Je hield je cassettespeler bij de radio, drukte op RECORD zodra de pieptonen begonnen, en hoopte dat de ontvangst goed genoeg was. Na de uitzending stopte je de cassette in de datasette en laadde het programma via de <strong>Hobbyscoop-interpreter</strong> — een speciaal programma dat de geluiden kon vertalen naar uitvoerbare code.</p>
+    
+    <p>Het was software-distributie uit een andere tijd. Geen internet, geen downloads, maar letterlijk geluiden door de ether die codes werden. Soms lukte het perfect, soms was er te veel ruis en moest je wachten tot de volgende week voor een herhaling. Maar als het werkte — als die pieptonen transformeerden in een werkend spel of programma — was het pure magie. Het voelde alsof je deelnam aan een landelijke samenkomst van ingewijden, allemaal tegelijkertijd met hun cassettespelers bij de radio zittend, wachtend op die digitale zending uit Hilversum.</p>
+    
+    <h3>De Groeiende Vaardigheid</h3>
+    
+    <p>Weken werden maanden. Mijn vingers begonnen het toetsenbord als vanzelf te vinden. Wat begon als moeizaam zoeken, transformeerde langzaam in een vloeiende dans. De typesnelheid groeide, en daarmee mijn ambities. Ik typte niet langer alleen over wat in de handleiding stond — ik begon te <em>experimenteren</em>. Wat gebeurt er als ik dit getal verander? Wat als ik deze regel weglaat? Elk <code>SYNTAX ERROR</code>-bericht was geen frustratie, maar een aanwijzing. De machine onderwees me in precisie, geduld en logisch denken.</p>
+    
+    <p>Tegen de tijd dat ik een jaar of tien was, begon het allemaal steeds duidelijker te worden. Ik kon zelf kleine programma's maken — niet alleen overtikken, maar bedenken en bouwen. Primitieve quiz-programma's waarin de computer een vraag stelde en ik het antwoord typte. Simpele animaties waarbij een karakter over het scherm bewoog. Elke vrijdagmiddag na school was een pelgrimstocht naar die beige doos, die grijze gloed op dat flikkerende scherm, dat cursor-blok dat knipperde met de belofte: <em>jij kunt hier alles maken wat je wilt</em>.</p>
+    
+    <h3>De Gouden Jaren van Type-Spelletjes</h3>
+    
+    <p>Later, toen de Commodore 64 en de MSX de markt veroverden, veranderde het landschap radicaal. Plots waren er echte <strong>computerwinkels</strong> waar je kant-en-klare spelletjes kon kopen op cassette. De bibliotheek kreeg een nieuwe sectie: naast de jeugdboeken en stripverhalen verschenen boeken vol met BASIC-listings die je thuis kon overtypen. Dit was de gouden tijd van Nederlandse computerauteurs als <strong>Hal Renko</strong> en <strong>Sam Edwards</strong>, wiens <em>Volcanic Games</em> en andere boeken vol stonden met avontuurlijke programma's. En dan was er nog <strong>Max Vijftigschild</strong>, wiens boeken ik verslond — als kleine jongen wist ik toen nog niet dat hij later mijn chef zou worden bij KPN (1992).</p>
+    
+    <p>Het overtypen van deze listings was een eigen discipline. Pagina's vol met cryptische code, regel na regel, waarbij een enkele verkeerde komma of haakje het verschil betekende tussen een werkend spel en een frustrerende <code>SYNTAX ERROR IN LINE 340</code>. Je was <em>uren</em> bezig met het opsporen van overtikfouten. Je vergeleek regel voor regel, karakter voor karakter, totdat je eindelijk die ene plek vond waar een 0 een O was geworden, of waar je per ongeluk een puntkomma in plaats van een dubbele punt had getypt. Maar als het dan eindelijk werkte — dat moment van triomf was iedere minuut waard.</p>
+    
+    <p>Ook boekhandel <strong>De Slegte in Amsterdam</strong> werd een vaste bestemming. In die stoffige winkel vol tweedehandsboeken kon je voor weinig geld oude computertijdschriften en programmeergidsen vinden. Iedere trip naar Amsterdam was niet compleet zonder een bezoek aan De Slegte, op zoek naar nieuwe listings, nieuwe ideeën, nieuwe werelden om te bouwen uit niets dan tekens op een scherm.</p>
+    
+    <h3>Ons Huis in Wormer: Het Epicentrum</h3>
+    
+    <p>Maar de echte biotoop van de computerrevolutie bevond zich dichter bij huis: de <strong>computerclub in "Ons Huis" in Wormer</strong>. Als veertienjarige fietste ik erheen door de Noord-Hollandse polders, mijn rugzak vol met cassettes en uitgeprinte listings. Dit was het epicentrum waar alle geeks, techies en nerds samenkwamen — een generatie jongens (het waren voornamelijk jongens) verenigd door een obsessie met bits en bytes.</p>
+    
+    <p>In die ruimte hing een elektriciteit die niets te maken had met de stroom uit de stopcontacten. Er stond een wilde verzameling machines: <strong>Commodore 64's</strong> naast <strong>MSX-computers</strong>, een enkele <strong>Commodore 16</strong>, een <strong>Amstrad</strong> in de hoek, en altijd wel iemand die met trots zijn <strong>ZX Spectrum</strong> demonstreerde. Het merk deed er niet toe. De sekte had maar één geloofsartikel: zolang er maar een <strong>Zilog Z80</strong> of een <strong>MOS 6502</strong> processor in zat, was je welkom.</p>
+    
+    <p>Als de avond vorderde en je het zat was om naar andermans code te staren, ging je mee naar iemand naar huis. Nog een uurtje gamen op zijn C64 of MSX, terwijl zijn moeder beneden thee zette en zich afvroeg wat die jongens toch de hele tijd voor dat beeldscherm deden. We bouwden geen kastelen van LEGO meer — we bouwden ze van code, regel voor regel, in een taal die onze ouders nooit zouden begrijpen maar die voor ons poorten opende naar oneindige werelden.</p>
+    
+    <p>Mijn schoolvriend <strong>Marten</strong> woonde in Jisp en had een <strong>Commodore 64</strong> — de heilige graal voor elke jonge computerfreak. Daar speelden we <em>dagenlang</em>. Niet uren, maar dagen waarin de tijd verdween in pixels en geluidschips. We versleten meerdere joysticks, die Competition Pro's en Quickshot's die het na maandenlange martelingen begaven. De vuurknop ging eerst, dan de richtingsschakelaars, tot het ding alleen nog bruikbaar was als briefverzwaarder.</p>
+    
+    <p>Maar weggooien? Ondenkbaar. Als een joystick kapot ging, belandde hij op het soldeerbureau van mijn vader. Met de routine van een chirurg soldeerde hij een nieuw snoer, een nieuwe stekker, of verving hij de schakelaar. Elektronische reanimatie. Sommige joysticks keerden meerdere malen terug van de dood. Eén joystick overleefde het allemaal: de <strong>Suze Arcade</strong>-joystick, een massief geval gebouwd als een tank. Die was onverwoestbaar. En hij doet het <em>nog steeds</em> — ergens in een doos, wachtend op zijn volgende opdracht, decennia later nog steeds functioneel. Dat was kwaliteit uit een tijd toen dingen gemaakt werden om te blijven, niet om vervangen te worden.</p>
+    
+    <p>Zo gingen we verder. <em>Boulder Dash</em>, <em>International Karate</em>, <em>Impossible Mission</em> — elk spel een universum op zichzelf, elk level een uitdaging die moest worden overwonnen. En als de controller het opgaf, maakte mijn vader hem weer heel. Die C64 van Marten ligt trouwens op dit moment in de hackerspace in Drenthe, waar hij af en toe nog wordt opgestart. Hij werkt nog steeds. Veertig jaar later, en de MOS 6510 rekent nog steeds, pixel voor pixel, geluid voor geluid. Sommige dingen weigeren simpelweg te sterven.</p>
+    
+    <h3>De Liefde Die Bleef</h3>
+    
+    <p>De VIC-20 was objectief gezien een beperkte machine. Met slechts <strong>5 KB RAM</strong> (waarvan maar 3,5 KB beschikbaar voor programma's) was het zelfs in 1982 al niet de krachtigste computer. Maar wat het miste aan specificaties, compenseerde het in toegankelijkheid. Zodra je het aanzette, werd je begroet door de BASIC-prompt. Er was geen besturingssysteem dat je moest leren bedienen, geen installaties die nodig waren. De machine <em>was</em> programmeren.</p>
+    
+    <p>Deze eerste computerliefde legde een fundament dat nooit meer zou verdwijnen. Van die beige Commodore op zolder in Assendelft naar de mainframes op het Insi, van Linux-diskettes in Noordwijkerhout tot de servers waar ik nu dagelijks mee werk — het begon allemaal met tien aanslagen per minuut en een vader die begreep dat de toekomst soms in een doos zit die je koopt bij de boekhandel.</p>
+    
+    <p>Die oude VIC-20 bestaat niet meer. Ergens in de jaren die volgden is hij weggegooid, materiaal dat zijn nut had verloren, overbodig geworden door nieuwere, krachtigere machines. Maar het object was nooit het punt. Wat ertoe deed — wat <em>bleef</em> — was de kennis, de ervaring, het beleven van die periode. Die eerste regels code die ik typte, die eindeloze middagen van experimenteren, die frustraties en doorbraken: dat is wat zich inbakte in mijn denken. De machine was tijdelijk, maar wat hij me leerde is blijvend. Hij zit verweven in elke regel code die ik schrijf, in elk algoritme dat ik begrijp, in elke computer die ik openstel voor anderen. Boekhandel Knijnenberg bestaat allang niet meer, maar wat mijn vader daar kocht, blijft leven in elke cursor die knippert op elk scherm waarachter ik zit.</p>
+    
+    <hr>
+    
+    <div class="references">
+        <h3>Literatuurverwijzingen (APA)</h3>
+        
+        <p>Commodore International. (1981). <em>VIC-20 user's manual</em>. Commodore Business Machines.</p>
+        
+        <p>Edwards, S. (z.d.). <em>Volcanic games for the VIC-20</em>. Retrieved from http://www.vic20listings.freeolamail.com/book_volcanicgames.html</p>
+        
+        <p>Reimer, J. (2007, 9 oktober). <em>A history of the Commodore VIC-20</em>. Ars Technica. https://arstechnica.com/gadgets/2007/10/the-commodore-vic-20/</p>
+        
+        <p>Renko, H. (1984). <em>VIC-20 spelletjes</em>. Uitgeverij Kluwer.</p>
+        
+        <p>Tomczyk, M. S. (1984). <em>The home computer wars: An insider's account of Commodore and Jack Tramiel</em>. COMPUTE! Publications.</p>
+        
+        <p>Veit, S. (1993). <em>Exploring the VIC</em>. Abacus Software.</p>
+        
+        <p>Vijftigschild, M. (1983). <em>Programmeren voor de VIC-20</em>. Uitgeverij Stark.</p>
+    </div>
+    
+    <a href="../sitemap.html" class="back-link">◀ Terug</a>
+</div>
+
+<script>
+// VIC-20 Centipede-style game animation
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const gridSize = 16;
+const cols = Math.floor(canvas.width / gridSize);
+const rows = Math.floor(canvas.height / gridSize);
+
+// Mushrooms
+const mushrooms = [];
+for (let i = 0; i < 30; i++) {
+    mushrooms.push({
+        x: Math.floor(Math.random() * cols),
+        y: Math.floor(Math.random() * (rows - 5)) + 2
+    });
+}
+
+// Centipede segments
+class Centipede {
+    constructor() {
+        this.segments = [];
+        this.direction = 1; // 1 = right, -1 = left
+        this.downward = false;
+        
+        // Create segments
+        for (let i = 0; i < 12; i++) {
+            this.segments.push({
+                x: -i,
+                y: 1
+            });
+        }
+    }
+    
+    update() {
+        const head = this.segments[0];
+        let newX = head.x + this.direction;
+        let newY = head.y;
+        
+        // Check boundaries and mushrooms
+        if (newX >= cols || newX < 0 || this.checkMushroom(newX, newY)) {
+            this.direction *= -1;
+            newY += 1;
+            newX = head.x;
+            
+            // Wrap around if too far down
+            if (newY >= rows - 3) {
+                newY = 1;
+            }
+        }
+        
+        // Move segments
+        for (let i = this.segments.length - 1; i > 0; i--) {
+            this.segments[i].x = this.segments[i - 1].x;
+            this.segments[i].y = this.segments[i - 1].y;
+        }
+        
+        this.segments[0].x = newX;
+        this.segments[0].y = newY;
+    }
+    
+    checkMushroom(x, y) {
+        return mushrooms.some(m => m.x === x && m.y === y);
+    }
+    
+    draw() {
+        this.segments.forEach((seg, i) => {
+            // Alternate colors for segments
+            ctx.fillStyle = i % 2 === 0 ? '#ff00ff' : '#ffff00';
+            ctx.fillRect(
+                seg.x * gridSize + 2,
+                seg.y * gridSize + 2,
+                gridSize - 4,
+                gridSize - 4
+            );
+        });
+    }
+}
+
+// Player
+const player = {
+    x: Math.floor(cols / 2),
+    y: rows - 2,
+    draw() {
+        ctx.fillStyle = '#ffffff';
+        // Draw simple player shape
+        ctx.beginPath();
+        ctx.moveTo(this.x * gridSize + gridSize/2, this.y * gridSize + 2);
+        ctx.lineTo(this.x * gridSize + gridSize - 2, this.y * gridSize + gridSize - 2);
+        ctx.lineTo(this.x * gridSize + 2, this.y * gridSize + gridSize - 2);
+        ctx.closePath();
+        ctx.fill();
+    }
+};
+
+// Bullets
+const bullets = [];
+
+function shootBullet() {
+    bullets.push({
+        x: player.x,
+        y: player.y - 1
+    });
+}
+
+// Auto-shoot periodically
+setInterval(shootBullet, 1500);
+
+const centipede = new Centipede();
+let frameCount = 0;
+
+function gameLoop() {
+    // Clear canvas
+    ctx.fillStyle = 'rgba(58, 174, 255, 0.1)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw mushrooms
+    ctx.fillStyle = '#00ff00';
+    mushrooms.forEach(m => {
+        ctx.fillRect(
+            m.x * gridSize + 4,
+            m.y * gridSize + 4,
+            gridSize - 8,
+            gridSize - 8
+        );
+    });
+    
+    // Update and draw centipede every few frames
+    if (frameCount % 8 === 0) {
+        centipede.update();
+    }
+    centipede.draw();
+    
+    // Update and draw bullets
+    bullets.forEach((bullet, index) => {
+        bullet.y -= 0.5;
+        if (bullet.y < 0) {
+            bullets.splice(index, 1);
+        }
+    });
+    
+    ctx.fillStyle = '#ffffff';
+    bullets.forEach(b => {
+        ctx.fillRect(
+            b.x * gridSize + gridSize/2 - 1,
+            b.y * gridSize,
+            2,
+            gridSize / 2
+        );
+    });
+    
+    // Draw player
+    player.draw();
+    
+    frameCount++;
+    requestAnimationFrame(gameLoop);
+}
+
+// Handle resize
+window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+});
+
+gameLoop();
+</script>
+
+</body>
+</html>
