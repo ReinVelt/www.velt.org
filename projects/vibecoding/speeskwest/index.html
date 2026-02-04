@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Quest: The Cosmic Janitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            border: 4px solid #444;
+            box-shadow: 0 0 20px rgba(0, 150, 255, 0.5);
+        }
+        
+        #verb-bar {
+            display: flex;
+            background: #1a1a2e;
+            padding: 8px;
+            gap: 5px;
+            border-bottom: 2px solid #333;
+        }
+        
+        .verb-btn {
+            background: linear-gradient(180deg, #3a3a5a, #2a2a4a);
+            color: #8af;
+            border: 2px solid #555;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.1s;
+        }
+        
+        .verb-btn:hover, .verb-btn.active {
+            background: linear-gradient(180deg, #5a5a8a, #4a4a7a);
+            border-color: #8af;
+        }
+        
+        #game-canvas {
+            display: block;
+            image-rendering: pixelated;
+            cursor: crosshair;
+        }
+        
+        #bottom-panel {
+            display: flex;
+            background: #1a1a2e;
+            border-top: 2px solid #333;
+        }
+        
+        #inventory-panel {
+            flex: 1;
+            padding: 10px;
+            display: flex;
+            gap: 10px;
+            min-height: 80px;
+            flex-wrap: wrap;
+            align-content: flex-start;
+        }
+        
+        .inv-item {
+            width: 50px;
+            height: 50px;
+            background: #2a2a4a;
+            border: 2px solid #555;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.1s;
+        }
+        
+        .inv-item:hover {
+            border-color: #8af;
+            transform: scale(1.1);
+        }
+        
+        .inv-item canvas {
+            image-rendering: pixelated;
+        }
+        
+        #score-panel {
+            padding: 10px 20px;
+            color: #8af;
+            text-align: right;
+            border-left: 2px solid #333;
+            min-width: 150px;
+        }
+        
+        #message-box {
+            position: absolute;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 30, 0.95);
+            color: #8af;
+            padding: 15px 25px;
+            border: 3px solid #558;
+            max-width: 600px;
+            text-align: center;
+            font-size: 14px;
+            line-height: 1.5;
+            display: none;
+            z-index: 100;
+        }
+        
+        #dialog-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 40, 0.98);
+            color: #fff;
+            padding: 20px 30px;
+            border: 4px solid #66a;
+            max-width: 500px;
+            text-align: center;
+            font-size: 16px;
+            line-height: 1.6;
+            display: none;
+            z-index: 200;
+        }
+        
+        #dialog-box .speaker {
+            color: #ff0;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        #dialog-box .continue {
+            margin-top: 15px;
+            color: #8af;
+            font-size: 12px;
+        }
+        
+        #death-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(100, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+        
+        #death-screen h1 {
+            color: #f00;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        #death-screen p {
+            color: #faa;
+            font-size: 18px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 400px;
+        }
+        
+        #death-screen button {
+            background: #800;
+            color: #fff;
+            border: 3px solid #f00;
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #death-screen button:hover {
+            background: #a00;
+        }
+        
+        #title-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 400;
+        }
+        
+        #title-screen h1 {
+            color: #4af;
+            font-size: 36px;
+            text-shadow: 0 0 10px #08f;
+            margin-bottom: 10px;
+        }
+        
+        #title-screen h2 {
+            color: #88f;
+            font-size: 24px;
+            margin-bottom: 40px;
+        }
+        
+        #title-screen .subtitle {
+            color: #668;
+            font-size: 14px;
+            margin-bottom: 50px;
+        }
+        
+        #title-screen button {
+            background: linear-gradient(180deg, #3a3a8a, #2a2a6a);
+            color: #8cf;
+            border: 3px solid #66a;
+            padding: 15px 40px;
+            font-size: 20px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            margin: 10px;
+            transition: all 0.2s;
+        }
+        
+        #title-screen button:hover {
+            background: linear-gradient(180deg, #5a5aaa, #4a4a8a);
+            transform: scale(1.05);
+        }
+        
+        #title-canvas {
+            margin-bottom: 30px;
+            image-rendering: pixelated;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="verb-bar">
+            <button class="verb-btn active" data-verb="walk">Walk</button>
+            <button class="verb-btn" data-verb="look">Look</button>
+            <button class="verb-btn" data-verb="get">Get</button>
+            <button class="verb-btn" data-verb="use">Use</button>
+            <button class="verb-btn" data-verb="talk">Talk</button>
+            <button class="verb-btn" data-verb="open">Open</button>
+        </div>
+        <canvas id="game-canvas" width="640" height="400"></canvas>
+        <div id="bottom-panel">
+            <div id="inventory-panel"></div>
+            <div id="score-panel">
+                <div>Score: <span id="score">0</span></div>
+                <div>of 200</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="message-box"></div>
+    <div id="dialog-box"></div>
+    
+    <div id="death-screen">
+        <h1>YOU DIED</h1>
+        <p id="death-message"></p>
+        <button onclick="restoreGame()">Restore</button>
+    </div>
+    
+    <div id="title-screen">
+        <canvas id="title-canvas" width="300" height="200"></canvas>
+        <h1>SPACE QUEST</h1>
+        <h2>The Cosmic Janitor</h2>
+        <p class="subtitle">A Sierra-Style Adventure</p>
+        <button onclick="startNewGame()">New Game</button>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

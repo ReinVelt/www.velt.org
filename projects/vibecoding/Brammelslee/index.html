@@ -1,0 +1,1526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bram's Winter Sled Race - The Hungry Pug!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(180deg, #1a3a4a 0%, #2d5a6a 50%, #3d6a7a 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            margin-top: 10px;
+        }
+
+        #gameCanvas {
+            border: 4px solid #5D4E37;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            background: #FFFFFF;
+        }
+
+        #ui {
+            display: flex;
+            justify-content: space-between;
+            width: 800px;
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .stat {
+            text-align: center;
+            padding: 5px 15px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .bram-stat { color: #C4956A; }
+        .kino-stat { color: #6B5344; }
+        .tessy-stat { color: #7B6354; }
+
+        #startScreen, #gameOverScreen, #levelCompleteScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.97);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 38px;
+            color: #5D4E37;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 28px;
+            color: #5D4E37;
+            margin-bottom: 15px;
+        }
+
+        .character-intro {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .character-card {
+            text-align: center;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 10px;
+            width: 160px;
+        }
+
+        .character-preview {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .character-name {
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 18px;
+        }
+
+        .character-desc {
+            font-size: 11px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: linear-gradient(180deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin-top: 20px;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5);
+        }
+
+        .instructions {
+            margin-top: 20px;
+            color: #666;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .results {
+            margin: 20px 0;
+            font-size: 18px;
+        }
+
+        .result-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+
+        .first-place { background: #FFD700; }
+        .second-place { background: #C0C0C0; }
+        .third-place { background: #CD7F32; }
+
+        .food-collected {
+            font-size: 24px;
+            color: #4CAF50;
+            margin: 10px 0;
+        }
+
+        #controls {
+            margin-top: 10px;
+            color: #ccc;
+            font-size: 14px;
+        }
+
+        .distance-display {
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui">
+        <div class="stat">
+            <div class="stat-label">Level</div>
+            <div class="stat-value" id="levelDisplay">1</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">🐕 Bram (Pug)</div>
+            <div class="stat-value bram-stat" id="bramProgress">0m</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">🐕 Kino</div>
+            <div class="stat-value kino-stat" id="kinoProgress">0m</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">🐕 Tessy</div>
+            <div class="stat-value tessy-stat" id="tessyProgress">0m</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Food</div>
+            <div class="stat-value" id="foodDisplay">🍖 0</div>
+        </div>
+        <div class="stat">
+            <div class="stat-label">Score</div>
+            <div class="stat-value" id="scoreDisplay">0</div>
+        </div>
+    </div>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        
+        <div id="startScreen">
+            <h1>🛷 Bram's Winter Sled Race! 🛷</h1>
+            <div class="character-intro">
+                <div class="character-card">
+                    <canvas id="bramPreview" width="80" height="80"></canvas>
+                    <div class="character-name" style="color: #C4956A;">Bram</div>
+                    <div class="character-desc">Fawn-colored pug<br>Small but determined!</div>
+                </div>
+                <div class="character-card">
+                    <canvas id="kinoPreview" width="80" height="80"></canvas>
+                    <div class="character-name" style="color: #6B5344;">Kino</div>
+                    <div class="character-desc">Old male rat-terrier<br>White & brown, wise racer</div>
+                </div>
+                <div class="character-card">
+                    <canvas id="tessyPreview" width="80" height="80"></canvas>
+                    <div class="character-name" style="color: #7B6354;">Tessy</div>
+                    <div class="character-desc">Female rat-terrier<br>White & brown, agile!</div>
+                </div>
+            </div>
+            <p style="max-width: 500px; text-align: center; color: #666;">
+                Help Bram sled down the long mountain slope! Collect food, avoid trees and obstacles, 
+                and race against Kino and Tessy to reach the bottom first!
+            </p>
+            <button onclick="startGame()">Start Race! 🏁</button>
+            <div class="instructions">
+                <strong>Controls:</strong> ← → Arrow Keys or A/D to steer<br>
+                <span class="distance-display">Race distance: 2000+ meters!</span>
+            </div>
+        </div>
+
+        <div id="gameOverScreen" class="hidden">
+            <h2>💥 Crash! 💥</h2>
+            <p id="crashMessage">Bram hit an obstacle!</p>
+            <div class="results" id="crashResults"></div>
+            <button onclick="restartLevel()">Try Again</button>
+        </div>
+
+        <div id="levelCompleteScreen" class="hidden">
+            <h2>🏁 Level Complete! 🏁</h2>
+            <div class="results" id="raceResults"></div>
+            <div class="food-collected" id="foodCollected"></div>
+            <div id="levelScore" style="font-size: 20px; margin: 10px 0;"></div>
+            <button onclick="nextLevel()">Next Level →</button>
+        </div>
+    </div>
+
+    <div id="controls">
+        ⬅️ Left: A or ← | Right: D or → ➡️
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Game state
+        let gameState = 'start'; // start, playing, crashed, levelComplete
+        let level = 1;
+        let totalScore = 0;
+        let totalFood = 0;
+
+        // Track/hill settings - MUCH LONGER RACE
+        const trackLength = 15000; // Base track length (was 3000)
+        let currentTrackLength = trackLength;
+        const metersPerProgress = 2000; // Display meters
+
+        // Players - TOP DOWN VIEW
+        const players = {
+            bram: {
+                name: 'Bram',
+                type: 'pug',
+                // Fawn pug colors
+                bodyColor: '#C4956A',
+                bodyColorDark: '#A67B4F',
+                muzzleColor: '#1a1a1a',
+                earColor: '#8B6914',
+                x: 400,
+                y: 450,
+                speed: 0,
+                maxSpeed: 5,
+                width: 32,
+                height: 44,
+                progress: 0,
+                isPlayer: true,
+                sledColor: '#8B4513',
+                sledColorLight: '#A0522D'
+            },
+            kino: {
+                name: 'Kino',
+                type: 'rat-terrier',
+                // White with brown patches
+                bodyColor: '#F5F5F5',
+                bodyColorDark: '#E8E8E8',
+                patchColor: '#8B6914',
+                patchColor2: '#6B4423',
+                earColor: '#8B6914',
+                x: 300,
+                y: 450,
+                speed: 0,
+                maxSpeed: 4.5,
+                width: 36,
+                height: 50,
+                progress: 0,
+                isPlayer: false,
+                sledColor: '#654321',
+                sledColorLight: '#8B6914',
+                ai: { skill: 0.7, reaction: 0.8 }
+            },
+            tessy: {
+                name: 'Tessy',
+                type: 'rat-terrier',
+                // White with lighter brown patches
+                bodyColor: '#FAFAFA',
+                bodyColorDark: '#EFEFEF',
+                patchColor: '#A0826D',
+                patchColor2: '#8B7355',
+                earColor: '#A0826D',
+                x: 500,
+                y: 450,
+                speed: 0,
+                maxSpeed: 4.8,
+                width: 34,
+                height: 48,
+                progress: 0,
+                isPlayer: false,
+                sledColor: '#CD853F',
+                sledColorLight: '#DEB887',
+                ai: { skill: 0.8, reaction: 0.9 }
+            }
+        };
+
+        // Obstacles and items
+        let obstacles = [];
+        let foodItems = [];
+        let snowPatches = [];
+        let treeShadows = [];
+        let collectedFood = 0;
+
+        // Input
+        const keys = {};
+
+        // Scroll offset for parallax
+        let scrollOffset = 0;
+
+        // Initialize snow texture patches
+        function initSnowPatches() {
+            snowPatches = [];
+            for (let i = 0; i < 50; i++) {
+                snowPatches.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * 2000,
+                    size: 20 + Math.random() * 60,
+                    opacity: 0.03 + Math.random() * 0.08
+                });
+            }
+        }
+
+        // Generate level obstacles and food - MUCH MORE FOR LONGER RACE
+        function generateLevel() {
+            obstacles = [];
+            foodItems = [];
+            collectedFood = 0;
+            
+            currentTrackLength = trackLength + (level - 1) * 2000;
+            
+            // Many more obstacles for longer race
+            const obstacleCount = 60 + level * 15;
+            const foodCount = 40 + level * 8;
+            
+            // Generate obstacles (trees, rocks, logs, ice patches)
+            for (let i = 0; i < obstacleCount; i++) {
+                const progress = (i + 1) / (obstacleCount + 1);
+                const type = Math.random();
+                let obstacle;
+                
+                if (type < 0.45) {
+                    // Pine tree (top-down)
+                    obstacle = {
+                        type: 'tree',
+                        x: 80 + Math.random() * 640,
+                        progress: progress * 0.95 + 0.02,
+                        radius: 18 + Math.random() * 12,
+                        snowAmount: 0.3 + Math.random() * 0.4
+                    };
+                } else if (type < 0.7) {
+                    // Rock
+                    obstacle = {
+                        type: 'rock',
+                        x: 80 + Math.random() * 640,
+                        progress: progress * 0.95 + 0.02,
+                        width: 25 + Math.random() * 20,
+                        height: 20 + Math.random() * 15,
+                        rotation: Math.random() * Math.PI
+                    };
+                } else if (type < 0.85) {
+                    // Fallen log
+                    obstacle = {
+                        type: 'log',
+                        x: 80 + Math.random() * 640,
+                        progress: progress * 0.95 + 0.02,
+                        width: 60 + Math.random() * 40,
+                        height: 12 + Math.random() * 6,
+                        rotation: (Math.random() - 0.5) * 0.8
+                    };
+                } else {
+                    // Ice patch (slippery visual, still obstacle)
+                    obstacle = {
+                        type: 'ice',
+                        x: 80 + Math.random() * 640,
+                        progress: progress * 0.95 + 0.02,
+                        width: 40 + Math.random() * 30,
+                        height: 30 + Math.random() * 20
+                    };
+                }
+                obstacles.push(obstacle);
+            }
+
+            // Generate food items
+            const foodTypes = ['🍖', '🥓', '🍗', '🌭', '🥩', '🦴'];
+            for (let i = 0; i < foodCount; i++) {
+                foodItems.push({
+                    type: foodTypes[Math.floor(Math.random() * foodTypes.length)],
+                    x: 100 + Math.random() * 600,
+                    progress: (i + 1) / (foodCount + 1) * 0.92 + 0.03,
+                    collected: false,
+                    size: 24,
+                    glow: Math.random() * Math.PI * 2
+                });
+            }
+
+            // Reset players
+            Object.values(players).forEach((player, index) => {
+                player.x = 300 + index * 100;
+                player.y = 450;
+                player.progress = 0;
+                player.speed = 2 + Math.random() * 0.5;
+                player.finished = false;
+                player.finishTime = null;
+                player.wobble = Math.random() * Math.PI * 2;
+            });
+
+            initSnowPatches();
+        }
+
+        // Draw TOP-DOWN snow mountain background
+        function drawBackground() {
+            // Create gradient for snow - top-down perspective
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#E8F0F5');
+            gradient.addColorStop(0.3, '#F0F5F8');
+            gradient.addColorStop(0.7, '#F5F8FA');
+            gradient.addColorStop(1, '#FAFCFD');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Snow texture - subtle variations
+            const bramProgress = players.bram.progress;
+            snowPatches.forEach(patch => {
+                const y = (patch.y - bramProgress * 5000) % canvas.height;
+                ctx.fillStyle = `rgba(200, 210, 220, ${patch.opacity})`;
+                ctx.beginPath();
+                ctx.ellipse(patch.x, y, patch.size, patch.size * 0.6, 0, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Ski track marks (subtle)
+            ctx.strokeStyle = 'rgba(180, 190, 200, 0.3)';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 8; i++) {
+                const x = 100 + i * 90;
+                ctx.beginPath();
+                ctx.setLineDash([20, 40]);
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x + Math.sin(bramProgress * 10 + i) * 10, canvas.height);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+
+            // Side boundaries - forest edge shadows
+            const sideGradientL = ctx.createLinearGradient(0, 0, 80, 0);
+            sideGradientL.addColorStop(0, 'rgba(40, 60, 40, 0.4)');
+            sideGradientL.addColorStop(1, 'rgba(40, 60, 40, 0)');
+            ctx.fillStyle = sideGradientL;
+            ctx.fillRect(0, 0, 80, canvas.height);
+
+            const sideGradientR = ctx.createLinearGradient(720, 0, 800, 0);
+            sideGradientR.addColorStop(0, 'rgba(40, 60, 40, 0)');
+            sideGradientR.addColorStop(1, 'rgba(40, 60, 40, 0.4)');
+            ctx.fillStyle = sideGradientR;
+            ctx.fillRect(720, 0, 80, canvas.height);
+
+            // Distance markers on sides
+            ctx.font = '10px Arial';
+            ctx.fillStyle = '#666';
+            const currentMeters = Math.floor(bramProgress * metersPerProgress);
+            for (let i = 0; i < 6; i++) {
+                const markerMeters = Math.floor(currentMeters / 100) * 100 + i * 100;
+                const y = ((markerMeters - currentMeters) / metersPerProgress) * canvas.height * 3;
+                if (y > 0 && y < canvas.height) {
+                    ctx.fillText(`${markerMeters}m`, 10, y);
+                    ctx.fillText(`${markerMeters}m`, 760, y);
+                }
+            }
+        }
+
+        // Draw tree from top-down (circular with texture)
+        function drawTreeTopDown(x, y, radius, snowAmount) {
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 30, 0, 0.25)';
+            ctx.beginPath();
+            ctx.ellipse(x + 5, y + 5, radius * 1.1, radius * 0.9, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Tree foliage (dark green base)
+            const treeGradient = ctx.createRadialGradient(x - radius*0.3, y - radius*0.3, 0, x, y, radius);
+            treeGradient.addColorStop(0, '#2D5A27');
+            treeGradient.addColorStop(0.5, '#1E4620');
+            treeGradient.addColorStop(1, '#0D2818');
+            ctx.fillStyle = treeGradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inner detail rings
+            ctx.strokeStyle = 'rgba(0, 20, 0, 0.3)';
+            ctx.lineWidth = 1;
+            for (let r = radius * 0.4; r < radius; r += radius * 0.25) {
+                ctx.beginPath();
+                ctx.arc(x, y, r, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+
+            // Snow on top
+            ctx.fillStyle = `rgba(255, 255, 255, ${snowAmount})`;
+            ctx.beginPath();
+            ctx.ellipse(x, y - radius * 0.1, radius * 0.7, radius * 0.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Snow patches
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2 + 0.3;
+                const px = x + Math.cos(angle) * radius * 0.5;
+                const py = y + Math.sin(angle) * radius * 0.4;
+                ctx.fillStyle = `rgba(255, 255, 255, ${snowAmount * 0.7})`;
+                ctx.beginPath();
+                ctx.ellipse(px, py, radius * 0.25, radius * 0.15, angle, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Draw rock from top-down
+        function drawRockTopDown(x, y, width, height, rotation) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.ellipse(4, 4, width/2, height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rock base
+            const rockGradient = ctx.createRadialGradient(-width*0.2, -height*0.2, 0, 0, 0, width/2);
+            rockGradient.addColorStop(0, '#8B8B8B');
+            rockGradient.addColorStop(0.5, '#6B6B6B');
+            rockGradient.addColorStop(1, '#4B4B4B');
+            ctx.fillStyle = rockGradient;
+            ctx.beginPath();
+            ctx.ellipse(0, 0, width/2, height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rock texture
+            ctx.fillStyle = 'rgba(60, 60, 60, 0.4)';
+            ctx.beginPath();
+            ctx.ellipse(-width*0.15, -height*0.1, width*0.15, height*0.1, 0.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Snow on rock
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            ctx.beginPath();
+            ctx.ellipse(0, -height*0.15, width*0.3, height*0.2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw fallen log from top-down
+        function drawLogTopDown(x, y, width, height, rotation) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+
+            // Shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.roundRect(-width/2 + 4, -height/2 + 4, width, height, height/2);
+            ctx.fill();
+
+            // Log bark
+            const logGradient = ctx.createLinearGradient(0, -height/2, 0, height/2);
+            logGradient.addColorStop(0, '#5D4E37');
+            logGradient.addColorStop(0.5, '#4A3C2A');
+            logGradient.addColorStop(1, '#3D3224');
+            ctx.fillStyle = logGradient;
+            ctx.beginPath();
+            ctx.roundRect(-width/2, -height/2, width, height, height/2);
+            ctx.fill();
+
+            // Bark texture lines
+            ctx.strokeStyle = 'rgba(30, 20, 10, 0.4)';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < width; i += 8) {
+                ctx.beginPath();
+                ctx.moveTo(-width/2 + i, -height/2);
+                ctx.lineTo(-width/2 + i, height/2);
+                ctx.stroke();
+            }
+
+            // Log ends (cut circles)
+            ctx.fillStyle = '#C4A574';
+            ctx.beginPath();
+            ctx.ellipse(-width/2, 0, height/2.5, height/2, 0, 0, Math.PI * 2);
+            ctx.ellipse(width/2, 0, height/2.5, height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ring pattern on ends
+            ctx.strokeStyle = '#8B7355';
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.ellipse(-width/2, 0, height/4, height/3, 0, 0, Math.PI * 2);
+            ctx.ellipse(width/2, 0, height/4, height/3, 0, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Snow on log
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.ellipse(0, -height*0.3, width*0.4, height*0.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        // Draw ice patch from top-down
+        function drawIceTopDown(x, y, width, height) {
+            // Ice shadow/glow
+            ctx.fillStyle = 'rgba(100, 180, 255, 0.2)';
+            ctx.beginPath();
+            ctx.ellipse(x, y, width/2 + 5, height/2 + 5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ice surface
+            const iceGradient = ctx.createRadialGradient(x - width*0.2, y - height*0.2, 0, x, y, width/2);
+            iceGradient.addColorStop(0, 'rgba(200, 230, 255, 0.8)');
+            iceGradient.addColorStop(0.7, 'rgba(150, 200, 240, 0.6)');
+            iceGradient.addColorStop(1, 'rgba(100, 170, 220, 0.4)');
+            ctx.fillStyle = iceGradient;
+            ctx.beginPath();
+            ctx.ellipse(x, y, width/2, height/2, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Ice cracks
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x - width*0.3, y);
+            ctx.lineTo(x + width*0.2, y - height*0.2);
+            ctx.moveTo(x, y - height*0.2);
+            ctx.lineTo(x + width*0.1, y + height*0.3);
+            ctx.stroke();
+
+            // Highlight
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.beginPath();
+            ctx.ellipse(x - width*0.15, y - height*0.15, width*0.15, height*0.1, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawObstacles() {
+            const bramProgress = players.bram.progress;
+            
+            obstacles.forEach(obs => {
+                const relativeProgress = obs.progress - bramProgress;
+                if (relativeProgress > -0.05 && relativeProgress < 0.25) {
+                    const y = 100 + relativeProgress * 2000;
+                    
+                    if (obs.type === 'tree') {
+                        drawTreeTopDown(obs.x, y, obs.radius, obs.snowAmount);
+                    } else if (obs.type === 'rock') {
+                        drawRockTopDown(obs.x, y, obs.width, obs.height, obs.rotation);
+                    } else if (obs.type === 'log') {
+                        drawLogTopDown(obs.x, y, obs.width, obs.height, obs.rotation);
+                    } else if (obs.type === 'ice') {
+                        drawIceTopDown(obs.x, y, obs.width, obs.height);
+                    }
+                }
+            });
+        }
+
+        function drawFoodItems() {
+            const bramProgress = players.bram.progress;
+            
+            foodItems.forEach(food => {
+                if (food.collected) return;
+                
+                const relativeProgress = food.progress - bramProgress;
+                if (relativeProgress > -0.05 && relativeProgress < 0.25) {
+                    const y = 100 + relativeProgress * 2000;
+                    
+                    // Glow effect
+                    food.glow += 0.1;
+                    const glowSize = 5 + Math.sin(food.glow) * 3;
+                    ctx.fillStyle = `rgba(255, 200, 100, ${0.3 + Math.sin(food.glow) * 0.1})`;
+                    ctx.beginPath();
+                    ctx.arc(food.x + food.size/2, y, food.size/2 + glowSize, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.font = `${food.size}px Arial`;
+                    ctx.fillText(food.type, food.x, y + food.size/3);
+                }
+            });
+        }
+
+        // Draw sled from top-down
+        function drawSledTopDown(x, y, color, colorLight, width) {
+            // Sled shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.beginPath();
+            ctx.roundRect(x - width/2 + 3, y - 8 + 3, width, 16, 3);
+            ctx.fill();
+
+            // Sled body
+            const sledGradient = ctx.createLinearGradient(x - width/2, 0, x + width/2, 0);
+            sledGradient.addColorStop(0, color);
+            sledGradient.addColorStop(0.5, colorLight);
+            sledGradient.addColorStop(1, color);
+            ctx.fillStyle = sledGradient;
+            ctx.beginPath();
+            ctx.roundRect(x - width/2, y - 8, width, 16, 3);
+            ctx.fill();
+
+            // Sled rails
+            ctx.fillStyle = '#444';
+            ctx.fillRect(x - width/2 + 2, y - 10, 3, 20);
+            ctx.fillRect(x + width/2 - 5, y - 10, 3, 20);
+
+            // Rail shine
+            ctx.fillStyle = '#888';
+            ctx.fillRect(x - width/2 + 3, y - 9, 1, 18);
+            ctx.fillRect(x + width/2 - 4, y - 9, 1, 18);
+        }
+
+        // Draw Bram (fawn pug) from top-down
+        function drawBramTopDown(player, y) {
+            const x = player.x;
+            
+            // Draw sled first
+            drawSledTopDown(x, y + 15, player.sledColor, player.sledColorLight, player.width + 8);
+
+            // Body shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.ellipse(x + 2, y + 2, player.width/2.2, player.height/2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pug body (fawn/tan)
+            const bodyGradient = ctx.createRadialGradient(x - 5, y - 5, 0, x, y, player.width/2);
+            bodyGradient.addColorStop(0, '#D4B088');
+            bodyGradient.addColorStop(0.7, player.bodyColor);
+            bodyGradient.addColorStop(1, player.bodyColorDark);
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.ellipse(x, y, player.width/2.2, player.height/2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pug head (rounder, at front)
+            const headY = y - player.height/3;
+            ctx.fillStyle = player.bodyColor;
+            ctx.beginPath();
+            ctx.arc(x, headY, player.width/2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Black pug face/muzzle
+            ctx.fillStyle = player.muzzleColor;
+            ctx.beginPath();
+            ctx.ellipse(x, headY + 4, player.width/4, player.width/5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Floppy pug ears (fawn colored, folded)
+            ctx.fillStyle = player.earColor;
+            ctx.beginPath();
+            ctx.ellipse(x - player.width/3, headY - 2, 6, 8, -0.4, 0, Math.PI * 2);
+            ctx.ellipse(x + player.width/3, headY - 2, 6, 8, 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Big pug eyes
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(x - 5, headY - 3, 5, 0, Math.PI * 2);
+            ctx.arc(x + 5, headY - 3, 5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#2a1a0a';
+            ctx.beginPath();
+            ctx.arc(x - 5, headY - 2, 3, 0, Math.PI * 2);
+            ctx.arc(x + 5, headY - 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye shine
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(x - 6, headY - 4, 1.5, 0, Math.PI * 2);
+            ctx.arc(x + 4, headY - 4, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Flat pug nose
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(x, headY + 6, 4, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Curly pug tail (on back)
+            ctx.strokeStyle = player.bodyColor;
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(x, y + player.height/3, 5, 0, Math.PI * 1.5);
+            ctx.stroke();
+
+            // Name tag
+            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeText(player.name, x - 14, y - player.height/2 - 5);
+            ctx.fillText(player.name, x - 14, y - player.height/2 - 5);
+        }
+
+        // Draw rat-terrier (Kino/Tessy) from top-down - white with brown patches
+        function drawRatTerrierTopDown(player, y) {
+            const x = player.x;
+            
+            // Draw sled first
+            drawSledTopDown(x, y + 15, player.sledColor, player.sledColorLight, player.width + 8);
+
+            // Body shadow
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+            ctx.beginPath();
+            ctx.ellipse(x + 2, y + 2, player.width/2.3, player.height/2.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rat-terrier body (white base)
+            const bodyGradient = ctx.createRadialGradient(x - 5, y - 5, 0, x, y, player.width/2);
+            bodyGradient.addColorStop(0, '#FFFFFF');
+            bodyGradient.addColorStop(0.7, player.bodyColor);
+            bodyGradient.addColorStop(1, player.bodyColorDark);
+            ctx.fillStyle = bodyGradient;
+            ctx.beginPath();
+            ctx.ellipse(x, y, player.width/2.3, player.height/2.3, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Brown patches on body
+            ctx.fillStyle = player.patchColor;
+            ctx.beginPath();
+            ctx.ellipse(x + player.width/5, y - player.height/6, player.width/5, player.height/5, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = player.patchColor2;
+            ctx.beginPath();
+            ctx.ellipse(x - player.width/6, y + player.height/8, player.width/6, player.height/7, -0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rat-terrier head (more pointed/wedge shaped)
+            const headY = y - player.height/3;
+            ctx.fillStyle = player.bodyColor;
+            ctx.beginPath();
+            ctx.ellipse(x, headY, player.width/2.8, player.width/2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Brown patch on head
+            ctx.fillStyle = player.patchColor;
+            ctx.beginPath();
+            ctx.ellipse(x + 3, headY - 3, player.width/5, player.width/4, 0.2, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Pointed muzzle (white)
+            ctx.fillStyle = player.bodyColor;
+            ctx.beginPath();
+            ctx.ellipse(x, headY + 6, player.width/5, player.width/8, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Erect triangular ears (rat-terrier style) - brown
+            ctx.fillStyle = player.earColor;
+            ctx.beginPath();
+            // Left ear
+            ctx.moveTo(x - player.width/3, headY);
+            ctx.lineTo(x - player.width/4 - 4, headY - 12);
+            ctx.lineTo(x - player.width/5, headY - 2);
+            ctx.closePath();
+            ctx.fill();
+            // Right ear
+            ctx.beginPath();
+            ctx.moveTo(x + player.width/3, headY);
+            ctx.lineTo(x + player.width/4 + 4, headY - 12);
+            ctx.lineTo(x + player.width/5, headY - 2);
+            ctx.closePath();
+            ctx.fill();
+
+            // Inner ear (pink)
+            ctx.fillStyle = '#FFCCCC';
+            ctx.beginPath();
+            ctx.moveTo(x - player.width/3 + 2, headY);
+            ctx.lineTo(x - player.width/4 - 2, headY - 8);
+            ctx.lineTo(x - player.width/5 - 1, headY - 1);
+            ctx.closePath();
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(x + player.width/3 - 2, headY);
+            ctx.lineTo(x + player.width/4 + 2, headY - 8);
+            ctx.lineTo(x + player.width/5 + 1, headY - 1);
+            ctx.closePath();
+            ctx.fill();
+
+            // Eyes (alert, smaller than pug)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(x - 5, headY - 1, 4, 0, Math.PI * 2);
+            ctx.arc(x + 5, headY - 1, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#3a2a1a';
+            ctx.beginPath();
+            ctx.arc(x - 5, headY, 2.5, 0, Math.PI * 2);
+            ctx.arc(x + 5, headY, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Eye shine
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            ctx.arc(x - 6, headY - 1, 1, 0, Math.PI * 2);
+            ctx.arc(x + 4, headY - 1, 1, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Black nose
+            ctx.fillStyle = '#000';
+            ctx.beginPath();
+            ctx.ellipse(x, headY + 8, 3, 2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Thin tail (straight up for rat-terrier, with brown tip)
+            ctx.strokeStyle = player.bodyColor;
+            ctx.lineWidth = 3;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x, y + player.height/3);
+            ctx.lineTo(x + 2, y + player.height/2.5 + 8);
+            ctx.stroke();
+            // Brown tail tip
+            ctx.strokeStyle = player.patchColor;
+            ctx.beginPath();
+            ctx.moveTo(x + 2, y + player.height/2.5 + 5);
+            ctx.lineTo(x + 2, y + player.height/2.5 + 10);
+            ctx.stroke();
+
+            // Name tag
+            ctx.font = 'bold 11px Arial';
+            ctx.fillStyle = '#FFFFFF';
+            ctx.strokeStyle = '#000000';
+            ctx.lineWidth = 3;
+            ctx.strokeText(player.name, x - 14, y - player.height/2 - 5);
+            ctx.fillText(player.name, x - 14, y - player.height/2 - 5);
+
+            // Add "old" indicator for Kino (gray whiskers)
+            if (player.name === 'Kino') {
+                ctx.strokeStyle = '#AAA';
+                ctx.lineWidth = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(x - 8, headY + 6);
+                ctx.lineTo(x - 15, headY + 5);
+                ctx.moveTo(x + 8, headY + 6);
+                ctx.lineTo(x + 15, headY + 5);
+                ctx.moveTo(x - 8, headY + 8);
+                ctx.lineTo(x - 14, headY + 9);
+                ctx.moveTo(x + 8, headY + 8);
+                ctx.lineTo(x + 14, headY + 9);
+                ctx.stroke();
+            }
+        }
+
+        function drawPlayers() {
+            const bramProgress = players.bram.progress;
+            
+            // Sort players by progress so further ones draw first
+            const sortedPlayers = Object.values(players).sort((a, b) => a.progress - b.progress);
+            
+            sortedPlayers.forEach(player => {
+                if (player.finished && !player.isPlayer) return;
+                
+                let y;
+                if (player.isPlayer) {
+                    y = 450; // Bram near bottom of screen
+                } else {
+                    const relativeProgress = player.progress - bramProgress;
+                    y = 450 - relativeProgress * 2000;
+                }
+                
+                if (y > -60 && y < canvas.height + 60) {
+                    if (player.type === 'pug') {
+                        drawBramTopDown(player, y);
+                    } else {
+                        drawRatTerrierTopDown(player, y);
+                    }
+                }
+            });
+        }
+
+        function drawFinishLine() {
+            const bramProgress = players.bram.progress;
+            const finishProgress = 1.0;
+            const relativeProgress = finishProgress - bramProgress;
+            
+            if (relativeProgress > -0.05 && relativeProgress < 0.25) {
+                const y = 100 + relativeProgress * 2000;
+                
+                // Checkered finish line (horizontal across screen)
+                const squareSize = 15;
+                for (let row = 0; row < 2; row++) {
+                    for (let i = 0; i < canvas.width / squareSize; i++) {
+                        ctx.fillStyle = (i + row) % 2 === 0 ? '#000000' : '#FFFFFF';
+                        ctx.fillRect(i * squareSize, y + row * squareSize, squareSize, squareSize);
+                    }
+                }
+                
+                // Finish banner
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+                ctx.beginPath();
+                ctx.roundRect(350, y - 25, 100, 22, 5);
+                ctx.fill();
+                ctx.fillStyle = '#FFFFFF';
+                ctx.font = 'bold 14px Arial';
+                ctx.fillText('🏁 FINISH!', 362, y - 9);
+            }
+        }
+
+        function drawProgressBar() {
+            const barWidth = 120;
+            const barHeight = 180;
+            const x = canvas.width - barWidth - 15;
+            const y = 15;
+            
+            // Background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.beginPath();
+            ctx.roundRect(x, y, barWidth, barHeight, 10);
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Title
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 11px Arial';
+            ctx.fillText('Race Progress', x + 20, y + 15);
+            
+            // Distance
+            const totalDist = Math.floor(metersPerProgress);
+            ctx.font = '9px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText(`${totalDist}m total`, x + 30, y + 27);
+            
+            // Progress track
+            const trackX = x + 15;
+            const trackWidth = barWidth - 30;
+            const trackY = y + 35;
+            const trackHeight = 130;
+            
+            // Track background with gradient
+            const trackGradient = ctx.createLinearGradient(0, trackY, 0, trackY + trackHeight);
+            trackGradient.addColorStop(0, '#4a7c4e');
+            trackGradient.addColorStop(0.5, '#E8E8E8');
+            trackGradient.addColorStop(1, '#87CEEB');
+            ctx.fillStyle = trackGradient;
+            ctx.beginPath();
+            ctx.roundRect(trackX, trackY, trackWidth, trackHeight, 5);
+            ctx.fill();
+            
+            // Player markers
+            Object.values(players).forEach(player => {
+                const markerY = trackY + trackHeight - 10 - player.progress * (trackHeight - 20);
+                
+                // Player dot
+                if (player.type === 'pug') {
+                    ctx.fillStyle = player.bodyColor;
+                } else {
+                    ctx.fillStyle = player.patchColor;
+                }
+                ctx.beginPath();
+                ctx.arc(trackX + trackWidth/2, markerY, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#FFF';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 8px Arial';
+                ctx.fillText(player.name[0], trackX + trackWidth/2 - 3, markerY + 3);
+            });
+            
+            // Start label
+            ctx.font = '8px Arial';
+            ctx.fillStyle = '#666';
+            ctx.fillText('START', trackX + 15, trackY + trackHeight - 2);
+            
+            // Finish flag at top
+            ctx.font = '12px Arial';
+            ctx.fillText('🏁', trackX + trackWidth/2 - 6, trackY + 12);
+        }
+
+        // Game logic
+        function updatePlayer() {
+            const player = players.bram;
+            
+            // Horizontal movement
+            const moveSpeed = 7;
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                player.x -= moveSpeed;
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                player.x += moveSpeed;
+            }
+            
+            // Keep in bounds
+            player.x = Math.max(90, Math.min(710, player.x));
+            
+            // Progress down the hill
+            player.speed = player.maxSpeed + level * 0.15;
+            player.progress += player.speed / currentTrackLength;
+            
+            // Check collisions with obstacles
+            const bramProgress = player.progress;
+            obstacles.forEach(obs => {
+                const relativeProgress = obs.progress - bramProgress;
+                if (Math.abs(relativeProgress) < 0.012) {
+                    let obsRadius;
+                    if (obs.type === 'tree') {
+                        obsRadius = obs.radius;
+                    } else if (obs.type === 'rock') {
+                        obsRadius = Math.max(obs.width, obs.height) / 2;
+                    } else if (obs.type === 'log') {
+                        obsRadius = obs.width / 2;
+                    } else if (obs.type === 'ice') {
+                        obsRadius = Math.max(obs.width, obs.height) / 2;
+                    }
+                    
+                    const distance = Math.abs(player.x - obs.x);
+                    if (distance < (player.width/2 + obsRadius * 0.7)) {
+                        gameState = 'crashed';
+                        showCrashScreen();
+                    }
+                }
+            });
+            
+            // Collect food
+            foodItems.forEach(food => {
+                if (food.collected) return;
+                const relativeProgress = food.progress - bramProgress;
+                if (Math.abs(relativeProgress) < 0.015) {
+                    const distance = Math.abs(player.x - food.x);
+                    if (distance < player.width) {
+                        food.collected = true;
+                        collectedFood++;
+                        totalFood++;
+                    }
+                }
+            });
+            
+            // Check finish
+            if (player.progress >= 1.0 && !player.finished) {
+                player.finished = true;
+                player.finishTime = Date.now();
+                checkRaceComplete();
+            }
+        }
+
+        function updateAI() {
+            Object.values(players).forEach(player => {
+                if (player.isPlayer || player.finished) return;
+                
+                // AI movement
+                const ai = player.ai;
+                
+                // Look ahead for obstacles
+                const lookAhead = player.progress + 0.03;
+                let targetX = player.x;
+                let needsToMove = false;
+                
+                obstacles.forEach(obs => {
+                    if (obs.progress > player.progress && obs.progress < lookAhead) {
+                        let obsRadius = obs.radius || Math.max(obs.width || 30, obs.height || 30) / 2;
+                        const distance = Math.abs(player.x - obs.x);
+                        if (distance < player.width/2 + obsRadius + 40) {
+                            needsToMove = true;
+                            if (player.x < obs.x) {
+                                targetX = obs.x - obsRadius - 50;
+                            } else {
+                                targetX = obs.x + obsRadius + 50;
+                            }
+                        }
+                    }
+                });
+                
+                // Move towards target
+                if (needsToMove && Math.random() < ai.reaction) {
+                    const moveAmount = (targetX - player.x) * 0.12 * ai.skill;
+                    player.x += moveAmount;
+                }
+                
+                // Add some randomness
+                player.x += (Math.random() - 0.5) * 1.5;
+                
+                // Keep in bounds
+                player.x = Math.max(90, Math.min(710, player.x));
+                
+                // Progress (slightly variable speed)
+                const speedVariation = 0.92 + Math.random() * 0.16;
+                player.speed = (player.maxSpeed + level * 0.12) * speedVariation;
+                player.progress += player.speed / currentTrackLength;
+                
+                // Check finish
+                if (player.progress >= 1.0 && !player.finished) {
+                    player.finished = true;
+                    player.finishTime = Date.now();
+                    checkRaceComplete();
+                }
+            });
+        }
+
+        function checkRaceComplete() {
+            const allFinished = Object.values(players).every(p => p.finished);
+            if (allFinished || players.bram.finished) {
+                gameState = 'levelComplete';
+                showLevelComplete();
+            }
+        }
+
+        function showCrashScreen() {
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+            
+            const sorted = Object.values(players).sort((a, b) => b.progress - a.progress);
+            let resultsHTML = '<div style="font-size: 16px; margin-top: 10px;">';
+            resultsHTML += '<p>When you crashed:</p>';
+            sorted.forEach((p, i) => {
+                const meters = Math.floor(p.progress * metersPerProgress);
+                resultsHTML += `<p>${i + 1}. ${p.name}: ${meters}m</p>`;
+            });
+            resultsHTML += '</div>';
+            document.getElementById('crashResults').innerHTML = resultsHTML;
+        }
+
+        function showLevelComplete() {
+            document.getElementById('levelCompleteScreen').classList.remove('hidden');
+            
+            const sorted = Object.values(players).sort((a, b) => {
+                if (a.finishTime && b.finishTime) return a.finishTime - b.finishTime;
+                if (a.finishTime) return -1;
+                if (b.finishTime) return 1;
+                return b.progress - a.progress;
+            });
+            
+            let resultsHTML = '';
+            const places = ['🥇', '🥈', '🥉'];
+            sorted.forEach((p, i) => {
+                const placeClass = i === 0 ? 'first-place' : i === 1 ? 'second-place' : 'third-place';
+                resultsHTML += `<div class="result-item ${placeClass}">
+                    ${places[i]} ${p.name} ${p.isPlayer ? '(YOU!)' : ''} 
+                </div>`;
+            });
+            
+            document.getElementById('raceResults').innerHTML = resultsHTML;
+            document.getElementById('foodCollected').innerHTML = 
+                `Food collected this level: ${collectedFood} 🍖<br>Total food: ${totalFood}`;
+            
+            const positionBonus = sorted.findIndex(p => p.isPlayer) === 0 ? 500 : 
+                                  sorted.findIndex(p => p.isPlayer) === 1 ? 300 : 100;
+            const foodBonus = collectedFood * 50;
+            const levelBonus = level * 100;
+            const levelScore = positionBonus + foodBonus + levelBonus;
+            totalScore += levelScore;
+            
+            document.getElementById('levelScore').innerHTML = 
+                `Level Score: ${levelScore} (Position: ${positionBonus} + Food: ${foodBonus} + Level: ${levelBonus})`;
+        }
+
+        function updateUI() {
+            document.getElementById('levelDisplay').textContent = level;
+            document.getElementById('bramProgress').textContent = Math.floor(players.bram.progress * metersPerProgress) + 'm';
+            document.getElementById('kinoProgress').textContent = Math.floor(players.kino.progress * metersPerProgress) + 'm';
+            document.getElementById('tessyProgress').textContent = Math.floor(players.tessy.progress * metersPerProgress) + 'm';
+            document.getElementById('foodDisplay').textContent = '🍖 ' + totalFood;
+            document.getElementById('scoreDisplay').textContent = totalScore;
+        }
+
+        // Game loop
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            drawBackground();
+            
+            if (gameState === 'playing') {
+                updatePlayer();
+                updateAI();
+                drawObstacles();
+                drawFoodItems();
+                drawFinishLine();
+                drawPlayers();
+                drawProgressBar();
+                updateUI();
+            } else if (gameState === 'start') {
+                drawPlayers();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            level = 1;
+            totalScore = 0;
+            totalFood = 0;
+            generateLevel();
+            gameState = 'playing';
+        }
+
+        function restartLevel() {
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            generateLevel();
+            gameState = 'playing';
+        }
+
+        function nextLevel() {
+            document.getElementById('levelCompleteScreen').classList.add('hidden');
+            level++;
+            
+            players.kino.ai.skill = Math.min(0.95, players.kino.ai.skill + 0.02);
+            players.kino.ai.reaction = Math.min(0.95, players.kino.ai.reaction + 0.015);
+            players.tessy.ai.skill = Math.min(0.98, players.tessy.ai.skill + 0.02);
+            players.tessy.ai.reaction = Math.min(0.98, players.tessy.ai.reaction + 0.015);
+            
+            players.kino.maxSpeed = Math.min(5.5, players.kino.maxSpeed + 0.08);
+            players.tessy.maxSpeed = Math.min(5.3, players.tessy.maxSpeed + 0.08);
+            
+            generateLevel();
+            gameState = 'playing';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Draw character previews on start screen
+        function drawPreviews() {
+            // Bram preview
+            const bramCanvas = document.getElementById('bramPreview');
+            const bramCtx = bramCanvas.getContext('2d');
+            bramCtx.clearRect(0, 0, 80, 80);
+            
+            // Simple pug face preview
+            bramCtx.fillStyle = '#C4956A';
+            bramCtx.beginPath();
+            bramCtx.arc(40, 45, 25, 0, Math.PI * 2);
+            bramCtx.fill();
+            bramCtx.fillStyle = '#1a1a1a';
+            bramCtx.beginPath();
+            bramCtx.ellipse(40, 52, 12, 8, 0, 0, Math.PI * 2);
+            bramCtx.fill();
+            bramCtx.fillStyle = '#8B6914';
+            bramCtx.beginPath();
+            bramCtx.ellipse(22, 38, 8, 10, -0.3, 0, Math.PI * 2);
+            bramCtx.ellipse(58, 38, 8, 10, 0.3, 0, Math.PI * 2);
+            bramCtx.fill();
+            bramCtx.fillStyle = '#FFF';
+            bramCtx.beginPath();
+            bramCtx.arc(32, 42, 6, 0, Math.PI * 2);
+            bramCtx.arc(48, 42, 6, 0, Math.PI * 2);
+            bramCtx.fill();
+            bramCtx.fillStyle = '#2a1a0a';
+            bramCtx.beginPath();
+            bramCtx.arc(32, 43, 3, 0, Math.PI * 2);
+            bramCtx.arc(48, 43, 3, 0, Math.PI * 2);
+            bramCtx.fill();
+            bramCtx.fillStyle = '#000';
+            bramCtx.beginPath();
+            bramCtx.ellipse(40, 55, 5, 4, 0, 0, Math.PI * 2);
+            bramCtx.fill();
+
+            // Kino preview
+            const kinoCanvas = document.getElementById('kinoPreview');
+            const kinoCtx = kinoCanvas.getContext('2d');
+            kinoCtx.clearRect(0, 0, 80, 80);
+            
+            kinoCtx.fillStyle = '#F5F5F5';
+            kinoCtx.beginPath();
+            kinoCtx.arc(40, 45, 22, 0, Math.PI * 2);
+            kinoCtx.fill();
+            kinoCtx.fillStyle = '#8B6914';
+            kinoCtx.beginPath();
+            kinoCtx.ellipse(50, 38, 10, 12, 0.2, 0, Math.PI * 2);
+            kinoCtx.fill();
+            // Ears
+            kinoCtx.fillStyle = '#8B6914';
+            kinoCtx.beginPath();
+            kinoCtx.moveTo(22, 45);
+            kinoCtx.lineTo(15, 25);
+            kinoCtx.lineTo(30, 38);
+            kinoCtx.closePath();
+            kinoCtx.fill();
+            kinoCtx.beginPath();
+            kinoCtx.moveTo(58, 45);
+            kinoCtx.lineTo(65, 25);
+            kinoCtx.lineTo(50, 38);
+            kinoCtx.closePath();
+            kinoCtx.fill();
+            kinoCtx.fillStyle = '#FFF';
+            kinoCtx.beginPath();
+            kinoCtx.arc(32, 44, 5, 0, Math.PI * 2);
+            kinoCtx.arc(48, 44, 5, 0, Math.PI * 2);
+            kinoCtx.fill();
+            kinoCtx.fillStyle = '#3a2a1a';
+            kinoCtx.beginPath();
+            kinoCtx.arc(32, 45, 3, 0, Math.PI * 2);
+            kinoCtx.arc(48, 45, 3, 0, Math.PI * 2);
+            kinoCtx.fill();
+            kinoCtx.fillStyle = '#000';
+            kinoCtx.beginPath();
+            kinoCtx.ellipse(40, 54, 4, 3, 0, 0, Math.PI * 2);
+            kinoCtx.fill();
+            // Gray whiskers for old Kino
+            kinoCtx.strokeStyle = '#AAA';
+            kinoCtx.lineWidth = 1;
+            kinoCtx.beginPath();
+            kinoCtx.moveTo(30, 52);
+            kinoCtx.lineTo(18, 50);
+            kinoCtx.moveTo(50, 52);
+            kinoCtx.lineTo(62, 50);
+            kinoCtx.stroke();
+
+            // Tessy preview
+            const tessyCanvas = document.getElementById('tessyPreview');
+            const tessyCtx = tessyCanvas.getContext('2d');
+            tessyCtx.clearRect(0, 0, 80, 80);
+            
+            tessyCtx.fillStyle = '#FAFAFA';
+            tessyCtx.beginPath();
+            tessyCtx.arc(40, 45, 21, 0, Math.PI * 2);
+            tessyCtx.fill();
+            tessyCtx.fillStyle = '#A0826D';
+            tessyCtx.beginPath();
+            tessyCtx.ellipse(48, 40, 9, 11, 0.3, 0, Math.PI * 2);
+            tessyCtx.fill();
+            // Ears
+            tessyCtx.fillStyle = '#A0826D';
+            tessyCtx.beginPath();
+            tessyCtx.moveTo(23, 45);
+            tessyCtx.lineTo(17, 27);
+            tessyCtx.lineTo(30, 40);
+            tessyCtx.closePath();
+            tessyCtx.fill();
+            tessyCtx.beginPath();
+            tessyCtx.moveTo(57, 45);
+            tessyCtx.lineTo(63, 27);
+            tessyCtx.lineTo(50, 40);
+            tessyCtx.closePath();
+            tessyCtx.fill();
+            tessyCtx.fillStyle = '#FFF';
+            tessyCtx.beginPath();
+            tessyCtx.arc(33, 44, 5, 0, Math.PI * 2);
+            tessyCtx.arc(47, 44, 5, 0, Math.PI * 2);
+            tessyCtx.fill();
+            tessyCtx.fillStyle = '#3a2a1a';
+            tessyCtx.beginPath();
+            tessyCtx.arc(33, 45, 3, 0, Math.PI * 2);
+            tessyCtx.arc(47, 45, 3, 0, Math.PI * 2);
+            tessyCtx.fill();
+            tessyCtx.fillStyle = '#000';
+            tessyCtx.beginPath();
+            tessyCtx.ellipse(40, 53, 4, 3, 0, 0, Math.PI * 2);
+            tessyCtx.fill();
+        }
+
+        // Initialize
+        initSnowPatches();
+        generateLevel();
+        drawPreviews();
+        gameLoop();
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bram and the Quest of the Holy Sausage</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <div id="title-screen" class="screen active">
+            <div class="title-content">
+                <h1>🌭 BRAM 🌭</h1>
+                <h2>and the Quest of the Holy Sausage</h2>
+                <p class="subtitle">A Sierra-Style Adventure</p>
+                <div class="pug-ascii">
+                    <pre>
+    .-"-.
+   /|6 6|\
+  {/(_0_)\}
+   _/ ^ \_
+  (/ /^\ \)-'
+   ""' '""
+                    </pre>
+                </div>
+                <p class="tagline">"Vies Ventje on a Noble Quest"</p>
+                <button id="start-btn" class="game-btn">Start Adventure</button>
+                <button id="credits-btn" class="game-btn">Credits</button>
+            </div>
+        </div>
+
+        <div id="game-screen" class="screen">
+            <div id="menu-bar">
+                <span class="menu-item" data-action="walk">👣 Walk</span>
+                <span class="menu-item" data-action="look">👁️ Look</span>
+                <span class="menu-item" data-action="use">✋ Use</span>
+                <span class="menu-item" data-action="talk">💬 Talk</span>
+                <span class="menu-item" data-action="inventory">🎒 Inventory</span>
+                <span class="menu-item" data-action="save">💾 Save</span>
+            </div>
+            
+            <canvas id="game-canvas" width="800" height="450"></canvas>
+            
+            <div id="text-box">
+                <p id="game-text">Welcome to the adventure, Bram!</p>
+            </div>
+            
+            <div id="inventory-panel" class="hidden">
+                <h3>Bram's Inventory</h3>
+                <div id="inventory-items"></div>
+                <button id="close-inventory" class="game-btn">Close</button>
+            </div>
+
+            <div id="dialog-box" class="hidden">
+                <div id="dialog-portrait"></div>
+                <div id="dialog-content">
+                    <p id="dialog-text"></p>
+                    <div id="dialog-choices"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="credits-screen" class="screen">
+            <h2>Credits</h2>
+            <p>Created with ❤️ for Bram the Pug</p>
+            <p>A "Vies Ventje" Production</p>
+            <p>Inspired by Sierra Adventure Games</p>
+            <button id="back-btn" class="game-btn">Back to Menu</button>
+        </div>
+    </div>
+
+    <script src="js/audio.js"></script>
+    <script src="js/sprites.js"></script>
+    <script src="js/scenes.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,2048 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threads of Fate - A Weaver's Tale</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a12;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 960px;
+            height: 600px;
+            background: #1a1a2e;
+            border: 4px solid #4a4a6a;
+            border-radius: 8px;
+            box-shadow: 0 0 50px rgba(100, 100, 200, 0.3);
+        }
+
+        #game-canvas {
+            display: block;
+            cursor: pointer;
+        }
+
+        #distaff-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: linear-gradient(to bottom, rgba(20, 20, 40, 0.9), rgba(10, 10, 20, 0.95));
+            border-top: 2px solid #4a4a6a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .distaff-note {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px currentColor;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .distaff-note:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px currentColor;
+        }
+
+        .distaff-note.active {
+            animation: noteGlow 0.5s ease;
+        }
+
+        @keyframes noteGlow {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.3); box-shadow: 0 0 40px currentColor; }
+            100% { transform: scale(1); }
+        }
+
+        .note-c { background: radial-gradient(circle, #ff6b6b, #c92a2a); }
+        .note-d { background: radial-gradient(circle, #ffa94d, #d9480f); }
+        .note-e { background: radial-gradient(circle, #ffd43b, #f59f00); }
+        .note-f { background: radial-gradient(circle, #69db7c, #2f9e44); }
+        .note-g { background: radial-gradient(circle, #4dabf7, #1971c2); }
+        .note-a { background: radial-gradient(circle, #9775fa, #6741d9); }
+        .note-b { background: radial-gradient(circle, #f783ac, #c2255c); }
+        .note-c2 { background: radial-gradient(circle, #ffffff, #adb5bd); }
+
+        #draft-display {
+            position: absolute;
+            bottom: 85px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 5px;
+            padding: 5px 15px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 20px;
+            min-height: 30px;
+        }
+
+        .draft-note {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #message-box {
+            position: absolute;
+            bottom: 90px;
+            left: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: #e8e8f0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid #4a4a6a;
+            font-size: 16px;
+            line-height: 1.5;
+            display: none;
+            text-align: center;
+        }
+
+        #message-box.visible {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #inventory {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .draft-learned {
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #6a6a8a;
+            border-radius: 5px;
+            color: #aaa;
+            font-size: 12px;
+            cursor: help;
+        }
+
+        .draft-learned:hover {
+            background: rgba(50, 50, 80, 0.9);
+            color: #fff;
+        }
+
+        #title-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, #0a0a1a, #1a1a3a);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        #title-screen h1 {
+            font-size: 48px;
+            color: #9775fa;
+            text-shadow: 0 0 30px #9775fa, 0 0 60px #6741d9;
+            margin-bottom: 20px;
+            letter-spacing: 8px;
+        }
+
+        #title-screen h2 {
+            font-size: 24px;
+            color: #6a6a8a;
+            margin-bottom: 60px;
+            font-weight: normal;
+            font-style: italic;
+        }
+
+        #start-btn {
+            padding: 15px 50px;
+            font-size: 20px;
+            background: linear-gradient(to bottom, #4a4a6a, #2a2a4a);
+            color: #e8e8f0;
+            border: 2px solid #6a6a8a;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Georgia', serif;
+        }
+
+        #start-btn:hover {
+            background: linear-gradient(to bottom, #6a6a8a, #4a4a6a);
+            box-shadow: 0 0 30px rgba(100, 100, 200, 0.5);
+            transform: scale(1.05);
+        }
+
+        .thread-decoration {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent, #9775fa, transparent);
+            opacity: 0.3;
+        }
+
+        #cursor-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+            pointer-events: none;
+            display: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="960" height="520"></canvas>
+        
+        <div id="title-screen">
+            <div class="thread-decoration" style="left: 20%;"></div>
+            <div class="thread-decoration" style="left: 40%;"></div>
+            <div class="thread-decoration" style="left: 60%;"></div>
+            <div class="thread-decoration" style="left: 80%;"></div>
+            <h1>THREADS OF FATE</h1>
+            <h2>A Weaver's Tale</h2>
+            <button id="start-btn">Begin Your Journey</button>
+        </div>
+
+        <div id="draft-display"></div>
+        
+        <div id="distaff-container">
+            <div class="distaff-note note-c" data-note="C">C</div>
+            <div class="distaff-note note-d" data-note="D">D</div>
+            <div class="distaff-note note-e" data-note="E">E</div>
+            <div class="distaff-note note-f" data-note="F">F</div>
+            <div class="distaff-note note-g" data-note="G">G</div>
+            <div class="distaff-note note-a" data-note="A">A</div>
+            <div class="distaff-note note-b" data-note="B">B</div>
+            <div class="distaff-note note-c2" data-note="C2">C'</div>
+        </div>
+
+        <div id="message-box"></div>
+        <div id="inventory"></div>
+        <div id="cursor-label"></div>
+    </div>
+
+    <script>
+// ============================================
+// THREADS OF FATE - A Weaver's Tale
+// A LucasArts Loom-inspired Adventure Game
+// ============================================
+
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const messageBox = document.getElementById('message-box');
+const draftDisplay = document.getElementById('draft-display');
+const inventoryEl = document.getElementById('inventory');
+const cursorLabel = document.getElementById('cursor-label');
+const titleScreen = document.getElementById('title-screen');
+
+// Audio Context for musical notes
+let audioCtx = null;
+
+function initAudio() {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+
+// Note frequencies
+const noteFrequencies = {
+    'C': 261.63,
+    'D': 293.66,
+    'E': 329.63,
+    'F': 349.23,
+    'G': 392.00,
+    'A': 440.00,
+    'B': 493.88,
+    'C2': 523.25
+};
+
+const noteColors = {
+    'C': '#ff6b6b',
+    'D': '#ffa94d',
+    'E': '#ffd43b',
+    'F': '#69db7c',
+    'G': '#4dabf7',
+    'A': '#9775fa',
+    'B': '#f783ac',
+    'C2': '#ffffff'
+};
+
+// Game State
+const gameState = {
+    currentScene: 'tower_top',
+    draftsLearned: [],
+    currentDraft: [],
+    flags: {},
+    messageTimeout: null,
+    isPlaying: false
+};
+
+// Drafts (Spells) - Sequence of notes
+const drafts = {
+    'opening': { notes: ['C', 'D', 'E', 'F'], name: 'Opening', reverse: 'closing' },
+    'closing': { notes: ['F', 'E', 'D', 'C'], name: 'Closing', reverse: 'opening' },
+    'light': { notes: ['E', 'G', 'A', 'C2'], name: 'Light', reverse: 'dark' },
+    'dark': { notes: ['C2', 'A', 'G', 'E'], name: 'Darkness', reverse: 'light' },
+    'healing': { notes: ['C', 'E', 'G', 'C2'], name: 'Healing', reverse: 'harming' },
+    'transform': { notes: ['D', 'F', 'A', 'B'], name: 'Transformation', reverse: null },
+    'sleep': { notes: ['G', 'E', 'C', 'D'], name: 'Sleep', reverse: 'wake' },
+    'wake': { notes: ['D', 'C', 'E', 'G'], name: 'Awakening', reverse: 'sleep' }
+};
+
+// Scenes
+const scenes = {
+    tower_top: {
+        name: "Weaver's Tower - Observatory",
+        background: drawTowerTop,
+        hotspots: [
+            {
+                id: 'telescope',
+                x: 650, y: 150, width: 120, height: 200,
+                name: 'Ancient Telescope',
+                look: 'An ornate telescope points toward the stars. The Weavers used it to read the patterns of fate in the heavens.',
+                draft: null,
+                onDraft: null
+            },
+            {
+                id: 'tome',
+                x: 100, y: 280, width: 100, height: 80,
+                name: 'Tome of Drafts',
+                look: 'The ancient tome of your people. It contains the first draft you ever learned.',
+                interact: function() {
+                    if (!gameState.draftsLearned.includes('opening')) {
+                        gameState.draftsLearned.push('opening');
+                        gameState.draftsLearned.push('closing');
+                        showMessage('You open the tome and remember the first draft taught to all Weavers: the Draft of Opening. Its reverse creates the Draft of Closing.\n\n♪ C - D - E - F ♪', 6000);
+                        updateInventory();
+                    } else {
+                        showMessage('The tome reminds you of simpler times, when the Guild still thrived.', 3000);
+                    }
+                }
+            },
+            {
+                id: 'crystal',
+                x: 450, y: 100, width: 60, height: 100,
+                name: 'Glowing Crystal',
+                look: 'A crystal that once held pure light. Now it flickers dimly.',
+                draft: 'light',
+                onDraft: function() {
+                    gameState.flags.crystalLit = true;
+                    showMessage('The crystal blazes with renewed light! It illuminates a hidden passage behind the bookshelf.', 4000);
+                    this.look = 'The crystal shines brilliantly, revealing secrets long hidden.';
+                }
+            },
+            {
+                id: 'door',
+                x: 20, y: 150, width: 80, height: 250,
+                name: 'Tower Door',
+                look: 'The door leading down from the observatory. It seems to be sealed.',
+                draft: 'opening',
+                onDraft: function() {
+                    gameState.flags.towerDoorOpen = true;
+                    showMessage('The door shimmers and swings open, revealing the spiral staircase below.', 3000);
+                    this.look = 'The door stands open, the staircase descending into shadow.';
+                },
+                interact: function() {
+                    if (gameState.flags.towerDoorOpen) {
+                        gameState.currentScene = 'tower_stairs';
+                        showMessage('You descend the ancient stairs...', 2000);
+                    } else {
+                        showMessage('The door is sealed with an ancient weave. Perhaps a draft could open it.', 3000);
+                    }
+                }
+            },
+            {
+                id: 'passage',
+                x: 200, y: 200, width: 80, height: 150,
+                name: 'Hidden Passage',
+                hidden: true,
+                showWhen: () => gameState.flags.crystalLit,
+                look: 'A secret passage revealed by the crystal\'s light!',
+                interact: function() {
+                    gameState.currentScene = 'secret_room';
+                    showMessage('You slip through the narrow passage...', 2000);
+                }
+            }
+        ]
+    },
+    tower_stairs: {
+        name: "Spiral Staircase",
+        background: drawTowerStairs,
+        hotspots: [
+            {
+                id: 'upstairs',
+                x: 800, y: 100, width: 100, height: 150,
+                name: 'Stairs Up',
+                look: 'The stairs lead back up to the observatory.',
+                interact: function() {
+                    gameState.currentScene = 'tower_top';
+                    showMessage('You climb back to the observatory.', 2000);
+                }
+            },
+            {
+                id: 'downstairs',
+                x: 50, y: 300, width: 100, height: 150,
+                name: 'Stairs Down',
+                look: 'The stairs continue down into darkness.',
+                interact: function() {
+                    gameState.currentScene = 'tower_base';
+                    showMessage('You descend further into the tower...', 2000);
+                }
+            },
+            {
+                id: 'tapestry',
+                x: 400, y: 80, width: 200, height: 300,
+                name: 'Grand Tapestry',
+                look: 'A magnificent tapestry depicting the Great Loom - the source of all magical drafts. You notice musical notes woven into the pattern...',
+                interact: function() {
+                    if (!gameState.draftsLearned.includes('light')) {
+                        gameState.draftsLearned.push('light');
+                        gameState.draftsLearned.push('dark');
+                        showMessage('Studying the tapestry, you discern the Draft of Light woven into its threads!\n\n♪ E - G - A - C\' ♪', 5000);
+                        updateInventory();
+                    } else {
+                        showMessage('The tapestry shows the Great Loom in all its glory - a device that could weave the very fabric of reality.', 4000);
+                    }
+                }
+            },
+            {
+                id: 'sleeping_cat',
+                x: 650, y: 380, width: 80, height: 60,
+                name: 'Sleeping Cat',
+                look: 'A magical familiar, deep in slumber. It guards something beneath its paws.',
+                draft: 'wake',
+                onDraft: function() {
+                    gameState.flags.catAwake = true;
+                    showMessage('The cat stretches and yawns, then pads away, revealing a small key!', 4000);
+                    this.look = 'The cat is now awake and watching you with knowing eyes.';
+                    this.name = 'Watchful Cat';
+                },
+                interact: function() {
+                    if (gameState.flags.catAwake) {
+                        if (!gameState.flags.hasKey) {
+                            gameState.flags.hasKey = true;
+                            showMessage('You pick up the ornate key. It tingles with magical energy.', 3000);
+                        } else {
+                            showMessage('The cat purrs contentedly.', 2000);
+                        }
+                    } else {
+                        showMessage('You dare not disturb the familiar. Who knows what protective spells guard its sleep?', 3000);
+                    }
+                }
+            }
+        ]
+    },
+    tower_base: {
+        name: "Tower Base - Grand Hall",
+        background: drawTowerBase,
+        hotspots: [
+            {
+                id: 'upstairs_base',
+                x: 850, y: 150, width: 80, height: 200,
+                name: 'Stairs Up',
+                look: 'The spiral staircase leads back up.',
+                interact: function() {
+                    gameState.currentScene = 'tower_stairs';
+                    showMessage('You climb the stairs...', 2000);
+                }
+            },
+            {
+                id: 'main_door',
+                x: 400, y: 150, width: 160, height: 280,
+                name: 'Great Door',
+                look: 'The main entrance to the tower. Beyond lies the outside world.',
+                interact: function() {
+                    if (gameState.flags.hasKey && gameState.flags.doorUnlocked) {
+                        gameState.currentScene = 'forest_path';
+                        showMessage('You step out into the world beyond...', 2000);
+                    } else if (gameState.flags.hasKey) {
+                        gameState.flags.doorUnlocked = true;
+                        showMessage('You use the magical key. The lock clicks open with a musical chime!', 3000);
+                    } else {
+                        showMessage('The great door is locked. You need a key to open it.', 3000);
+                    }
+                }
+            },
+            {
+                id: 'mirror',
+                x: 100, y: 200, width: 100, height: 180,
+                name: 'Enchanted Mirror',
+                look: 'An ancient mirror that shows not your reflection, but shadows of possible futures...',
+                interact: function() {
+                    showMessage('In the mirror, you see yourself standing before the Great Loom, threads of fate flowing through your fingers. But is this future... or merely possibility?', 5000);
+                }
+            },
+            {
+                id: 'fountain',
+                x: 700, y: 300, width: 100, height: 120,
+                name: 'Dried Fountain',
+                look: 'Once this fountain flowed with the Waters of Clarity. Now it stands empty.',
+                draft: 'healing',
+                onDraft: function() {
+                    gameState.flags.fountainRestored = true;
+                    showMessage('Crystal clear water springs forth! You feel your mind sharpen and memories of lost drafts return...', 4000);
+                    if (!gameState.draftsLearned.includes('transform')) {
+                        gameState.draftsLearned.push('transform');
+                        showMessage('The Draft of Transformation surfaces in your memory!\n\n♪ D - F - A - B ♪', 5000);
+                        updateInventory();
+                    }
+                    this.look = 'The fountain flows with magical waters once more.';
+                }
+            }
+        ]
+    },
+    secret_room: {
+        name: "Hidden Chamber",
+        background: drawSecretRoom,
+        hotspots: [
+            {
+                id: 'back_passage',
+                x: 850, y: 200, width: 80, height: 200,
+                name: 'Passage Back',
+                look: 'The passage back to the observatory.',
+                interact: function() {
+                    gameState.currentScene = 'tower_top';
+                    showMessage('You return to the observatory.', 2000);
+                }
+            },
+            {
+                id: 'loom_model',
+                x: 350, y: 150, width: 250, height: 250,
+                name: 'Model of the Great Loom',
+                look: 'A miniature replica of the Great Loom! Threads of pure light connect its spindles.',
+                interact: function() {
+                    if (!gameState.draftsLearned.includes('sleep')) {
+                        gameState.draftsLearned.push('sleep');
+                        gameState.draftsLearned.push('wake');
+                        showMessage('Touching the model, knowledge flows into you - the Draft of Sleep and its reverse, the Draft of Awakening!\n\n♪ G - E - C - D ♪', 5000);
+                        updateInventory();
+                    } else {
+                        showMessage('The model hums with residual magic. This is what you seek - but the real Loom lies somewhere beyond the tower.', 4000);
+                    }
+                }
+            },
+            {
+                id: 'prophecy',
+                x: 100, y: 100, width: 150, height: 250,
+                name: 'Wall Inscription',
+                look: 'Ancient runes are carved into the wall.',
+                interact: function() {
+                    showMessage('"When chaos unravels the threads of fate, the last Weaver must journey to the Loom. Only there can the Pattern be restored. But beware - the Unraveler seeks to undo all that was woven..."', 6000);
+                }
+            }
+        ]
+    },
+    forest_path: {
+        name: "The Whispering Woods",
+        background: drawForestPath,
+        hotspots: [
+            {
+                id: 'tower_entrance',
+                x: 850, y: 200, width: 80, height: 200,
+                name: 'Tower Entrance',
+                look: 'The tower looms behind you.',
+                interact: function() {
+                    gameState.currentScene = 'tower_base';
+                    showMessage('You return to the safety of the tower.', 2000);
+                }
+            },
+            {
+                id: 'forest_deeper',
+                x: 20, y: 200, width: 80, height: 200,
+                name: 'Forest Path',
+                look: 'The path winds deeper into the whispering woods.',
+                interact: function() {
+                    gameState.currentScene = 'forest_clearing';
+                    showMessage('You venture deeper into the ancient forest...', 2000);
+                }
+            },
+            {
+                id: 'wounded_deer',
+                x: 400, y: 320, width: 120, height: 100,
+                name: 'Wounded Deer',
+                look: 'A magical deer lies wounded on the forest floor. Its silver fur is stained.',
+                draft: 'healing',
+                onDraft: function() {
+                    gameState.flags.deerHealed = true;
+                    showMessage('The deer\'s wounds close and it rises gracefully. It bows its head in thanks, then bounds away - but not before gifting you a silver hair from its mane.', 5000);
+                    this.look = 'A patch of silver fur marks where the deer once lay.';
+                    this.name = 'Silver Fur Patch';
+                    gameState.flags.hasSilverHair = true;
+                }
+            },
+            {
+                id: 'glowing_mushrooms',
+                x: 200, y: 380, width: 80, height: 60,
+                name: 'Luminous Mushrooms',
+                look: 'Mushrooms that glow with an inner light. They might be useful...',
+                draft: 'dark',
+                onDraft: function() {
+                    showMessage('The mushrooms\' glow fades, revealing a hidden trapdoor beneath them!', 4000);
+                    gameState.flags.trapdoorRevealed = true;
+                }
+            },
+            {
+                id: 'trapdoor',
+                x: 200, y: 400, width: 80, height: 40,
+                name: 'Hidden Trapdoor',
+                hidden: true,
+                showWhen: () => gameState.flags.trapdoorRevealed,
+                look: 'A moss-covered trapdoor leading underground.',
+                draft: 'opening',
+                onDraft: function() {
+                    gameState.flags.trapdoorOpen = true;
+                    showMessage('The trapdoor creaks open, revealing a tunnel below!', 3000);
+                },
+                interact: function() {
+                    if (gameState.flags.trapdoorOpen) {
+                        gameState.currentScene = 'underground';
+                        showMessage('You descend into the darkness below...', 2000);
+                    } else {
+                        showMessage('The trapdoor is sealed shut. A draft might open it.', 3000);
+                    }
+                }
+            }
+        ]
+    },
+    forest_clearing: {
+        name: "The Sacred Clearing",
+        background: drawForestClearing,
+        hotspots: [
+            {
+                id: 'path_back',
+                x: 850, y: 200, width: 80, height: 200,
+                name: 'Path Back',
+                look: 'The path leads back toward the tower.',
+                interact: function() {
+                    gameState.currentScene = 'forest_path';
+                    showMessage('You return along the forest path.', 2000);
+                }
+            },
+            {
+                id: 'standing_stones',
+                x: 350, y: 150, width: 250, height: 200,
+                name: 'Standing Stones',
+                look: 'Ancient stones arranged in a circle. They thrum with dormant power.',
+                interact: function() {
+                    if (gameState.flags.hasSilverHair && gameState.draftsLearned.includes('transform')) {
+                        showMessage('You feel the stones responding to your presence. With the silver hair and the Draft of Transformation, you could activate this ancient portal...', 5000);
+                    } else {
+                        showMessage('The stones seem to be waiting for something - a catalyst and the right magic.', 4000);
+                    }
+                },
+                draft: 'transform',
+                onDraft: function() {
+                    if (gameState.flags.hasSilverHair) {
+                        showMessage('You weave the silver hair through the air as you play the draft. The stones blaze with light and a portal opens!', 5000);
+                        gameState.flags.portalOpen = true;
+                    } else {
+                        showMessage('The draft echoes through the stones but nothing happens. You need some kind of magical catalyst.', 4000);
+                    }
+                }
+            },
+            {
+                id: 'portal',
+                x: 400, y: 200, width: 150, height: 150,
+                name: 'Shimmering Portal',
+                hidden: true,
+                showWhen: () => gameState.flags.portalOpen,
+                look: 'A gateway woven of pure light and possibility!',
+                interact: function() {
+                    gameState.currentScene = 'loom_chamber';
+                    showMessage('You step through the portal into legend...', 3000);
+                }
+            },
+            {
+                id: 'old_weaver',
+                x: 100, y: 280, width: 80, height: 150,
+                name: 'Ghostly Figure',
+                look: 'A translucent figure in weaver\'s robes. A ghost of your order.',
+                interact: function() {
+                    if (!gameState.draftsLearned.includes('healing')) {
+                        gameState.draftsLearned.push('healing');
+                        showMessage('"Young Weaver... I am but an echo now. Take this knowledge with you - the Draft of Healing. Use it to mend what has been broken."\n\n♪ C - E - G - C\' ♪', 6000);
+                        updateInventory();
+                    } else {
+                        showMessage('"The Loom awaits, young Weaver. Only you can restore the Pattern. Trust in the drafts..."', 4000);
+                    }
+                }
+            }
+        ]
+    },
+    underground: {
+        name: "The Forgotten Tunnels",
+        background: drawUnderground,
+        hotspots: [
+            {
+                id: 'ladder_up',
+                x: 850, y: 100, width: 80, height: 200,
+                name: 'Ladder Up',
+                look: 'The ladder leads back to the forest.',
+                interact: function() {
+                    gameState.currentScene = 'forest_path';
+                    showMessage('You climb back to the surface.', 2000);
+                }
+            },
+            {
+                id: 'crystal_formation',
+                x: 150, y: 150, width: 150, height: 200,
+                name: 'Crystal Formation',
+                look: 'Massive crystals grow from the walls, pulsing with inner light.',
+                draft: 'light',
+                onDraft: function() {
+                    gameState.flags.crystalsActivated = true;
+                    showMessage('The crystals resonate with your draft, illuminating hidden writing on the walls!', 4000);
+                }
+            },
+            {
+                id: 'ancient_writing',
+                x: 400, y: 100, width: 200, height: 100,
+                name: 'Ancient Writing',
+                hidden: true,
+                showWhen: () => gameState.flags.crystalsActivated,
+                look: 'Glowing text reveals the history of the Weavers.',
+                interact: function() {
+                    showMessage('"We, the Weavers, created the Great Loom to maintain the Pattern of reality. But one among us - the Unraveler - sought to use it to remake the world in chaos. We hid the Loom beyond mortal reach... until the time of need."', 7000);
+                }
+            },
+            {
+                id: 'locked_chest',
+                x: 550, y: 350, width: 100, height: 80,
+                name: 'Ancient Chest',
+                look: 'A chest sealed with magical runes.',
+                draft: 'opening',
+                onDraft: function() {
+                    if (!gameState.flags.chestOpened) {
+                        gameState.flags.chestOpened = true;
+                        showMessage('The chest opens revealing... a shard of the original Loom! This will amplify your drafts at the Great Loom!', 5000);
+                        gameState.flags.hasLoomShard = true;
+                    }
+                }
+            }
+        ]
+    },
+    loom_chamber: {
+        name: "Chamber of the Great Loom",
+        background: drawLoomChamber,
+        hotspots: [
+            {
+                id: 'great_loom',
+                x: 280, y: 100, width: 400, height: 350,
+                name: 'The Great Loom',
+                look: 'The legendary Great Loom! Threads of reality itself are woven upon its frame. But the Pattern is tangled, chaotic...',
+                interact: function() {
+                    if (gameState.flags.hasLoomShard) {
+                        showMessage('You place the Loom Shard in its rightful place. The Loom hums with renewed power! Now you must weave the Pattern anew using your drafts...', 5000);
+                        gameState.flags.shardPlaced = true;
+                    } else {
+                        showMessage('The Loom is damaged. You need something to restore its power - perhaps a piece of the original Loom.', 4000);
+                    }
+                },
+                draft: 'healing',
+                onDraft: function() {
+                    if (gameState.flags.shardPlaced) {
+                        gameState.flags.loomStep1 = true;
+                        showMessage('The Healing draft mends the broken threads! The Pattern begins to stabilize... but it needs more.', 4000);
+                    }
+                }
+            },
+            {
+                id: 'loom_step2',
+                x: 280, y: 100, width: 400, height: 350,
+                name: 'The Stabilizing Pattern',
+                hidden: true,
+                showWhen: () => gameState.flags.loomStep1 && !gameState.flags.loomStep2,
+                look: 'The Pattern needs light to guide the threads...',
+                draft: 'light',
+                onDraft: function() {
+                    gameState.flags.loomStep2 = true;
+                    showMessage('Light floods the Pattern, illuminating the correct paths! One more draft should complete the weave...', 4000);
+                }
+            },
+            {
+                id: 'loom_step3',
+                x: 280, y: 100, width: 400, height: 350,
+                name: 'The Almost-Complete Pattern',
+                hidden: true,
+                showWhen: () => gameState.flags.loomStep2 && !gameState.flags.gameWon,
+                look: 'The Pattern is almost complete! It needs to be opened to the flow of destiny...',
+                draft: 'opening',
+                onDraft: function() {
+                    gameState.flags.gameWon = true;
+                    showMessage('THE PATTERN IS COMPLETE!\n\nReality itself sings as the Great Loom weaves harmony back into existence. You have fulfilled the prophecy - the last Weaver has restored the Pattern.\n\nThe threads of fate flow true once more.\n\n*** THE END ***', 10000);
+                }
+            },
+            {
+                id: 'portal_back',
+                x: 850, y: 200, width: 80, height: 200,
+                name: 'Portal Back',
+                look: 'The portal shimmers, ready to return you to the mortal realm.',
+                hidden: false,
+                showWhen: () => !gameState.flags.gameWon,
+                interact: function() {
+                    gameState.currentScene = 'forest_clearing';
+                    showMessage('You step back through the portal.', 2000);
+                }
+            }
+        ]
+    }
+};
+
+// Play a musical note
+function playNote(note) {
+    if (!audioCtx) initAudio();
+    
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    oscillator.type = 'sine';
+    oscillator.frequency.value = noteFrequencies[note];
+    
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+    
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.8);
+}
+
+// Add note to current draft
+function addNoteToDraft(note) {
+    playNote(note);
+    gameState.currentDraft.push(note);
+    
+    // Update visual display
+    const noteEl = document.createElement('div');
+    noteEl.className = 'draft-note';
+    noteEl.style.background = noteColors[note];
+    draftDisplay.appendChild(noteEl);
+    
+    // Check if draft matches any known draft
+    if (gameState.currentDraft.length >= 4) {
+        setTimeout(() => {
+            checkDraft();
+        }, 500);
+    }
+    
+    // Clear draft after timeout
+    clearTimeout(gameState.draftTimeout);
+    gameState.draftTimeout = setTimeout(() => {
+        clearDraft();
+    }, 3000);
+}
+
+// Check if current notes match a draft
+function checkDraft() {
+    const currentNotes = gameState.currentDraft.join(',');
+    
+    for (const [draftId, draft] of Object.entries(drafts)) {
+        if (draft.notes.join(',') === currentNotes) {
+            if (gameState.draftsLearned.includes(draftId)) {
+                executeDraft(draftId);
+            } else {
+                showMessage('You play an unfamiliar melody... but you haven\'t learned this draft yet.', 3000);
+            }
+            clearDraft();
+            return;
+        }
+    }
+    
+    // No match found after 4 notes
+    if (gameState.currentDraft.length >= 4) {
+        showMessage('The notes fade without effect...', 2000);
+        clearDraft();
+    }
+}
+
+// Execute a draft on the current scene
+function executeDraft(draftId) {
+    const draft = drafts[draftId];
+    const scene = scenes[gameState.currentScene];
+    let draftUsed = false;
+    
+    // Check all hotspots for draft targets
+    for (const hotspot of scene.hotspots) {
+        if (hotspot.hidden && hotspot.showWhen && !hotspot.showWhen()) continue;
+        
+        if (hotspot.draft === draftId && hotspot.onDraft) {
+            hotspot.onDraft.call(hotspot);
+            draftUsed = true;
+            break;
+        }
+    }
+    
+    if (!draftUsed) {
+        showMessage(`You weave the Draft of ${draft.name}, but nothing here responds to it.`, 3000);
+    }
+    
+    drawScene();
+}
+
+// Clear current draft
+function clearDraft() {
+    gameState.currentDraft = [];
+    draftDisplay.innerHTML = '';
+}
+
+// Show message
+function showMessage(text, duration = 4000) {
+    messageBox.textContent = text;
+    messageBox.classList.add('visible');
+    
+    clearTimeout(gameState.messageTimeout);
+    gameState.messageTimeout = setTimeout(() => {
+        messageBox.classList.remove('visible');
+    }, duration);
+}
+
+// Update inventory display
+function updateInventory() {
+    inventoryEl.innerHTML = '';
+    
+    const learnedDrafts = [...new Set(gameState.draftsLearned)];
+    for (const draftId of learnedDrafts) {
+        const draft = drafts[draftId];
+        if (draft) {
+            const el = document.createElement('div');
+            el.className = 'draft-learned';
+            el.textContent = draft.name;
+            el.title = draft.notes.join(' - ');
+            inventoryEl.appendChild(el);
+        }
+    }
+}
+
+// Get hotspot at position
+function getHotspotAt(x, y) {
+    const scene = scenes[gameState.currentScene];
+    
+    for (const hotspot of scene.hotspots) {
+        // Check if hidden
+        if (hotspot.hidden && (!hotspot.showWhen || !hotspot.showWhen())) continue;
+        
+        if (x >= hotspot.x && x <= hotspot.x + hotspot.width &&
+            y >= hotspot.y && y <= hotspot.y + hotspot.height) {
+            return hotspot;
+        }
+    }
+    
+    return null;
+}
+
+// ============================================
+// SCENE DRAWING FUNCTIONS
+// ============================================
+
+function drawTowerTop() {
+    // Sky gradient
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, 520);
+    skyGrad.addColorStop(0, '#0a0a2a');
+    skyGrad.addColorStop(1, '#1a1a4a');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, 960, 520);
+    
+    // Stars
+    ctx.fillStyle = '#fff';
+    for (let i = 0; i < 100; i++) {
+        const x = Math.sin(i * 567) * 480 + 480;
+        const y = Math.cos(i * 234) * 260 + 200;
+        const size = (Math.sin(i) + 1) * 1.5;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Stone floor
+    ctx.fillStyle = '#2a2a3a';
+    ctx.fillRect(0, 420, 960, 100);
+    
+    // Stone pattern
+    ctx.strokeStyle = '#3a3a4a';
+    for (let x = 0; x < 960; x += 60) {
+        ctx.beginPath();
+        ctx.moveTo(x, 420);
+        ctx.lineTo(x, 520);
+        ctx.stroke();
+    }
+    
+    // Walls
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(0, 0, 50, 520);
+    ctx.fillRect(910, 0, 50, 520);
+    
+    // Door (left)
+    ctx.fillStyle = gameState.flags.towerDoorOpen ? '#0a0a1a' : '#3a2a2a';
+    ctx.fillRect(20, 150, 80, 270);
+    ctx.strokeStyle = '#5a4a4a';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(20, 150, 80, 270);
+    
+    // Bookshelf
+    ctx.fillStyle = '#3a2a1a';
+    ctx.fillRect(100, 200, 120, 220);
+    for (let y = 220; y < 400; y += 40) {
+        ctx.fillStyle = `hsl(${y}, 30%, 25%)`;
+        ctx.fillRect(105, y, 110, 35);
+    }
+    
+    // Tome on table
+    ctx.fillStyle = '#4a3a2a';
+    ctx.fillRect(90, 340, 140, 80);
+    ctx.fillStyle = '#8a6a4a';
+    ctx.fillRect(100, 280, 100, 80);
+    ctx.fillStyle = '#c9a87c';
+    ctx.fillRect(110, 290, 80, 60);
+    
+    // Crystal (center top)
+    if (gameState.flags.crystalLit) {
+        ctx.fillStyle = 'rgba(150, 200, 255, 0.3)';
+        ctx.beginPath();
+        ctx.arc(480, 150, 100, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    const crystalGrad = ctx.createLinearGradient(450, 100, 510, 200);
+    crystalGrad.addColorStop(0, gameState.flags.crystalLit ? '#aaeeff' : '#446688');
+    crystalGrad.addColorStop(1, gameState.flags.crystalLit ? '#66ccff' : '#223344');
+    ctx.fillStyle = crystalGrad;
+    ctx.beginPath();
+    ctx.moveTo(480, 100);
+    ctx.lineTo(510, 180);
+    ctx.lineTo(480, 200);
+    ctx.lineTo(450, 180);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Hidden passage (if crystal is lit)
+    if (gameState.flags.crystalLit) {
+        ctx.fillStyle = '#0a0a1a';
+        ctx.fillRect(200, 200, 80, 150);
+        ctx.fillStyle = 'rgba(100, 100, 200, 0.3)';
+        ctx.fillRect(200, 200, 80, 150);
+    }
+    
+    // Telescope
+    ctx.fillStyle = '#4a4a5a';
+    ctx.fillRect(680, 300, 20, 100);
+    ctx.fillStyle = '#6a6a7a';
+    ctx.save();
+    ctx.translate(690, 300);
+    ctx.rotate(-0.5);
+    ctx.fillRect(-15, -150, 30, 160);
+    ctx.fillStyle = '#3a3a4a';
+    ctx.fillRect(-20, -160, 40, 20);
+    ctx.restore();
+    
+    // Arched windows
+    ctx.fillStyle = '#0a0a3a';
+    for (let x of [300, 600]) {
+        ctx.beginPath();
+        ctx.arc(x, 100, 40, Math.PI, 0);
+        ctx.fillRect(x - 40, 100, 80, 80);
+        ctx.fill();
+    }
+    
+    drawSceneLabel();
+}
+
+function drawTowerStairs() {
+    // Dark background
+    ctx.fillStyle = '#0a0a15';
+    ctx.fillRect(0, 0, 960, 520);
+    
+    // Spiral staircase effect
+    for (let i = 0; i < 20; i++) {
+        const y = i * 30;
+        const offset = Math.sin(i * 0.5) * 50;
+        ctx.fillStyle = `hsl(240, 20%, ${10 + i}%)`;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.quadraticCurveTo(480 + offset, y + 15, 960, y);
+        ctx.lineTo(960, y + 30);
+        ctx.quadraticCurveTo(480 + offset, y + 45, 0, y + 30);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    // Walls
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(0, 0, 100, 520);
+    ctx.fillRect(860, 0, 100, 520);
+    
+    // Stairs up (right)
+    ctx.fillStyle = '#2a2a3a';
+    ctx.beginPath();
+    ctx.moveTo(860, 100);
+    ctx.lineTo(960, 50);
+    ctx.lineTo(960, 300);
+    ctx.lineTo(860, 350);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Stairs down (left)
+    ctx.fillStyle = '#1a1a2a';
+    ctx.beginPath();
+    ctx.moveTo(0, 300);
+    ctx.lineTo(100, 250);
+    ctx.lineTo(100, 500);
+    ctx.lineTo(0, 520);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Grand tapestry
+    ctx.fillStyle = '#3a1a2a';
+    ctx.fillRect(400, 80, 200, 300);
+    ctx.strokeStyle = '#6a4a5a';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(400, 80, 200, 300);
+    
+    // Tapestry design (loom pattern)
+    ctx.strokeStyle = '#8a6a7a';
+    ctx.lineWidth = 2;
+    for (let y = 100; y < 360; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(420, y);
+        ctx.bezierCurveTo(450, y + 10, 550, y - 10, 580, y);
+        ctx.stroke();
+    }
+    ctx.fillStyle = '#aa8a9a';
+    ctx.beginPath();
+    ctx.arc(500, 200, 40, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Sleeping cat
+    const catColor = gameState.flags.catAwake ? '#6a5a4a' : '#5a4a3a';
+    ctx.fillStyle = catColor;
+    ctx.beginPath();
+    ctx.ellipse(690, 410, 40, 25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(720, 395, 15, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears
+    ctx.beginPath();
+    ctx.moveTo(710, 385);
+    ctx.lineTo(715, 370);
+    ctx.lineTo(720, 385);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(725, 385);
+    ctx.lineTo(730, 370);
+    ctx.lineTo(735, 385);
+    ctx.fill();
+    
+    // Key under cat (if cat is awake but key not taken)
+    if (gameState.flags.catAwake && !gameState.flags.hasKey) {
+        ctx.fillStyle = '#c9a832';
+        ctx.fillRect(685, 420, 20, 8);
+        ctx.beginPath();
+        ctx.arc(680, 424, 8, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Torches
+    for (let x of [150, 800]) {
+        ctx.fillStyle = '#4a3a2a';
+        ctx.fillRect(x - 5, 150, 10, 50);
+        ctx.fillStyle = '#ff6a2a';
+        ctx.beginPath();
+        ctx.moveTo(x, 130);
+        ctx.quadraticCurveTo(x + 15, 145, x, 160);
+        ctx.quadraticCurveTo(x - 15, 145, x, 130);
+        ctx.fill();
+        ctx.fillStyle = '#ffaa4a';
+        ctx.beginPath();
+        ctx.moveTo(x, 140);
+        ctx.quadraticCurveTo(x + 8, 148, x, 155);
+        ctx.quadraticCurveTo(x - 8, 148, x, 140);
+        ctx.fill();
+    }
+    
+    drawSceneLabel();
+}
+
+function drawTowerBase() {
+    // Floor
+    const floorGrad = ctx.createLinearGradient(0, 350, 0, 520);
+    floorGrad.addColorStop(0, '#2a2a3a');
+    floorGrad.addColorStop(1, '#1a1a2a');
+    ctx.fillStyle = floorGrad;
+    ctx.fillRect(0, 350, 960, 170);
+    
+    // Tile pattern
+    ctx.strokeStyle = '#3a3a4a';
+    for (let x = 0; x < 960; x += 80) {
+        for (let y = 350; y < 520; y += 40) {
+            ctx.strokeRect(x, y, 80, 40);
+        }
+    }
+    
+    // Walls
+    ctx.fillStyle = '#1a1a2a';
+    ctx.fillRect(0, 0, 960, 350);
+    
+    // Wall texture
+    ctx.strokeStyle = '#2a2a3a';
+    for (let y = 0; y < 350; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(960, y);
+        ctx.stroke();
+    }
+    
+    // Great door
+    ctx.fillStyle = '#3a2a1a';
+    ctx.fillRect(400, 150, 160, 280);
+    // Door arch
+    ctx.beginPath();
+    ctx.arc(480, 150, 80, Math.PI, 0);
+    ctx.fill();
+    // Door details
+    ctx.strokeStyle = '#5a4a3a';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(410, 160, 60, 260);
+    ctx.strokeRect(490, 160, 60, 260);
+    // Door handle
+    ctx.fillStyle = gameState.flags.hasKey ? '#c9a832' : '#6a5a4a';
+    ctx.beginPath();
+    ctx.arc(545, 300, 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Stairs up
+    ctx.fillStyle = '#2a2a3a';
+    for (let i = 0; i < 6; i++) {
+        ctx.fillRect(860 - i * 15, 150 + i * 35, 100 + i * 15, 35);
+    }
+    
+    // Mirror
+    ctx.fillStyle = '#3a3a4a';
+    ctx.fillRect(95, 195, 110, 190);
+    const mirrorGrad = ctx.createRadialGradient(150, 290, 10, 150, 290, 80);
+    mirrorGrad.addColorStop(0, '#4a4a6a');
+    mirrorGrad.addColorStop(1, '#2a2a4a');
+    ctx.fillStyle = mirrorGrad;
+    ctx.fillRect(100, 200, 100, 180);
+    // Mirror reflection
+    ctx.fillStyle = 'rgba(100, 100, 150, 0.3)';
+    ctx.fillRect(105, 205, 40, 170);
+    
+    // Fountain
+    ctx.fillStyle = '#4a4a5a';
+    ctx.fillRect(700, 350, 100, 70);
+    ctx.beginPath();
+    ctx.ellipse(750, 350, 50, 20, 0, 0, Math.PI * 2);
+    ctx.fill();
+    if (gameState.flags.fountainRestored) {
+        ctx.fillStyle = 'rgba(100, 150, 255, 0.6)';
+        ctx.beginPath();
+        ctx.ellipse(750, 345, 40, 15, 0, 0, Math.PI * 2);
+        ctx.fill();
+        // Water droplets
+        ctx.fillStyle = '#aaddff';
+        for (let i = 0; i < 5; i++) {
+            const angle = (Date.now() / 500 + i) % (Math.PI * 2);
+            const x = 750 + Math.cos(angle) * 20;
+            const y = 320 + Math.sin(angle * 2) * 15;
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+    
+    // Columns
+    for (let x of [250, 650]) {
+        ctx.fillStyle = '#3a3a4a';
+        ctx.fillRect(x - 20, 100, 40, 320);
+        ctx.fillStyle = '#4a4a5a';
+        ctx.fillRect(x - 25, 90, 50, 20);
+        ctx.fillRect(x - 25, 410, 50, 20);
+    }
+    
+    drawSceneLabel();
+}
+
+function drawSecretRoom() {
+    // Dark chamber
+    ctx.fillStyle = '#0a0a12';
+    ctx.fillRect(0, 0, 960, 520);
+    
+    // Stone walls with mystical glow
+    ctx.fillStyle = '#1a1a25';
+    ctx.fillRect(0, 0, 960, 420);
+    
+    // Floor
+    ctx.fillStyle = '#15151f';
+    ctx.fillRect(0, 420, 960, 100);
+    
+    // Glowing lines on floor
+    ctx.strokeStyle = 'rgba(100, 100, 200, 0.3)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 10; i++) {
+        ctx.beginPath();
+        ctx.moveTo(480, 420);
+        ctx.lineTo(i * 120 - 60, 520);
+        ctx.stroke();
+    }
+    
+    // Passage back
+    ctx.fillStyle = 'rgba(100, 100, 200, 0.2)';
+    ctx.fillRect(850, 200, 80, 200);
+    ctx.strokeStyle = '#4a4a6a';
+    ctx.strokeRect(850, 200, 80, 200);
+    
+    // Model of the Great Loom
+    ctx.save();
+    ctx.translate(475, 280);
+    
+    // Loom frame
+    ctx.strokeStyle = '#8a7a5a';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-100, -100);
+    ctx.lineTo(-80, 100);
+    ctx.moveTo(100, -100);
+    ctx.lineTo(80, 100);
+    ctx.moveTo(-100, -100);
+    ctx.lineTo(100, -100);
+    ctx.moveTo(-80, 100);
+    ctx.lineTo(80, 100);
+    ctx.stroke();
+    
+    // Glowing threads
+    ctx.strokeStyle = 'rgba(150, 100, 255, 0.6)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 10; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-70 + i * 15, -90);
+        ctx.bezierCurveTo(-70 + i * 15, -30, -60 + i * 14, 30, -55 + i * 12, 90);
+        ctx.stroke();
+    }
+    
+    // Cross threads
+    ctx.strokeStyle = 'rgba(255, 200, 100, 0.4)';
+    for (let y = -70; y < 80; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(-70, y);
+        ctx.bezierCurveTo(-20, y + 5, 20, y - 5, 70, y);
+        ctx.stroke();
+    }
+    
+    // Central glow
+    ctx.fillStyle = 'rgba(150, 100, 255, 0.3)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 50, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+    
+    // Wall inscriptions
+    ctx.fillStyle = '#2a2a3a';
+    ctx.fillRect(100, 100, 150, 250);
+    ctx.strokeStyle = 'rgba(100, 150, 200, 0.5)';
+    ctx.lineWidth = 1;
+    for (let y = 120; y < 330; y += 15) {
+        ctx.beginPath();
+        ctx.moveTo(110, y);
+        ctx.lineTo(110 + Math.random() * 120, y);
+        ctx.stroke();
+    }
+    
+    // Mystical symbols
+    ctx.strokeStyle = 'rgba(150, 100, 255, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(175, 200, 30, 0, Math.PI * 2);
+    ctx.moveTo(175, 170);
+    ctx.lineTo(175, 230);
+    ctx.moveTo(145, 200);
+    ctx.lineTo(205, 200);
+    ctx.stroke();
+    
+    drawSceneLabel();
+}
+
+function drawForestPath() {
+    // Sky through trees
+    const skyGrad = ctx.createLinearGradient(0, 0, 0, 300);
+    skyGrad.addColorStop(0, '#1a2a3a');
+    skyGrad.addColorStop(1, '#2a3a4a');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, 960, 300);
+    
+    // Ground
+    ctx.fillStyle = '#1a2a1a';
+    ctx.fillRect(0, 350, 960, 170);
+    
+    // Path
+    ctx.fillStyle = '#2a2a2a';
+    ctx.beginPath();
+    ctx.moveTo(100, 520);
+    ctx.quadraticCurveTo(300, 400, 500, 380);
+    ctx.quadraticCurveTo(700, 360, 900, 380);
+    ctx.lineTo(960, 400);
+    ctx.lineTo(960, 520);
+    ctx.lineTo(0, 520);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Trees background
+    for (let i = 0; i < 15; i++) {
+        const x = i * 70 + Math.sin(i) * 20;
+        const height = 200 + Math.cos(i * 2) * 50;
+        drawTree(x, 350, height, 0.6);
+    }
+    
+    // Trees foreground
+    drawTree(-20, 450, 300, 1);
+    drawTree(150, 480, 350, 1.2);
+    drawTree(750, 470, 320, 1.1);
+    drawTree(900, 460, 280, 0.9);
+    
+    // Tower in background (right)
+    ctx.fillStyle = '#2a2a3a';
+    ctx.fillRect(870, 100, 60, 280);
+    ctx.beginPath();
+    ctx.moveTo(870, 100);
+    ctx.lineTo(900, 50);
+    ctx.lineTo(930, 100);
+    ctx.fill();
+    
+    // Wounded deer (or healed spot)
+    if (!gameState.flags.deerHealed) {
+        ctx.fillStyle = '#aaaacc';
+        ctx.beginPath();
+        ctx.ellipse(460, 370, 50, 30, -0.2, 0, Math.PI * 2);
+        ctx.fill();
+        // Legs
+        ctx.fillRect(420, 380, 8, 30);
+        ctx.fillRect(470, 385, 8, 25);
+        // Head
+        ctx.beginPath();
+        ctx.ellipse(510, 345, 20, 15, 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        // Antlers
+        ctx.strokeStyle = '#aaaacc';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(515, 335);
+        ctx.lineTo(530, 310);
+        ctx.lineTo(540, 320);
+        ctx.moveTo(530, 310);
+        ctx.lineTo(535, 295);
+        ctx.stroke();
+        // Wound indication
+        ctx.fillStyle = '#883333';
+        ctx.beginPath();
+        ctx.ellipse(450, 365, 10, 5, 0, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        // Silver fur remains
+        ctx.fillStyle = 'rgba(200, 200, 230, 0.5)';
+        ctx.beginPath();
+        ctx.ellipse(460, 380, 30, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Glowing mushrooms
+    if (!gameState.flags.trapdoorRevealed) {
+        for (let i = 0; i < 5; i++) {
+            const x = 200 + i * 15;
+            const y = 400 - Math.abs(i - 2) * 5;
+            ctx.fillStyle = '#66ff66';
+            ctx.beginPath();
+            ctx.arc(x, y, 8, Math.PI, 0);
+            ctx.fill();
+            ctx.fillStyle = '#448844';
+            ctx.fillRect(x - 3, y, 6, 12);
+        }
+        // Glow effect
+        ctx.fillStyle = 'rgba(100, 255, 100, 0.2)';
+        ctx.beginPath();
+        ctx.arc(230, 400, 40, 0, Math.PI * 2);
+        ctx.fill();
+    } else {
+        // Trapdoor
+        ctx.fillStyle = '#3a2a1a';
+        ctx.fillRect(200, 400, 80, 40);
+        ctx.strokeStyle = '#2a1a0a';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(200, 400, 80, 40);
+        if (gameState.flags.trapdoorOpen) {
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(205, 405, 70, 30);
+        }
+    }
+    
+    // Mist
+    ctx.fillStyle = 'rgba(100, 120, 140, 0.1)';
+    for (let i = 0; i < 5; i++) {
+        ctx.beginPath();
+        ctx.ellipse(i * 200, 380, 150, 30, 0, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    drawSceneLabel();
+}
+
+function drawTree(x, baseY, height, scale) {
+    ctx.save();
+    ctx.translate(x, baseY);
+    ctx.scale(scale, scale);
+    
+    // Trunk
+    ctx.fillStyle = '#2a1a0a';
+    ctx.fillRect(-10, -height * 0.3, 20, height * 0.3);
+    
+    // Foliage layers
+    const foliageColors = ['#1a3a1a', '#0a2a0a', '#153315'];
+    for (let i = 0; i < 3; i++) {
+        ctx.fillStyle = foliageColors[i];
+        ctx.beginPath();
+        ctx.moveTo(0, -height + i * 40);
+        ctx.lineTo(-50 - i * 10, -height * 0.3 + i * 30);
+        ctx.lineTo(50 + i * 10, -height * 0.3 + i * 30);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    ctx.restore();
+}
+
+function drawForestClearing() {
+    // Mystical sky
+    const skyGrad = ctx.createRadialGradient(480, 200, 50, 480, 300, 400);
+    skyGrad.addColorStop(0, '#2a2a5a');
+    skyGrad.addColorStop(1, '#0a0a2a');
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, 960, 350);
+    
+    // Stars
+    ctx.fillStyle = '#ffffff';
+    for (let i = 0; i < 50; i++) {
+        const x = (Math.sin(i * 123) * 0.5 + 0.5) * 960;
+        const y = (Math.cos(i * 456) * 0.5 + 0.5) * 300;
+        ctx.beginPath();
+        ctx.arc(x, y, 1, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Ground
+    ctx.fillStyle = '#1a2a1a';
+    ctx.fillRect(0, 350, 960, 170);
+    
+    // Standing stones
+    const stones = [
+        { x: 350, h: 150 },
+        { x: 420, h: 180 },
+        { x: 500, h: 200 },
+        { x: 580, h: 175 },
+        { x: 650, h: 140 }
+    ];
+    
+    ctx.fillStyle = '#3a3a4a';
+    for (const stone of stones) {
+        ctx.beginPath();
+        ctx.moveTo(stone.x - 20, 380);
+        ctx.lineTo(stone.x - 15, 380 - stone.h);
+        ctx.quadraticCurveTo(stone.x, 370 - stone.h, stone.x + 15, 380 - stone.h);
+        ctx.lineTo(stone.x + 20, 380);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    // Mystical energy between stones
+    ctx.strokeStyle = 'rgba(150, 100, 255, 0.3)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < stones.length - 1; i++) {
+        ctx.beginPath();
+        ctx.moveTo(stones[i].x, 380 - stones[i].h + 20);
+        ctx.quadraticCurveTo(
+            (stones[i].x + stones[i + 1].x) / 2,
+            300,
+            stones[i + 1].x,
+            380 - stones[i + 1].h + 20
+        );
+        ctx.stroke();
+    }
+    
+    // Portal (if open)
+    if (gameState.flags.portalOpen) {
+        ctx.save();
+        const gradient = ctx.createRadialGradient(500, 280, 0, 500, 280, 80);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.3, 'rgba(150, 100, 255, 0.7)');
+        gradient.addColorStop(1, 'rgba(100, 50, 200, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(500, 280, 80, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    // Ghost weaver
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = '#aaaacc';
+    // Robe
+    ctx.beginPath();
+    ctx.moveTo(140, 430);
+    ctx.quadraticCurveTo(120, 350, 140, 300);
+    ctx.quadraticCurveTo(140, 280, 140, 280);
+    ctx.quadraticCurveTo(160, 280, 160, 300);
+    ctx.quadraticCurveTo(180, 350, 160, 430);
+    ctx.closePath();
+    ctx.fill();
+    // Head
+    ctx.beginPath();
+    ctx.arc(150, 270, 20, 0, Math.PI * 2);
+    ctx.fill();
+    // Hood
+    ctx.beginPath();
+    ctx.arc(150, 265, 25, Math.PI, 0);
+    ctx.fill();
+    ctx.restore();
+    
+    // Trees around clearing
+    for (let x of [-30, 80, 800, 900]) {
+        drawTree(x, 450, 280, 0.9);
+    }
+    
+    // Path back
+    ctx.fillStyle = '#2a2a2a';
+    ctx.beginPath();
+    ctx.moveTo(850, 380);
+    ctx.quadraticCurveTo(900, 400, 960, 420);
+    ctx.lineTo(960, 520);
+    ctx.lineTo(850, 520);
+    ctx.closePath();
+    ctx.fill();
+    
+    drawSceneLabel();
+}
+
+function drawUnderground() {
+    // Cave walls
+    ctx.fillStyle = '#0a0808';
+    ctx.fillRect(0, 0, 960, 520);
+    
+    // Rocky texture
+    ctx.fillStyle = '#151210';
+    for (let i = 0; i < 50; i++) {
+        const x = Math.sin(i * 234) * 500 + 480;
+        const y = Math.cos(i * 567) * 280 + 260;
+        const size = 20 + Math.sin(i) * 15;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // Crystal formation
+    const crystalLit = gameState.flags.crystalsActivated;
+    ctx.save();
+    ctx.translate(220, 280);
+    const crystalColors = crystalLit ? 
+        ['#aaeeff', '#88ccff', '#66aaff'] : 
+        ['#334455', '#223344', '#112233'];
+    
+    for (let i = 0; i < 7; i++) {
+        const angle = (i / 7) * Math.PI - Math.PI / 2;
+        const length = 60 + Math.sin(i * 2) * 30;
+        ctx.fillStyle = crystalColors[i % 3];
+        ctx.save();
+        ctx.rotate(angle);
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(-10, -length);
+        ctx.lineTo(0, -length - 20);
+        ctx.lineTo(10, -length);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    if (crystalLit) {
+        ctx.fillStyle = 'rgba(100, 200, 255, 0.2)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 100, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.restore();
+    
+    // Ancient writing (if crystals activated)
+    if (crystalLit) {
+        ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+        ctx.fillRect(400, 100, 200, 100);
+        ctx.strokeStyle = 'rgba(150, 220, 255, 0.7)';
+        ctx.lineWidth = 1;
+        for (let y = 115; y < 190; y += 12) {
+            const width = 30 + Math.random() * 150;
+            ctx.beginPath();
+            ctx.moveTo(410, y);
+            for (let x = 410; x < 410 + width; x += 10) {
+                ctx.lineTo(x, y + Math.sin(x * 0.1) * 3);
+            }
+            ctx.stroke();
+        }
+    }
+    
+    // Ladder (right side)
+    ctx.fillStyle = '#3a2a1a';
+    ctx.fillRect(870, 100, 10, 300);
+    ctx.fillRect(920, 100, 10, 300);
+    for (let y = 120; y < 400; y += 30) {
+        ctx.fillRect(870, y, 60, 8);
+    }
+    
+    // Chest
+    ctx.fillStyle = gameState.flags.chestOpened ? '#2a1a0a' : '#4a3a1a';
+    ctx.fillRect(550, 360, 100, 60);
+    if (!gameState.flags.chestOpened) {
+        ctx.fillStyle = '#6a5a2a';
+        ctx.beginPath();
+        ctx.arc(600, 360, 50, Math.PI, 0);
+        ctx.fill();
+        // Lock
+        ctx.fillStyle = '#c9a832';
+        ctx.fillRect(595, 370, 10, 15);
+    } else {
+        // Open chest with glow
+        ctx.fillStyle = 'rgba(200, 150, 255, 0.3)';
+        ctx.fillRect(560, 330, 80, 30);
+    }
+    
+    // Stalactites
+    ctx.fillStyle = '#1a1815';
+    for (let i = 0; i < 20; i++) {
+        const x = i * 50 + Math.sin(i) * 20;
+        const length = 30 + Math.cos(i * 3) * 20;
+        ctx.beginPath();
+        ctx.moveTo(x - 10, 0);
+        ctx.lineTo(x, length);
+        ctx.lineTo(x + 10, 0);
+        ctx.fill();
+    }
+    
+    // Ground
+    ctx.fillStyle = '#0d0b08';
+    ctx.fillRect(0, 430, 960, 90);
+    
+    drawSceneLabel();
+}
+
+function drawLoomChamber() {
+    // Ethereal background
+    const bgGrad = ctx.createRadialGradient(480, 260, 50, 480, 260, 500);
+    bgGrad.addColorStop(0, '#2a1a4a');
+    bgGrad.addColorStop(0.5, '#1a0a3a');
+    bgGrad.addColorStop(1, '#0a0020');
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, 960, 520);
+    
+    // Floating particles
+    ctx.fillStyle = 'rgba(200, 150, 255, 0.5)';
+    for (let i = 0; i < 100; i++) {
+        const x = (Math.sin(i * 123 + Date.now() * 0.001) * 0.5 + 0.5) * 960;
+        const y = (Math.cos(i * 456 + Date.now() * 0.0008) * 0.5 + 0.5) * 520;
+        ctx.beginPath();
+        ctx.arc(x, y, 2, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    // The Great Loom
+    ctx.save();
+    ctx.translate(480, 280);
+    
+    // Frame
+    ctx.strokeStyle = '#c9a832';
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(-180, -150);
+    ctx.lineTo(-150, 150);
+    ctx.moveTo(180, -150);
+    ctx.lineTo(150, 150);
+    ctx.moveTo(-180, -150);
+    ctx.bezierCurveTo(-100, -180, 100, -180, 180, -150);
+    ctx.moveTo(-150, 150);
+    ctx.lineTo(150, 150);
+    ctx.stroke();
+    
+    // Spindles
+    ctx.fillStyle = '#8a6a2a';
+    for (let x of [-120, -60, 0, 60, 120]) {
+        ctx.beginPath();
+        ctx.ellipse(x, -140, 15, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillRect(x - 3, -140, 6, 280);
+    }
+    
+    // Threads of fate
+    const threadIntensity = gameState.flags.gameWon ? 1 : 
+                           gameState.flags.loomStep2 ? 0.7 :
+                           gameState.flags.loomStep1 ? 0.4 : 0.2;
+    
+    for (let i = 0; i < 30; i++) {
+        const hue = (i * 12) % 360;
+        ctx.strokeStyle = `hsla(${hue}, 70%, 60%, ${threadIntensity})`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        const startX = -140 + (i % 6) * 50;
+        ctx.moveTo(startX, -130);
+        for (let y = -130; y < 140; y += 10) {
+            const wave = Math.sin(y * 0.05 + i + Date.now() * 0.002) * 20;
+            ctx.lineTo(startX + wave, y);
+        }
+        ctx.stroke();
+    }
+    
+    // Cross threads
+    for (let y = -100; y < 120; y += 20) {
+        ctx.strokeStyle = `rgba(255, 200, 100, ${threadIntensity * 0.5})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-140, y);
+        for (let x = -140; x < 140; x += 5) {
+            const wave = Math.sin(x * 0.02 + y * 0.1 + Date.now() * 0.001) * 5;
+            ctx.lineTo(x, y + wave);
+        }
+        ctx.stroke();
+    }
+    
+    // Central focus point
+    if (gameState.flags.shardPlaced || gameState.flags.hasLoomShard) {
+        const glowSize = gameState.flags.gameWon ? 80 : 40;
+        const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, glowSize);
+        glowGrad.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+        glowGrad.addColorStop(0.5, 'rgba(150, 100, 255, 0.4)');
+        glowGrad.addColorStop(1, 'rgba(100, 50, 200, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, glowSize, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    
+    ctx.restore();
+    
+    // Victory text
+    if (gameState.flags.gameWon) {
+        ctx.fillStyle = 'rgba(255, 220, 100, 0.9)';
+        ctx.font = '36px Georgia';
+        ctx.textAlign = 'center';
+        ctx.fillText('The Pattern is Restored', 480, 480);
+    }
+    
+    // Portal back (if not won)
+    if (!gameState.flags.gameWon) {
+        ctx.fillStyle = 'rgba(100, 100, 200, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(890, 300, 40, 80, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(150, 150, 255, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    
+    drawSceneLabel();
+}
+
+function drawSceneLabel() {
+    const scene = scenes[gameState.currentScene];
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, 0, 960, 35);
+    ctx.fillStyle = '#aaaacc';
+    ctx.font = '18px Georgia';
+    ctx.textAlign = 'left';
+    ctx.fillText(scene.name, 15, 25);
+}
+
+// Main draw function
+function drawScene() {
+    const scene = scenes[gameState.currentScene];
+    scene.background();
+    
+    // Debug: Draw hotspot areas (uncomment to debug)
+    /*
+    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+    ctx.lineWidth = 2;
+    for (const hotspot of scene.hotspots) {
+        if (hotspot.hidden && (!hotspot.showWhen || !hotspot.showWhen())) continue;
+        ctx.strokeRect(hotspot.x, hotspot.y, hotspot.width, hotspot.height);
+    }
+    */
+}
+
+// ============================================
+// EVENT HANDLERS
+// ============================================
+
+// Mouse move - show cursor label
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const hotspot = getHotspotAt(x, y);
+    
+    if (hotspot) {
+        cursorLabel.textContent = hotspot.name;
+        cursorLabel.style.left = (e.clientX - canvas.parentElement.offsetLeft + 15) + 'px';
+        cursorLabel.style.top = (e.clientY - canvas.parentElement.offsetTop - 30) + 'px';
+        cursorLabel.style.display = 'block';
+        canvas.style.cursor = 'pointer';
+    } else {
+        cursorLabel.style.display = 'none';
+        canvas.style.cursor = 'default';
+    }
+});
+
+canvas.addEventListener('mouseleave', () => {
+    cursorLabel.style.display = 'none';
+});
+
+// Click on canvas
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const hotspot = getHotspotAt(x, y);
+    
+    if (hotspot) {
+        if (e.shiftKey) {
+            // Shift+click to look
+            showMessage(hotspot.look, 4000);
+        } else if (hotspot.interact) {
+            hotspot.interact();
+            drawScene();
+        } else {
+            showMessage(hotspot.look, 4000);
+        }
+    }
+});
+
+// Right-click to look
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const hotspot = getHotspotAt(x, y);
+    
+    if (hotspot) {
+        showMessage(hotspot.look, 4000);
+    }
+});
+
+// Distaff note clicks
+document.querySelectorAll('.distaff-note').forEach(noteEl => {
+    noteEl.addEventListener('click', () => {
+        const note = noteEl.dataset.note;
+        noteEl.classList.add('active');
+        setTimeout(() => noteEl.classList.remove('active'), 500);
+        addNoteToDraft(note);
+    });
+});
+
+// Start button
+document.getElementById('start-btn').addEventListener('click', () => {
+    initAudio();
+    titleScreen.style.display = 'none';
+    gameState.isPlaying = true;
+    drawScene();
+    showMessage('You are the last of the Weavers. The Pattern of reality unravels, and only you can restore it. Use your Distaff to weave magical Drafts - click the notes below to play them. Explore the tower and learn the ancient drafts...', 8000);
+});
+
+// Animation loop
+function gameLoop() {
+    if (gameState.isPlaying) {
+        drawScene();
+    }
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialize
+updateInventory();
+gameLoop();
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    if (!gameState.isPlaying) return;
+    
+    const noteMap = {
+        '1': 'C', '2': 'D', '3': 'E', '4': 'F',
+        '5': 'G', '6': 'A', '7': 'B', '8': 'C2',
+        'c': 'C', 'd': 'D', 'e': 'E', 'f': 'F',
+        'g': 'G', 'a': 'A', 'b': 'B'
+    };
+    
+    const note = noteMap[e.key.toLowerCase()];
+    if (note) {
+        const noteEl = document.querySelector(`[data-note="${note}"]`);
+        if (noteEl) {
+            noteEl.classList.add('active');
+            setTimeout(() => noteEl.classList.remove('active'), 500);
+        }
+        addNoteToDraft(note);
+    }
+    
+    // Escape to clear draft
+    if (e.key === 'Escape') {
+        clearDraft();
+    }
+});
+
+console.log('Threads of Fate - A Weaver\'s Tale');
+console.log('===================================');
+console.log('Controls:');
+console.log('- Click on objects to interact');
+console.log('- Right-click to look at objects');
+console.log('- Click notes on the distaff (or use keys 1-8 / C-B) to play drafts');
+console.log('- Learn drafts by exploring and interacting with the world');
+console.log('- Use drafts on objects to solve puzzles');
+    </script>
+</body>
+</html>

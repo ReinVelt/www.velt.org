@@ -1,0 +1,1182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bram the SuperPug - Platform Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #1a1a2e, #16213e);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
+        }
+        
+        #gameContainer {
+            position: relative;
+            border: 4px solid #8b4513;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+        
+        #gameCanvas {
+            display: block;
+            background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 60%, #228B22 60%, #228B22 100%);
+        }
+        
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 10;
+        }
+        
+        #ui div {
+            margin: 5px 0;
+        }
+        
+        #startScreen, #gameOverScreen, #winScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 20;
+        }
+        
+        #startScreen h1, #gameOverScreen h1, #winScreen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #ffd700;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+        }
+        
+        #startScreen p, #gameOverScreen p, #winScreen p {
+            font-size: 18px;
+            margin: 10px 0;
+            text-align: center;
+            max-width: 600px;
+        }
+        
+        .btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            font-size: 24px;
+            background: linear-gradient(to bottom, #8B4513, #654321);
+            color: #ffd700;
+            border: 3px solid #ffd700;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        #instructions {
+            background: rgba(139,69,19,0.8);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px;
+            border: 2px solid #ffd700;
+        }
+        
+        #instructions h3 {
+            color: #ffd700;
+            margin-bottom: 10px;
+        }
+        
+        #instructions ul {
+            list-style: none;
+            text-align: left;
+        }
+        
+        #instructions li {
+            margin: 5px 0;
+        }
+        
+        .emoji {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1000" height="600"></canvas>
+        
+        <div id="ui">
+            <div>🍪 Cookies: <span id="cookieCount">0</span></div>
+            <div>🍬 Candy: <span id="candyCount">0</span></div>
+            <div>💩 Poop Power: <span id="poopPower">100</span>%</div>
+            <div>❤️ Lives: <span id="lives">3</span></div>
+            <div>🏆 Score: <span id="score">0</span></div>
+        </div>
+        
+        <div id="startScreen">
+            <h1>🐕 BRAM THE SUPERPUG 🐕</h1>
+            <p class="emoji">💩🍪🍬</p>
+            <p>Meet Bram, the small but VERY dirty pug who has a special superpower... he poops EVERYWHERE!</p>
+            <div id="instructions">
+                <h3>How to Play:</h3>
+                <ul>
+                    <li>⬅️➡️ Arrow keys or A/D to move</li>
+                    <li>⬆️ Arrow key, W, or SPACE to jump</li>
+                    <li>💩 SHIFT or E to poop (blocks enemies!)</li>
+                    <li>🍪🍬 Collect cookies and candy</li>
+                    <li>🧹 Avoid broomsticks - they clean up your poop!</li>
+                    <li>🎆 Watch out for fireworks - Bram hates them!</li>
+                </ul>
+            </div>
+            <button class="btn" onclick="startGame()">START POOPING!</button>
+        </div>
+        
+        <div id="gameOverScreen" class="hidden">
+            <h1>💀 GAME OVER 💀</h1>
+            <p>Bram got too scared of the fireworks!</p>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button class="btn" onclick="startGame()">TRY AGAIN</button>
+        </div>
+        
+        <div id="winScreen" class="hidden">
+            <h1>🎉 YOU WIN! 🎉</h1>
+            <p>Bram collected all the treats!</p>
+            <p>Final Score: <span id="winScore">0</span></p>
+            <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+    
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameRunning = false;
+        let score = 0;
+        let lives = 3;
+        let poopPower = 100;
+        let cookiesCollected = 0;
+        let candyCollected = 0;
+        
+        // Keys
+        const keys = {};
+        
+        // Game objects
+        let bram = null;
+        let platforms = [];
+        let cookies = [];
+        let candies = [];
+        let poops = [];
+        let enemies = [];
+        let particles = [];
+        
+        // Bram the Pug
+        class Pug {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 50;
+                this.height = 40;
+                this.velocityX = 0;
+                this.velocityY = 0;
+                this.speed = 5;
+                this.jumpPower = -14;
+                this.gravity = 0.6;
+                this.grounded = false;
+                this.facing = 1; // 1 = right, -1 = left
+                this.animFrame = 0;
+                this.animTimer = 0;
+                this.poopCooldown = 0;
+                this.invincible = 0;
+            }
+            
+            update() {
+                // Movement
+                if (keys['ArrowLeft'] || keys['KeyA']) {
+                    this.velocityX = -this.speed;
+                    this.facing = -1;
+                } else if (keys['ArrowRight'] || keys['KeyD']) {
+                    this.velocityX = this.speed;
+                    this.facing = 1;
+                } else {
+                    this.velocityX *= 0.8;
+                }
+                
+                // Jump
+                if ((keys['ArrowUp'] || keys['KeyW'] || keys['Space']) && this.grounded) {
+                    this.velocityY = this.jumpPower;
+                    this.grounded = false;
+                }
+                
+                // Poop
+                if ((keys['ShiftLeft'] || keys['ShiftRight'] || keys['KeyE']) && this.poopCooldown <= 0 && poopPower >= 10) {
+                    this.poop();
+                    this.poopCooldown = 20;
+                    poopPower -= 10;
+                }
+                
+                if (this.poopCooldown > 0) this.poopCooldown--;
+                if (this.invincible > 0) this.invincible--;
+                
+                // Gravity
+                this.velocityY += this.gravity;
+                
+                // Apply velocity
+                this.x += this.velocityX;
+                this.y += this.velocityY;
+                
+                // Platform collision
+                this.grounded = false;
+                for (let platform of platforms) {
+                    if (this.collidesWith(platform)) {
+                        if (this.velocityY > 0 && this.y + this.height - this.velocityY <= platform.y) {
+                            this.y = platform.y - this.height;
+                            this.velocityY = 0;
+                            this.grounded = true;
+                        } else if (this.velocityY < 0 && this.y - this.velocityY >= platform.y + platform.height) {
+                            this.y = platform.y + platform.height;
+                            this.velocityY = 0;
+                        }
+                    }
+                }
+                
+                // World bounds
+                if (this.x < 0) this.x = 0;
+                if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+                if (this.y > canvas.height) {
+                    this.takeDamage();
+                    this.x = 100;
+                    this.y = 300;
+                }
+                
+                // Animation
+                this.animTimer++;
+                if (this.animTimer > 8) {
+                    this.animFrame = (this.animFrame + 1) % 4;
+                    this.animTimer = 0;
+                }
+                
+                // Regenerate poop power slowly
+                if (poopPower < 100) {
+                    poopPower += 0.1;
+                }
+            }
+            
+            poop() {
+                const poop = new Poop(this.x + this.width/2 - 10, this.y + this.height - 15);
+                poops.push(poop);
+                
+                // Poop particles
+                for (let i = 0; i < 5; i++) {
+                    particles.push(new Particle(
+                        this.x + this.width/2,
+                        this.y + this.height,
+                        '#8B4513',
+                        Math.random() * 4 - 2,
+                        Math.random() * -3
+                    ));
+                }
+            }
+            
+            takeDamage() {
+                if (this.invincible <= 0) {
+                    lives--;
+                    this.invincible = 120;
+                    if (lives <= 0) {
+                        gameOver();
+                    }
+                }
+            }
+            
+            collidesWith(obj) {
+                return this.x < obj.x + obj.width &&
+                       this.x + this.width > obj.x &&
+                       this.y < obj.y + obj.height &&
+                       this.y + this.height > obj.y;
+            }
+            
+            draw() {
+                ctx.save();
+                
+                // Flicker when invincible
+                if (this.invincible > 0 && Math.floor(this.invincible / 5) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+                
+                const x = this.x;
+                const y = this.y;
+                const w = this.width;
+                const h = this.height;
+                
+                // Body (fawn/tan color like real pug)
+                ctx.fillStyle = '#D4A574';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2, y + h/2 + 5, w/2 - 5, h/2 - 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Darker back
+                ctx.fillStyle = '#B8956E';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2, y + h/2, w/2 - 8, h/2 - 10, 0, Math.PI, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#D4A574';
+                ctx.beginPath();
+                ctx.arc(x + w/2 + (this.facing * 10), y + 10, 18, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Black face mask (pug characteristic)
+                ctx.fillStyle = '#2C2C2C';
+                ctx.beginPath();
+                ctx.arc(x + w/2 + (this.facing * 15), y + 12, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Snout
+                ctx.fillStyle = '#2C2C2C';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2 + (this.facing * 20), y + 15, 8, 6, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Nose
+                ctx.fillStyle = '#1a1a1a';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2 + (this.facing * 25), y + 14, 4, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes (big pug eyes)
+                const eyeX = x + w/2 + (this.facing * 8);
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(eyeX - 5, y + 6, 5, 0, Math.PI * 2);
+                ctx.arc(eyeX + 5, y + 6, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Pupils
+                ctx.fillStyle = '#2C2C2C';
+                ctx.beginPath();
+                ctx.arc(eyeX - 5 + this.facing * 2, y + 6, 3, 0, Math.PI * 2);
+                ctx.arc(eyeX + 5 + this.facing * 2, y + 6, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eye shine
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.arc(eyeX - 6, y + 5, 1.5, 0, Math.PI * 2);
+                ctx.arc(eyeX + 4, y + 5, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Ears (floppy pug ears)
+                ctx.fillStyle = '#2C2C2C';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2 + (this.facing * 5) - 12, y + 2, 6, 8, -0.3, 0, Math.PI * 2);
+                ctx.ellipse(x + w/2 + (this.facing * 5) + 12, y + 2, 6, 8, 0.3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Legs (animated)
+                ctx.fillStyle = '#D4A574';
+                const legOffset = Math.sin(this.animFrame * Math.PI / 2) * 3;
+                
+                // Front legs
+                ctx.fillRect(x + 8, y + h - 12 + (this.grounded ? legOffset : 0), 8, 12);
+                ctx.fillRect(x + w - 16, y + h - 12 + (this.grounded ? -legOffset : 0), 8, 12);
+                
+                // Back legs
+                ctx.fillRect(x + 5, y + h - 10 + (this.grounded ? -legOffset : 0), 6, 10);
+                ctx.fillRect(x + w - 11, y + h - 10 + (this.grounded ? legOffset : 0), 6, 10);
+                
+                // Curly tail
+                ctx.strokeStyle = '#D4A574';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(x + (this.facing === 1 ? 5 : w - 5), y + 15, 8, 0, Math.PI * 1.5);
+                ctx.stroke();
+                
+                // Wrinkles on forehead (pug characteristic)
+                ctx.strokeStyle = '#B8956E';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x + w/2 + (this.facing * 12), y + 3, 8, 0.5, 2.6);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x + w/2 + (this.facing * 12), y + 5, 6, 0.5, 2.6);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+        
+        // Poop class
+        class Poop {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 20;
+                this.height = 15;
+                this.velocityY = 0;
+                this.grounded = false;
+                this.stacked = false;
+                this.stackedOn = null;
+            }
+            
+            update() {
+                if (!this.grounded) {
+                    this.velocityY += 0.5;
+                    this.y += this.velocityY;
+                    
+                    // Check platform collision
+                    for (let platform of platforms) {
+                        if (this.collidesWith(platform)) {
+                            this.y = platform.y - this.height;
+                            this.grounded = true;
+                            this.velocityY = 0;
+                        }
+                    }
+                    
+                    // Check poop stacking
+                    for (let poop of poops) {
+                        if (poop !== this && this.collidesWith(poop) && poop.grounded) {
+                            this.y = poop.y - this.height;
+                            this.grounded = true;
+                            this.velocityY = 0;
+                            this.stacked = true;
+                            this.stackedOn = poop;
+                        }
+                    }
+                }
+            }
+            
+            collidesWith(obj) {
+                return this.x < obj.x + obj.width &&
+                       this.x + this.width > obj.x &&
+                       this.y < obj.y + obj.height &&
+                       this.y + this.height > obj.y;
+            }
+            
+            draw() {
+                // Poop pile
+                ctx.fillStyle = '#5D4037';
+                
+                // Bottom layer
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, this.y + this.height - 3, 10, 5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Middle layer
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, this.y + this.height - 8, 7, 4, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Top
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, this.y + this.height - 12, 4, 3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Shine
+                ctx.fillStyle = '#795548';
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2 - 3, this.y + this.height - 10, 2, 1.5, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Stink lines
+                ctx.strokeStyle = '#8BC34A';
+                ctx.lineWidth = 1;
+                ctx.globalAlpha = 0.6;
+                for (let i = 0; i < 3; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + 5 + i * 5, this.y);
+                    ctx.bezierCurveTo(
+                        this.x + 3 + i * 5, this.y - 8,
+                        this.x + 7 + i * 5, this.y - 12,
+                        this.x + 5 + i * 5, this.y - 18
+                    );
+                    ctx.stroke();
+                }
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // Cookie class
+        class Cookie {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 25;
+                this.height = 25;
+                this.collected = false;
+                this.bobOffset = Math.random() * Math.PI * 2;
+            }
+            
+            update() {
+                this.bobOffset += 0.05;
+            }
+            
+            draw() {
+                if (this.collected) return;
+                
+                const bobY = this.y + Math.sin(this.bobOffset) * 3;
+                
+                // Cookie
+                ctx.fillStyle = '#D2691E';
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, bobY + this.height/2, 12, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Cookie edge
+                ctx.strokeStyle = '#8B4513';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Chocolate chips
+                ctx.fillStyle = '#3E2723';
+                const chips = [[0, -3], [4, 2], [-4, 3], [2, -5], [-3, -1]];
+                for (let chip of chips) {
+                    ctx.beginPath();
+                    ctx.arc(this.x + this.width/2 + chip[0], bobY + this.height/2 + chip[1], 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Sparkle
+                ctx.fillStyle = '#FFEB3B';
+                ctx.globalAlpha = 0.5 + Math.sin(this.bobOffset * 2) * 0.3;
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2 - 5, bobY + this.height/2 - 5, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // Candy class
+        class Candy {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 15;
+                this.collected = false;
+                this.bobOffset = Math.random() * Math.PI * 2;
+                this.color = ['#FF1744', '#E91E63', '#9C27B0', '#2196F3', '#4CAF50'][Math.floor(Math.random() * 5)];
+            }
+            
+            update() {
+                this.bobOffset += 0.05;
+            }
+            
+            draw() {
+                if (this.collected) return;
+                
+                const bobY = this.y + Math.sin(this.bobOffset) * 3;
+                
+                // Wrapper
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.ellipse(this.x + this.width/2, bobY + this.height/2, 10, 7, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Wrapper ends
+                ctx.beginPath();
+                ctx.moveTo(this.x + 5, bobY + this.height/2);
+                ctx.lineTo(this.x, bobY + 3);
+                ctx.lineTo(this.x, bobY + this.height - 3);
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width - 5, bobY + this.height/2);
+                ctx.lineTo(this.x + this.width, bobY + 3);
+                ctx.lineTo(this.x + this.width, bobY + this.height - 3);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Stripes
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.5;
+                ctx.beginPath();
+                ctx.moveTo(this.x + 12, bobY + 4);
+                ctx.lineTo(this.x + 12, bobY + this.height - 4);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(this.x + 18, bobY + 4);
+                ctx.lineTo(this.x + 18, bobY + this.height - 4);
+                ctx.stroke();
+                ctx.globalAlpha = 1;
+                
+                // Sparkle
+                ctx.fillStyle = '#FFEB3B';
+                ctx.globalAlpha = 0.5 + Math.sin(this.bobOffset * 2) * 0.3;
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, bobY + 3, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // Enemy class - Broomstick
+        class Broomstick {
+            constructor(x, y, patrolDistance) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 50;
+                this.startX = x;
+                this.patrolDistance = patrolDistance;
+                this.speed = 1.5;
+                this.direction = 1;
+                this.blocked = false;
+            }
+            
+            update() {
+                if (this.blocked) return;
+                
+                // Check if blocked by poop
+                for (let poop of poops) {
+                    const poopStack = getPoopStackHeight(poop);
+                    if (poopStack >= 2 && Math.abs(this.x - poop.x) < 30) {
+                        this.blocked = true;
+                        // Clean up poop
+                        setTimeout(() => {
+                            poops = poops.filter(p => Math.abs(p.x - poop.x) > 5);
+                            this.blocked = false;
+                        }, 3000);
+                        return;
+                    }
+                }
+                
+                this.x += this.speed * this.direction;
+                
+                if (this.x > this.startX + this.patrolDistance) {
+                    this.direction = -1;
+                } else if (this.x < this.startX) {
+                    this.direction = 1;
+                }
+            }
+            
+            draw() {
+                // Stick
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(this.x + 18, this.y, 6, 45);
+                
+                // Broom head
+                ctx.fillStyle = '#DAA520';
+                for (let i = 0; i < 7; i++) {
+                    ctx.fillRect(this.x + 5 + i * 4, this.y + 40, 3, 15);
+                }
+                
+                // Binding
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x + 5, this.y + 38, 28, 5);
+                
+                // Angry eyes on stick
+                ctx.fillStyle = '#FF0000';
+                ctx.beginPath();
+                ctx.arc(this.x + 15, this.y + 15, 3, 0, Math.PI * 2);
+                ctx.arc(this.x + 27, this.y + 15, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Angry eyebrows
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(this.x + 12, this.y + 10);
+                ctx.lineTo(this.x + 18, this.y + 12);
+                ctx.moveTo(this.x + 30, this.y + 10);
+                ctx.lineTo(this.x + 24, this.y + 12);
+                ctx.stroke();
+                
+                if (this.blocked) {
+                    // Show blocked state
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = '12px Arial';
+                    ctx.fillText('CLEANING...', this.x - 10, this.y - 10);
+                }
+            }
+        }
+        
+        // Firework enemy
+        class Firework {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 30;
+                this.height = 30;
+                this.timer = 0;
+                this.exploding = false;
+                this.explosionRadius = 0;
+                this.sparkles = [];
+            }
+            
+            update() {
+                this.timer++;
+                
+                if (this.timer % 120 === 0) {
+                    this.exploding = true;
+                    this.explosionRadius = 0;
+                    this.createSparkles();
+                }
+                
+                if (this.exploding) {
+                    this.explosionRadius += 3;
+                    if (this.explosionRadius > 80) {
+                        this.exploding = false;
+                        this.sparkles = [];
+                    }
+                    
+                    // Update sparkles
+                    for (let sparkle of this.sparkles) {
+                        sparkle.x += sparkle.vx;
+                        sparkle.y += sparkle.vy;
+                        sparkle.vy += 0.1;
+                        sparkle.life--;
+                    }
+                    this.sparkles = this.sparkles.filter(s => s.life > 0);
+                }
+            }
+            
+            createSparkles() {
+                for (let i = 0; i < 20; i++) {
+                    const angle = (Math.PI * 2 / 20) * i;
+                    this.sparkles.push({
+                        x: this.x + this.width/2,
+                        y: this.y + this.height/2,
+                        vx: Math.cos(angle) * 3,
+                        vy: Math.sin(angle) * 3,
+                        color: ['#FF0000', '#FFFF00', '#00FF00', '#0000FF', '#FF00FF'][Math.floor(Math.random() * 5)],
+                        life: 40
+                    });
+                }
+            }
+            
+            draw() {
+                if (!this.exploding) {
+                    // Firework rocket
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y);
+                    ctx.lineTo(this.x + this.width - 5, this.y + this.height);
+                    ctx.lineTo(this.x + 5, this.y + this.height);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Fuse
+                    ctx.strokeStyle = '#8B4513';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x + this.width/2, this.y + this.height);
+                    ctx.lineTo(this.x + this.width/2, this.y + this.height + 10);
+                    ctx.stroke();
+                    
+                    // Spark on fuse
+                    if (Math.floor(this.timer / 5) % 2 === 0) {
+                        ctx.fillStyle = '#FFFF00';
+                        ctx.beginPath();
+                        ctx.arc(this.x + this.width/2, this.y + this.height + 10, 4, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else {
+                    // Draw sparkles
+                    for (let sparkle of this.sparkles) {
+                        ctx.fillStyle = sparkle.color;
+                        ctx.globalAlpha = sparkle.life / 40;
+                        ctx.beginPath();
+                        ctx.arc(sparkle.x, sparkle.y, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                    ctx.globalAlpha = 1;
+                }
+            }
+            
+            isDangerous() {
+                return this.exploding && this.explosionRadius < 60;
+            }
+            
+            inExplosionRange(obj) {
+                const dx = (this.x + this.width/2) - (obj.x + obj.width/2);
+                const dy = (this.y + this.height/2) - (obj.y + obj.height/2);
+                return Math.sqrt(dx*dx + dy*dy) < this.explosionRadius;
+            }
+        }
+        
+        // Particle class
+        class Particle {
+            constructor(x, y, color, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                this.vx = vx;
+                this.vy = vy;
+                this.life = 30;
+            }
+            
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2;
+                this.life--;
+            }
+            
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.life / 30;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+        
+        // Platform class
+        class Platform {
+            constructor(x, y, width, height, type = 'grass') {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.type = type;
+            }
+            
+            draw() {
+                if (this.type === 'grass') {
+                    // Dirt
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(this.x, this.y + 10, this.width, this.height - 10);
+                    
+                    // Grass top
+                    ctx.fillStyle = '#228B22';
+                    ctx.fillRect(this.x, this.y, this.width, 15);
+                    
+                    // Grass blades
+                    ctx.fillStyle = '#32CD32';
+                    for (let i = 0; i < this.width; i += 8) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + i, this.y);
+                        ctx.lineTo(this.x + i + 4, this.y - 5);
+                        ctx.lineTo(this.x + i + 8, this.y);
+                        ctx.fill();
+                    }
+                } else if (this.type === 'stone') {
+                    ctx.fillStyle = '#696969';
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    
+                    // Stone lines
+                    ctx.strokeStyle = '#505050';
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < this.width; i += 30) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + i, this.y);
+                        ctx.lineTo(this.x + i, this.y + this.height);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+        
+        function getPoopStackHeight(basePoop) {
+            let count = 1;
+            for (let poop of poops) {
+                if (poop.stacked && poop.stackedOn === basePoop) {
+                    count += getPoopStackHeight(poop);
+                }
+            }
+            return count;
+        }
+        
+        function initLevel() {
+            // Clear everything
+            platforms = [];
+            cookies = [];
+            candies = [];
+            poops = [];
+            enemies = [];
+            particles = [];
+            
+            // Ground
+            platforms.push(new Platform(0, 550, 300, 50, 'grass'));
+            platforms.push(new Platform(350, 550, 200, 50, 'grass'));
+            platforms.push(new Platform(600, 550, 400, 50, 'grass'));
+            
+            // Floating platforms
+            platforms.push(new Platform(100, 450, 120, 25, 'grass'));
+            platforms.push(new Platform(280, 380, 100, 25, 'stone'));
+            platforms.push(new Platform(450, 320, 120, 25, 'grass'));
+            platforms.push(new Platform(620, 400, 100, 25, 'stone'));
+            platforms.push(new Platform(780, 330, 150, 25, 'grass'));
+            platforms.push(new Platform(200, 280, 80, 25, 'stone'));
+            platforms.push(new Platform(50, 200, 100, 25, 'grass'));
+            platforms.push(new Platform(350, 200, 100, 25, 'grass'));
+            platforms.push(new Platform(550, 180, 120, 25, 'stone'));
+            platforms.push(new Platform(750, 220, 100, 25, 'grass'));
+            platforms.push(new Platform(880, 150, 100, 25, 'grass'));
+            
+            // Cookies
+            cookies.push(new Cookie(130, 420));
+            cookies.push(new Cookie(300, 350));
+            cookies.push(new Cookie(480, 290));
+            cookies.push(new Cookie(650, 370));
+            cookies.push(new Cookie(820, 300));
+            cookies.push(new Cookie(70, 170));
+            cookies.push(new Cookie(580, 150));
+            cookies.push(new Cookie(910, 120));
+            
+            // Candies
+            candies.push(new Candy(380, 520));
+            candies.push(new Candy(700, 520));
+            candies.push(new Candy(230, 250));
+            candies.push(new Candy(370, 170));
+            candies.push(new Candy(780, 190));
+            
+            // Broomstick enemies
+            enemies.push(new Broomstick(350, 500, 150));
+            enemies.push(new Broomstick(650, 500, 100));
+            enemies.push(new Broomstick(280, 330, 80));
+            
+            // Firework enemies
+            enemies.push(new Firework(500, 280));
+            enemies.push(new Firework(800, 180));
+            enemies.push(new Firework(200, 150));
+            
+            // Create Bram
+            bram = new Pug(50, 480);
+        }
+        
+        function drawBackground() {
+            // Sky gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(0.5, '#B0E0E6');
+            gradient.addColorStop(1, '#98FB98');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            drawCloud(100, 60, 60);
+            drawCloud(300, 40, 45);
+            drawCloud(600, 80, 55);
+            drawCloud(850, 50, 40);
+            
+            // Sun
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(900, 80, 40, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Sun rays
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 3;
+            for (let i = 0; i < 8; i++) {
+                const angle = (Math.PI / 4) * i;
+                ctx.beginPath();
+                ctx.moveTo(900 + Math.cos(angle) * 45, 80 + Math.sin(angle) * 45);
+                ctx.lineTo(900 + Math.cos(angle) * 60, 80 + Math.sin(angle) * 60);
+                ctx.stroke();
+            }
+        }
+        
+        function drawCloud(x, y, size) {
+            ctx.beginPath();
+            ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.4, y - size * 0.1, size * 0.4, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.8, y, size * 0.5, 0, Math.PI * 2);
+            ctx.arc(x + size * 0.4, y + size * 0.2, size * 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        function updateUI() {
+            document.getElementById('cookieCount').textContent = cookiesCollected;
+            document.getElementById('candyCount').textContent = candyCollected;
+            document.getElementById('poopPower').textContent = Math.floor(poopPower);
+            document.getElementById('lives').textContent = lives;
+            document.getElementById('score').textContent = score;
+        }
+        
+        function checkCollisions() {
+            // Collect cookies
+            for (let cookie of cookies) {
+                if (!cookie.collected && bram.collidesWith(cookie)) {
+                    cookie.collected = true;
+                    cookiesCollected++;
+                    score += 100;
+                    // Particles
+                    for (let i = 0; i < 8; i++) {
+                        particles.push(new Particle(
+                            cookie.x + cookie.width/2,
+                            cookie.y + cookie.height/2,
+                            '#D2691E',
+                            Math.random() * 4 - 2,
+                            Math.random() * -4
+                        ));
+                    }
+                }
+            }
+            
+            // Collect candy
+            for (let candy of candies) {
+                if (!candy.collected && bram.collidesWith(candy)) {
+                    candy.collected = true;
+                    candyCollected++;
+                    score += 150;
+                    poopPower = Math.min(100, poopPower + 20);
+                    // Particles
+                    for (let i = 0; i < 8; i++) {
+                        particles.push(new Particle(
+                            candy.x + candy.width/2,
+                            candy.y + candy.height/2,
+                            candy.color,
+                            Math.random() * 4 - 2,
+                            Math.random() * -4
+                        ));
+                    }
+                }
+            }
+            
+            // Enemy collisions
+            for (let enemy of enemies) {
+                if (enemy instanceof Broomstick) {
+                    if (!enemy.blocked && bram.collidesWith(enemy)) {
+                        bram.takeDamage();
+                    }
+                } else if (enemy instanceof Firework) {
+                    if (enemy.isDangerous() && enemy.inExplosionRange(bram)) {
+                        bram.takeDamage();
+                    }
+                }
+            }
+            
+            // Check win condition
+            const totalCollectibles = cookies.length + candies.length;
+            const collected = cookiesCollected + candyCollected;
+            if (collected >= totalCollectibles) {
+                winGame();
+            }
+        }
+        
+        function gameLoop() {
+            if (!gameRunning) return;
+            
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background
+            drawBackground();
+            
+            // Update and draw platforms
+            for (let platform of platforms) {
+                platform.draw();
+            }
+            
+            // Update and draw poops
+            for (let poop of poops) {
+                poop.update();
+                poop.draw();
+            }
+            
+            // Update and draw cookies
+            for (let cookie of cookies) {
+                cookie.update();
+                cookie.draw();
+            }
+            
+            // Update and draw candies
+            for (let candy of candies) {
+                candy.update();
+                candy.draw();
+            }
+            
+            // Update and draw enemies
+            for (let enemy of enemies) {
+                enemy.update();
+                enemy.draw();
+            }
+            
+            // Update and draw Bram
+            bram.update();
+            bram.draw();
+            
+            // Update and draw particles
+            for (let particle of particles) {
+                particle.update();
+                particle.draw();
+            }
+            particles = particles.filter(p => p.life > 0);
+            
+            // Check collisions
+            checkCollisions();
+            
+            // Update UI
+            updateUI();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        function startGame() {
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOverScreen').classList.add('hidden');
+            document.getElementById('winScreen').classList.add('hidden');
+            
+            score = 0;
+            lives = 3;
+            poopPower = 100;
+            cookiesCollected = 0;
+            candyCollected = 0;
+            
+            initLevel();
+            gameRunning = true;
+            gameLoop();
+        }
+        
+        function gameOver() {
+            gameRunning = false;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('gameOverScreen').classList.remove('hidden');
+        }
+        
+        function winGame() {
+            gameRunning = false;
+            score += lives * 200; // Bonus for remaining lives
+            document.getElementById('winScore').textContent = score;
+            document.getElementById('winScreen').classList.remove('hidden');
+        }
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            // Prevent scrolling
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+        
+        // Prevent context menu on canvas
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
