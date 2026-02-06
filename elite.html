@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elite Wireframe Animation</title>
+<title>Elite Docking Sequence</title>
 <style>
     * {
         margin: 0;
@@ -31,337 +31,545 @@
 const canvas = document.getElementById('elite-canvas');
 const ctx = canvas.getContext('2d');
 
-// Set canvas to full window size
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Hacker info state
-let showHackerInfo = false;
-let mnemonicLines = [];
-let mnemonicUpdateCounter = 0;
+// Elite green color
+const ELITE_GREEN = '#00ff00';
+const ELITE_DIM = '#004400';
 
-// Assembly mnemonics and hacker terms
-const mnemonics = [
-    'LDA', 'STA', 'LDX', 'STX', 'LDY', 'STY', 'JMP', 'JSR', 'RTS',
-    'BEQ', 'BNE', 'BCC', 'BCS', 'BPL', 'BMI', 'CMP', 'CPX', 'CPY',
-    'INC', 'DEC', 'INX', 'DEX', 'INY', 'DEY', 'AND', 'ORA', 'EOR',
-    'ASL', 'LSR', 'ROL', 'ROR', 'BIT', 'NOP', 'BRK', 'RTI', 'CLC',
-    'SEC', 'CLI', 'SEI', 'CLV', 'CLD', 'SED', 'TAX', 'TXA', 'TAY',
-    'TYA', 'TSX', 'TXS', 'PHA', 'PLA', 'PHP', 'PLP', 'ADC', 'SBC'
-];
+// Stars
+const stars = [];
+const NUM_STARS = 200;
 
-const registers = ['$00', '$01', '$FF', '$A0', '$D0', '$C0', 'A', 'X', 'Y', 'SP'];
-
-function generateMnemonicLine() {
-    const addr = '$' + Math.floor(Math.random() * 65536).toString(16).toUpperCase().padStart(4, '0');
-    const mnemonic = mnemonics[Math.floor(Math.random() * mnemonics.length)];
-    const operand = Math.random() > 0.5 ? registers[Math.floor(Math.random() * registers.length)] : 
-                   '$' + Math.floor(Math.random() * 256).toString(16).toUpperCase().padStart(2, '0');
-    const bytes = Array.from({length: Math.floor(Math.random() * 3) + 1}, () => 
-                  Math.floor(Math.random() * 256).toString(16).toUpperCase().padStart(2, '0')).join(' ');
-    
-    return `${addr}  ${bytes.padEnd(10)}  ${mnemonic} ${operand}`;
-}
-
-function addMnemonicLine() {
-    mnemonicLines.push(generateMnemonicLine());
-    
-    // Keep only last 20 lines
-    if (mnemonicLines.length > 20) {
-        mnemonicLines.shift();
-    }
-}
-
-function drawHackerInfo() {
-    if (!showHackerInfo) return;
-    
-    ctx.font = '11px "Courier New", monospace';
-    ctx.fillStyle = '#00ff00';
-    ctx.shadowBlur = 3;
-    ctx.shadowColor = '#00ff00';
-    
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const lineHeight = 15;
-    const startY = centerY - (mnemonicLines.length * lineHeight) / 2;
-    
-    mnemonicLines.forEach((line, index) => {
-        const y = startY + (index * lineHeight);
-        const textWidth = ctx.measureText(line).width;
-        ctx.fillText(line, centerX - textWidth / 2, y);
+for (let i = 0; i < NUM_STARS; i++) {
+    stars.push({
+        x: Math.random() * 2 - 1,
+        y: Math.random() * 2 - 1,
+        z: Math.random() * 3 + 0.5
     });
+}
+
+// Station rotation
+let stationRotation = 0;
+let stationApproach = 0;
+
+// 3D projection
+function project(x, y, z, scale = 1) {
+    const fov = 400;
+    const distance = fov / (z + 3);
+    return {
+        x: canvas.width / 2 + x * distance * scale,
+        y: canvas.height / 2 + y * distance * scale,
+        scale: distance
+    };
+}
+
+// Rotate point around axis
+function rotateX(point, angle) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+        x: point.x,
+        y: point.y * cos - point.z * sin,
+        z: point.y * sin + point.z * cos
+    };
+}
+
+function rotateY(point, angle) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+        x: point.x * cos + point.z * sin,
+        y: point.y,
+        z: -point.x * sin + point.z * cos
+    };
+}
+
+function rotateZ(point, angle) {
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+    return {
+        x: point.x * cos - point.y * sin,
+        y: point.x * sin + point.y * cos,
+        z: point.z
+    };
+}
+
+// Draw starfield
+function drawStars() {
+    ctx.fillStyle = ELITE_GREEN;
+    
+    for (let star of stars) {
+        // Move stars toward viewer
+        star.z -= 0.005;
+        if (star.z < 0.1) {
+            star.z = 3 + Math.random();
+            star.x = Math.random() * 2 - 1;
+            star.y = Math.random() * 2 - 1;
+        }
+        
+        const projected = project(star.x, star.y, star.z);
+        const size = Math.max(1, 3 - star.z);
+        const brightness = Math.min(1, (3 - star.z) / 2);
+        
+        ctx.globalAlpha = brightness * 0.7;
+        ctx.beginPath();
+        ctx.arc(projected.x, projected.y, size, 0, Math.PI * 2);
+        ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+}
+
+// Create Coriolis station (dodecahedron-like structure)
+function createCoriolisStation(size) {
+    // Octahedron vertices for the classic Elite look
+    const vertices = [
+        { x: 0, y: -size, z: 0 },      // Top
+        { x: size, y: 0, z: 0 },       // Right
+        { x: 0, y: 0, z: size },       // Front
+        { x: -size, y: 0, z: 0 },      // Left
+        { x: 0, y: 0, z: -size },      // Back
+        { x: 0, y: size, z: 0 }        // Bottom
+    ];
+    
+    // Edges connecting vertices
+    const edges = [
+        [0, 1], [0, 2], [0, 3], [0, 4],  // Top to middle
+        [5, 1], [5, 2], [5, 3], [5, 4],  // Bottom to middle
+        [1, 2], [2, 3], [3, 4], [4, 1]   // Middle ring
+    ];
+    
+    return { vertices, edges };
+}
+
+// Create the docking slot (rotating rectangle on front face)
+function createDockingSlot(size, slotRotation) {
+    const slotSize = size * 0.3;
+    const slotDepth = size * 0.1;
+    const z = size * 0.5;  // Position on front face
+    
+    // Rectangular slot vertices
+    let vertices = [
+        { x: -slotSize * 0.6, y: -slotSize * 0.3, z: z },
+        { x: slotSize * 0.6, y: -slotSize * 0.3, z: z },
+        { x: slotSize * 0.6, y: slotSize * 0.3, z: z },
+        { x: -slotSize * 0.6, y: slotSize * 0.3, z: z },
+        // Inner slot (recessed)
+        { x: -slotSize * 0.5, y: -slotSize * 0.25, z: z + slotDepth },
+        { x: slotSize * 0.5, y: -slotSize * 0.25, z: z + slotDepth },
+        { x: slotSize * 0.5, y: slotSize * 0.25, z: z + slotDepth },
+        { x: -slotSize * 0.5, y: slotSize * 0.25, z: z + slotDepth }
+    ];
+    
+    // Rotate slot around Z axis (matches station rotation visible from front)
+    vertices = vertices.map(v => rotateZ(v, slotRotation));
+    
+    const edges = [
+        [0, 1], [1, 2], [2, 3], [3, 0],  // Outer rectangle
+        [4, 5], [5, 6], [6, 7], [7, 4],  // Inner rectangle
+        [0, 4], [1, 5], [2, 6], [3, 7]   // Connecting edges
+    ];
+    
+    return { vertices, edges };
+}
+
+// Create additional station detail structures
+function createStationDetails(size) {
+    const details = [];
+    
+    // Antenna/communication arrays
+    const antennaLength = size * 0.4;
+    details.push({
+        vertices: [
+            { x: 0, y: -size - antennaLength, z: 0 },
+            { x: 0, y: -size, z: 0 }
+        ],
+        edges: [[0, 1]]
+    });
+    
+    // Cross struts on faces
+    const strutSize = size * 0.7;
+    const faces = [
+        { axis: 'xy', z: size * 0.5 },
+        { axis: 'xy', z: -size * 0.5 }
+    ];
+    
+    return details;
+}
+
+// Draw wireframe structure
+function drawWireframe(structure, rotX, rotY, rotZ, zOffset = 0, color = ELITE_GREEN, lineWidth = 1.5) {
+    const transformedVertices = structure.vertices.map(v => {
+        let point = { ...v };
+        point = rotateX(point, rotX);
+        point = rotateY(point, rotY);
+        point = rotateZ(point, rotZ);
+        point.z += zOffset;
+        return point;
+    });
+    
+    ctx.strokeStyle = color;
+    ctx.lineWidth = lineWidth;
+    ctx.shadowBlur = 8;
+    ctx.shadowColor = color;
+    
+    for (let edge of structure.edges) {
+        const p1 = project(transformedVertices[edge[0]].x, transformedVertices[edge[0]].y, transformedVertices[edge[0]].z);
+        const p2 = project(transformedVertices[edge[1]].x, transformedVertices[edge[1]].y, transformedVertices[edge[1]].z);
+        
+        // Only draw if in front of camera
+        if (transformedVertices[edge[0]].z > -2.5 && transformedVertices[edge[1]].z > -2.5) {
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+    }
     
     ctx.shadowBlur = 0;
 }
 
-// Mouse position
-let mouseX = canvas.width / 2;
-let mouseY = canvas.height / 2;
-
-// Vizier opacity (controlled by parent page)
-let vizierOpacity = 1.0;
-
-// Track mouse movement and detect hexagon hover
-document.addEventListener('mousemove', (e) => {
-    mouseX = e.clientX;
-    mouseY = e.clientY;
+// Draw the Coriolis station
+function drawStation() {
+    const size = 0.8;
+    const station = createCoriolisStation(size);
     
-    // Check if mouse is near center (hexagon area)
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const distance = Math.sqrt(Math.pow(mouseX - centerX, 2) + Math.pow(mouseY - centerY, 2));
+    // Station tilted toward viewer (classic Elite angle)
+    const tiltX = 0.3;
+    const tiltY = stationRotation;
+    const tiltZ = stationRotation * 0.7;
     
-    if (distance < 200) {
-        showHackerInfo = true;
-    } else {
-        showHackerInfo = false;
-        mnemonicLines = [];
-    }
-});
-
-// Listen for opacity changes from parent window
-window.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'vizierOpacity') {
-        vizierOpacity = event.data.opacity;
-    }
-});
-
-// Hexagon rotation angle
-let rotation = 0;
-
-// Create hexagon vertices
-function createHexagon(centerX, centerY, radius) {
-    const points = [];
-    for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i;
-        points.push({
-            x: centerX + radius * Math.cos(angle),
-            y: centerY + radius * Math.sin(angle),
-            z: 0
-        });
-    }
-    return points;
+    // Pulsing approach effect
+    const zOffset = 1 + Math.sin(stationApproach * 0.5) * 0.3;
+    
+    // Draw main station structure
+    drawWireframe(station, tiltX, tiltY, tiltZ, zOffset, ELITE_GREEN, 2);
+    
+    // Draw docking slot (rotates with station)
+    const dockingSlot = createDockingSlot(size, stationRotation);
+    drawWireframe(dockingSlot, tiltX, tiltY, tiltZ, zOffset, ELITE_GREEN, 1.5);
+    
+    // Draw station detail - cross pattern on visible faces
+    drawStationCrossPattern(size, tiltX, tiltY, tiltZ, zOffset);
 }
 
-// Rotate point around center
-function rotatePoint(point, centerX, centerY, angleX, angleY) {
-    // Translate to origin
-    let x = point.x - centerX;
-    let y = point.y - centerY;
-    let z = point.z;
+// Draw cross pattern detail on station faces
+function drawStationCrossPattern(size, rotX, rotY, rotZ, zOffset) {
+    const crossSize = size * 0.4;
     
-    // Rotate around Y axis
-    let cosY = Math.cos(angleY);
-    let sinY = Math.sin(angleY);
-    let tempX = x * cosY - z * sinY;
-    let tempZ = x * sinY + z * cosY;
-    x = tempX;
-    z = tempZ;
-    
-    // Rotate around X axis
-    let cosX = Math.cos(angleX);
-    let sinX = Math.sin(angleX);
-    let tempY = y * cosX - z * sinX;
-    tempZ = y * sinX + z * cosX;
-    y = tempY;
-    z = tempZ;
-    
-    // Translate back
-    return {
-        x: x + centerX,
-        y: y + centerY,
-        z: z
+    // Front face cross
+    const frontCross = {
+        vertices: [
+            { x: -crossSize, y: 0, z: size * 0.48 },
+            { x: crossSize, y: 0, z: size * 0.48 },
+            { x: 0, y: -crossSize, z: size * 0.48 },
+            { x: 0, y: crossSize, z: size * 0.48 }
+        ],
+        edges: [[0, 1], [2, 3]]
     };
+    
+    drawWireframe(frontCross, rotX, rotY, rotZ, zOffset, ELITE_DIM, 1);
+    
+    // Side face crosses
+    const sideCross = {
+        vertices: [
+            { x: size * 0.48, y: -crossSize * 0.7, z: 0 },
+            { x: size * 0.48, y: crossSize * 0.7, z: 0 },
+            { x: size * 0.48, y: 0, z: -crossSize * 0.7 },
+            { x: size * 0.48, y: 0, z: crossSize * 0.7 }
+        ],
+        edges: [[0, 1], [2, 3]]
+    };
+    
+    drawWireframe(sideCross, rotX, rotY, rotZ, zOffset, ELITE_DIM, 1);
 }
 
-// Draw wireframe hexagon
-function drawHexagon(points) {
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = '#00ff00';
+// Draw scanner/radar display at bottom
+function drawScanner() {
+    const scannerWidth = 200;
+    const scannerHeight = 60;
+    const scannerX = canvas.width / 2 - scannerWidth / 2;
+    const scannerY = canvas.height - scannerHeight - 30;
     
+    ctx.strokeStyle = ELITE_GREEN;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = ELITE_GREEN;
+    
+    // Scanner border
     ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    
-    for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-    }
-    
+    ctx.moveTo(scannerX, scannerY + scannerHeight);
+    ctx.lineTo(scannerX + scannerWidth * 0.1, scannerY);
+    ctx.lineTo(scannerX + scannerWidth * 0.9, scannerY);
+    ctx.lineTo(scannerX + scannerWidth, scannerY + scannerHeight);
     ctx.closePath();
     ctx.stroke();
     
-    // Draw center lines
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
+    // Center line
+    ctx.beginPath();
+    ctx.moveTo(scannerX + scannerWidth / 2, scannerY);
+    ctx.lineTo(scannerX + scannerWidth / 2, scannerY + scannerHeight);
+    ctx.stroke();
     
-    ctx.strokeStyle = '#00ff00';
+    // Horizontal grid lines
     ctx.globalAlpha = 0.3;
-    for (let i = 0; i < points.length; i++) {
+    for (let i = 1; i < 4; i++) {
+        const y = scannerY + (scannerHeight / 4) * i;
+        const shrink = i * 5;
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.lineTo(points[i].x, points[i].y);
+        ctx.moveTo(scannerX + shrink, y);
+        ctx.lineTo(scannerX + scannerWidth - shrink, y);
         ctx.stroke();
     }
-    ctx.globalAlpha = 1.0;
+    ctx.globalAlpha = 1;
     
-    // Draw vertices
-    ctx.fillStyle = '#00ff00';
-    for (let i = 0; i < points.length; i++) {
-        ctx.beginPath();
-        ctx.arc(points[i].x, points[i].y, 3, 0, Math.PI * 2);
-        ctx.fill();
-    }
-}
-
-// Draw Elite-style crosshair/vizier
-function drawVizier(x, y) {
-    ctx.globalAlpha = vizierOpacity;
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 1;
-    ctx.shadowBlur = 5;
-    ctx.shadowColor = '#00ff00';
+    // Station blip (rotating)
+    const blipAngle = stationRotation * 2;
+    const blipX = scannerX + scannerWidth / 2 + Math.cos(blipAngle) * 30;
+    const blipY = scannerY + scannerHeight / 2 + Math.sin(blipAngle) * 15;
     
-    const size = 20;
-    const gap = 5;
-    
-    // Horizontal lines
+    ctx.fillStyle = ELITE_GREEN;
     ctx.beginPath();
-    ctx.moveTo(x - size, y);
-    ctx.lineTo(x - gap, y);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(x + gap, y);
-    ctx.lineTo(x + size, y);
-    ctx.stroke();
-    
-    // Vertical lines
-    ctx.beginPath();
-    ctx.moveTo(x, y - size);
-    ctx.lineTo(x, y - gap);
-    ctx.stroke();
-    
-    ctx.beginPath();
-    ctx.moveTo(x, y + gap);
-    ctx.lineTo(x, y + size);
-    ctx.stroke();
-    
-    // Center dot
-    ctx.fillStyle = '#00ff00';
-    ctx.beginPath();
-    ctx.arc(x, y, 2, 0, Math.PI * 2);
+    ctx.arc(blipX, blipY, 3, 0, Math.PI * 2);
     ctx.fill();
     
-    // Outer circle
-    ctx.strokeStyle = '#00ff00';
-    ctx.lineWidth = 1;
+    // Your ship (center)
     ctx.beginPath();
-    ctx.arc(x, y, 30, 0, Math.PI * 2);
+    ctx.arc(scannerX + scannerWidth / 2, scannerY + scannerHeight - 10, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+}
+
+// Draw targeting reticle
+function drawReticle() {
+    const cx = canvas.width / 2;
+    const cy = canvas.height / 2;
+    
+    ctx.strokeStyle = ELITE_GREEN;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = ELITE_GREEN;
+    ctx.globalAlpha = 0.6;
+    
+    // Crosshair
+    const size = 30;
+    const gap = 8;
+    
+    ctx.beginPath();
+    ctx.moveTo(cx - size, cy);
+    ctx.lineTo(cx - gap, cy);
     ctx.stroke();
     
-    // Corner brackets
-    const cornerSize = 40;
-    const cornerLength = 10;
+    ctx.beginPath();
+    ctx.moveTo(cx + gap, cy);
+    ctx.lineTo(cx + size, cy);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - size);
+    ctx.lineTo(cx, cy - gap);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + gap);
+    ctx.lineTo(cx, cy + size);
+    ctx.stroke();
+    
+    // Outer brackets
+    const bracketSize = 80;
+    const bracketLength = 20;
     
     // Top-left
     ctx.beginPath();
-    ctx.moveTo(x - cornerSize, y - cornerSize + cornerLength);
-    ctx.lineTo(x - cornerSize, y - cornerSize);
-    ctx.lineTo(x - cornerSize + cornerLength, y - cornerSize);
+    ctx.moveTo(cx - bracketSize, cy - bracketSize + bracketLength);
+    ctx.lineTo(cx - bracketSize, cy - bracketSize);
+    ctx.lineTo(cx - bracketSize + bracketLength, cy - bracketSize);
     ctx.stroke();
     
     // Top-right
     ctx.beginPath();
-    ctx.moveTo(x + cornerSize - cornerLength, y - cornerSize);
-    ctx.lineTo(x + cornerSize, y - cornerSize);
-    ctx.lineTo(x + cornerSize, y - cornerSize + cornerLength);
+    ctx.moveTo(cx + bracketSize - bracketLength, cy - bracketSize);
+    ctx.lineTo(cx + bracketSize, cy - bracketSize);
+    ctx.lineTo(cx + bracketSize, cy - bracketSize + bracketLength);
     ctx.stroke();
     
     // Bottom-left
     ctx.beginPath();
-    ctx.moveTo(x - cornerSize, y + cornerSize - cornerLength);
-    ctx.lineTo(x - cornerSize, y + cornerSize);
-    ctx.lineTo(x - cornerSize + cornerLength, y + cornerSize);
+    ctx.moveTo(cx - bracketSize, cy + bracketSize - bracketLength);
+    ctx.lineTo(cx - bracketSize, cy + bracketSize);
+    ctx.lineTo(cx - bracketSize + bracketLength, cy + bracketSize);
     ctx.stroke();
     
     // Bottom-right
     ctx.beginPath();
-    ctx.moveTo(x + cornerSize - cornerLength, y + cornerSize);
-    ctx.lineTo(x + cornerSize, y + cornerSize);
-    ctx.lineTo(x + cornerSize, y + cornerSize - cornerLength);
+    ctx.moveTo(cx + bracketSize - bracketLength, cy + bracketSize);
+    ctx.lineTo(cx + bracketSize, cy + bracketSize);
+    ctx.lineTo(cx + bracketSize, cy + bracketSize - bracketLength);
     ctx.stroke();
-}
-
-// Draw radar grid
-function drawRadarGrid() {
-    ctx.strokeStyle = '#002200';
-    ctx.lineWidth = 1;
+    
+    ctx.globalAlpha = 1;
     ctx.shadowBlur = 0;
-    
-    const gridSize = 50;
-    
-    // Vertical lines
-    for (let x = 0; x < canvas.width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-    }
-    
-    // Horizontal lines
-    for (let y = 0; y < canvas.height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-    }
 }
 
-// Animation loop
+// Draw speed/fuel bars (Elite style)
+function drawStatusBars() {
+    const barWidth = 100;
+    const barHeight = 8;
+    const startX = 30;
+    const startY = canvas.height - 100;
+    
+    ctx.font = '10px monospace';
+    ctx.fillStyle = ELITE_GREEN;
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = ELITE_GREEN;
+    
+    // Speed indicator
+    ctx.fillText('SP', startX, startY);
+    ctx.strokeStyle = ELITE_GREEN;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(startX + 20, startY - 8, barWidth, barHeight);
+    
+    const speed = 0.3 + Math.sin(stationApproach * 0.3) * 0.1;
+    ctx.fillRect(startX + 20, startY - 8, barWidth * speed, barHeight);
+    
+    // Fuel indicator
+    ctx.fillText('FU', startX, startY + 20);
+    ctx.strokeRect(startX + 20, startY + 12, barWidth, barHeight);
+    ctx.fillRect(startX + 20, startY + 12, barWidth * 0.7, barHeight);
+    
+    // Cabin temperature
+    ctx.fillText('CT', startX, startY + 40);
+    ctx.strokeRect(startX + 20, startY + 32, barWidth, barHeight);
+    ctx.fillRect(startX + 20, startY + 32, barWidth * 0.2, barHeight);
+    
+    // Laser temperature
+    ctx.fillText('LT', startX, startY + 60);
+    ctx.strokeRect(startX + 20, startY + 52, barWidth, barHeight);
+    ctx.fillRect(startX + 20, startY + 52, barWidth * 0.1, barHeight);
+    
+    ctx.shadowBlur = 0;
+}
+
+// Draw altitude indicator
+function drawAltitude() {
+    const x = canvas.width - 130;
+    const y = canvas.height - 100;
+    const barWidth = 100;
+    const barHeight = 8;
+    
+    ctx.font = '10px monospace';
+    ctx.fillStyle = ELITE_GREEN;
+    ctx.shadowBlur = 3;
+    ctx.shadowColor = ELITE_GREEN;
+    
+    ctx.fillText('AL', x, y);
+    ctx.strokeStyle = ELITE_GREEN;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x + 20, y - 8, barWidth, barHeight);
+    
+    const altitude = 0.5 + Math.sin(stationApproach * 0.2) * 0.2;
+    ctx.fillRect(x + 20, y - 8, barWidth * altitude, barHeight);
+    
+    // Shields
+    ctx.fillText('FS', x, y + 20);
+    ctx.strokeRect(x + 20, y + 12, barWidth, barHeight);
+    ctx.fillRect(x + 20, y + 12, barWidth * 0.9, barHeight);
+    
+    ctx.fillText('AS', x, y + 40);
+    ctx.strokeRect(x + 20, y + 32, barWidth, barHeight);
+    ctx.fillRect(x + 20, y + 32, barWidth * 0.85, barHeight);
+    
+    // Energy banks
+    ctx.fillText('EN', x, y + 60);
+    ctx.strokeRect(x + 20, y + 52, barWidth, barHeight);
+    ctx.fillRect(x + 20, y + 52, barWidth * 0.95, barHeight);
+    
+    ctx.shadowBlur = 0;
+}
+
+// Draw compass
+function drawCompass() {
+    const cx = canvas.width - 60;
+    const cy = 60;
+    const radius = 30;
+    
+    ctx.strokeStyle = ELITE_GREEN;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = ELITE_GREEN;
+    
+    // Circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Station direction indicator
+    const angle = stationRotation;
+    const dotX = cx + Math.cos(angle) * (radius * 0.6);
+    const dotY = cy + Math.sin(angle) * (radius * 0.6);
+    
+    ctx.fillStyle = ELITE_GREEN;
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Center dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+}
+
+// Draw "DOCKING COMPUTER" text when active
+function drawDockingText() {
+    ctx.font = '14px monospace';
+    ctx.fillStyle = ELITE_GREEN;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = ELITE_GREEN;
+    ctx.textAlign = 'center';
+    
+    const blink = Math.sin(stationApproach * 3) > 0;
+    if (blink) {
+        ctx.fillText('DOCKING COMPUTER ACTIVE', canvas.width / 2, 40);
+    }
+    
+    ctx.textAlign = 'left';
+    ctx.shadowBlur = 0;
+}
+
+// Main animation loop
 function animate() {
-    // Clear canvas with darker fade effect (CRT with backlight off)
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    // Clear to black
+    ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Draw background grid
-    drawRadarGrid();
+    // Draw elements
+    drawStars();
+    drawStation();
+    drawReticle();
+    drawScanner();
+    drawStatusBars();
+    drawAltitude();
+    drawCompass();
+    drawDockingText();
     
-    // Create and rotate hexagon
-    const centerX = canvas.width / 2;
-    const centerY = canvas.height / 2;
-    const radius = 150;
-    
-    let hexagon = createHexagon(centerX, centerY, radius);
-    
-    // Rotate hexagon
-    rotation += 0.01;
-    const rotatedHexagon = hexagon.map(point => 
-        rotatePoint(point, centerX, centerY, rotation * 0.7, rotation)
-    );
-    
-    // Draw hexagon
-    drawHexagon(rotatedHexagon);
-    
-    // Update and draw hacker info if hovering
-    if (showHackerInfo) {
-        mnemonicUpdateCounter++;
-        if (mnemonicUpdateCounter % 6 === 0) {  // Add new line every 6 frames (~100ms at 60fps)
-            addMnemonicLine();
-        }
-        drawHackerInfo();
-    }
+    // Update rotation
+    stationRotation += 0.008;
+    stationApproach += 0.02;
     
     requestAnimationFrame(animate);
 }
 
-// Handle window resize
+// Handle resize
 window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 });
 
-// Start animation
+// Start
 animate();
 </script>
 </body>

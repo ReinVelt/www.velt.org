@@ -1,0 +1,2017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLUE MAX - Satellite Reconnaissance</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --arcade-black: #0a0a0a;
+            --arcade-dark: #1a1a2e;
+            --arcade-blue: #0066cc;
+            --arcade-cyan: #00ffff;
+            --arcade-green: #00ff00;
+            --arcade-yellow: #ffff00;
+            --arcade-red: #ff0000;
+            --arcade-orange: #ff6600;
+            --arcade-white: #ffffff;
+            --scanline: rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background: var(--arcade-black);
+            font-family: 'Press Start 2P', monospace;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* CRT Scanline effect */
+        .crt-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.1) 2px,
+                rgba(0, 0, 0, 0.1) 4px
+            );
+        }
+
+        /* Top arcade header */
+        .arcade-header {
+            background: linear-gradient(180deg, #1a1a4e 0%, #0a0a2e 100%);
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid var(--arcade-cyan);
+            box-shadow: 0 4px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .game-title {
+            color: var(--arcade-cyan);
+            font-size: 16px;
+            text-shadow: 0 0 10px var(--arcade-cyan), 0 0 20px var(--arcade-blue);
+            letter-spacing: 4px;
+        }
+
+        .score-display {
+            display: flex;
+            gap: 30px;
+        }
+
+        .score-item {
+            text-align: center;
+        }
+
+        .score-label {
+            color: var(--arcade-yellow);
+            font-size: 8px;
+            margin-bottom: 2px;
+        }
+
+        .score-value {
+            color: var(--arcade-white);
+            font-size: 14px;
+            text-shadow: 0 0 10px var(--arcade-white);
+        }
+
+        /* Main game view */
+        .main-view {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(180deg, 
+                #000033 0%, 
+                #000066 30%, 
+                #003399 60%, 
+                #0066cc 100%
+            );
+        }
+
+        /* 3D perspective container - Blue Max isometric style */
+        .perspective-container {
+            position: absolute;
+            top: 5%;
+            left: -25%;
+            width: 150%;
+            height: 90%;
+            perspective: 800px;
+            perspective-origin: 50% 20%;
+            z-index: 2;
+        }
+
+        /* Ground plane with satellite */
+        #terrain-map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 250%;
+            transform-origin: 50% 0%;
+            transform: rotateX(65deg);
+            filter: contrast(1.2) saturate(1.3);
+        }
+
+        /* Horizon glow effect */
+        .horizon-glow {
+            position: absolute;
+            top: 20%;
+            left: 0;
+            width: 100%;
+            height: 15%;
+            background: linear-gradient(180deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.1) 50%, 
+                transparent 100%
+            );
+            z-index: 3;
+            pointer-events: none;
+        }
+
+        /* Aircraft shadow on ground */
+        .aircraft-shadow {
+            position: absolute;
+            bottom: 35%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+            background: radial-gradient(ellipse, rgba(0,0,0,0.4) 0%, transparent 70%);
+            z-index: 4;
+            pointer-events: none;
+        }
+
+        /* Player aircraft sprite */
+        .player-aircraft {
+            position: absolute;
+            top: 45%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 20;
+            pointer-events: none;
+            filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.5));
+        }
+
+        .aircraft-body {
+            width: 80px;
+            height: 80px;
+            position: relative;
+        }
+
+        /* SVG aircraft viewed from behind/above */
+        .aircraft-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* HUD Canvas */
+        #hud-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        /* Arcade instrument panel */
+        .arcade-panel {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(180deg, #1a1a3e 0%, #0a0a1e 100%);
+            border-top: 4px solid var(--arcade-cyan);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px;
+            z-index: 30;
+            box-shadow: 0 -4px 20px rgba(0, 255, 255, 0.3);
+        }
+
+        /* Arcade gauge */
+        .arcade-gauge {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .gauge-label {
+            color: var(--arcade-yellow);
+            font-size: 8px;
+            text-shadow: 0 0 5px var(--arcade-yellow);
+        }
+
+        .gauge-value {
+            color: var(--arcade-green);
+            font-size: 18px;
+            text-shadow: 0 0 10px var(--arcade-green);
+        }
+
+        .gauge-bar {
+            width: 80px;
+            height: 12px;
+            background: #111;
+            border: 2px solid var(--arcade-cyan);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .gauge-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--arcade-green) 0%, var(--arcade-yellow) 70%, var(--arcade-red) 100%);
+            transition: width 0.1s;
+        }
+
+        .gauge-fill.throttle {
+            background: linear-gradient(90deg, var(--arcade-green) 0%, var(--arcade-cyan) 100%);
+        }
+
+        /* Compass display */
+        .compass-display {
+            width: 70px;
+            height: 70px;
+            border: 3px solid var(--arcade-cyan);
+            border-radius: 50%;
+            background: radial-gradient(circle, #1a1a3e 0%, #0a0a1e 100%);
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .compass-needle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 4px;
+            height: 28px;
+            background: linear-gradient(180deg, var(--arcade-red) 50%, var(--arcade-white) 50%);
+            transform-origin: center top;
+            transform: translate(-50%, 0);
+        }
+
+        .compass-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-size: 8px;
+        }
+
+        .compass-ring span {
+            position: absolute;
+            color: var(--arcade-yellow);
+        }
+
+        .compass-ring .dir-n { top: 5px; left: 50%; transform: translateX(-50%); color: var(--arcade-red); }
+        .compass-ring .dir-e { top: 50%; right: 5px; transform: translateY(-50%); }
+        .compass-ring .dir-s { bottom: 5px; left: 50%; transform: translateX(-50%); }
+        .compass-ring .dir-w { top: 50%; left: 5px; transform: translateY(-50%); }
+
+        /* Attitude indicator - arcade style */
+        .attitude-display {
+            width: 70px;
+            height: 70px;
+            border: 3px solid var(--arcade-cyan);
+            border-radius: 50%;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .attitude-ball {
+            position: absolute;
+            width: 150%;
+            height: 150%;
+            top: -25%;
+            left: -25%;
+            background: linear-gradient(180deg, 
+                var(--arcade-cyan) 0%, 
+                var(--arcade-cyan) 48%, 
+                var(--arcade-white) 48%,
+                var(--arcade-white) 52%,
+                #8B4513 52%, 
+                #654321 100%
+            );
+            transform-origin: center center;
+        }
+
+        .attitude-wings {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 4px;
+            z-index: 5;
+        }
+
+        .attitude-wings::before,
+        .attitude-wings::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            height: 100%;
+            width: 18px;
+            background: var(--arcade-orange);
+        }
+
+        .attitude-wings::before { left: 0; }
+        .attitude-wings::after { right: 0; }
+
+        .attitude-wings .center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: var(--arcade-orange);
+            border-radius: 50%;
+        }
+
+        /* Mini radar map */
+        .radar-container {
+            width: 100px;
+            height: 100px;
+            border: 3px solid var(--arcade-green);
+            background: rgba(0, 20, 0, 0.9);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+        }
+
+        #nav-map {
+            width: 100%;
+            height: 100%;
+            filter: hue-rotate(90deg) saturate(0.3) brightness(0.8);
+        }
+
+        .radar-sweep {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(from 0deg, transparent 0deg, rgba(0, 255, 0, 0.3) 30deg, transparent 60deg);
+            animation: sweep 4s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes sweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .radar-grid {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 1px solid rgba(0, 255, 0, 0.3);
+            pointer-events: none;
+        }
+
+        .radar-grid::before,
+        .radar-grid::after {
+            content: '';
+            position: absolute;
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .radar-grid::before {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 1px;
+        }
+
+        .radar-grid::after {
+            top: 0;
+            left: 50%;
+            width: 1px;
+            height: 100%;
+        }
+
+        /* Warning/status lights */
+        .status-lights {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .status-light {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .light-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #333;
+            border: 2px solid #555;
+        }
+
+        .light-indicator.on {
+            background: var(--arcade-red);
+            box-shadow: 0 0 10px var(--arcade-red);
+            animation: blink 0.5s infinite;
+        }
+
+        .light-indicator.green.on {
+            background: var(--arcade-green);
+            box-shadow: 0 0 10px var(--arcade-green);
+            animation: none;
+        }
+
+        .light-label {
+            color: var(--arcade-white);
+            font-size: 6px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Location search - arcade style */
+        .location-search {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 50;
+            display: flex;
+            gap: 5px;
+        }
+
+        .location-search input {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--arcade-cyan);
+            color: var(--arcade-green);
+            padding: 8px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            width: 160px;
+        }
+
+        .location-search input::placeholder {
+            color: var(--arcade-cyan);
+            opacity: 0.5;
+        }
+
+        .location-search button {
+            background: var(--arcade-dark);
+            border: 2px solid var(--arcade-cyan);
+            color: var(--arcade-cyan);
+            padding: 8px 12px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .location-search button:hover {
+            background: var(--arcade-cyan);
+            color: var(--arcade-black);
+        }
+
+        /* Stall warning - arcade style */
+        .stall-warning {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--arcade-red);
+            color: var(--arcade-white);
+            padding: 20px 40px;
+            font-size: 16px;
+            z-index: 100;
+            display: none;
+            border: 4px solid var(--arcade-yellow);
+            box-shadow: 0 0 30px var(--arcade-red);
+            animation: warning-flash 0.2s infinite;
+        }
+
+        @keyframes warning-flash {
+            0%, 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.8; transform: translate(-50%, -50%) scale(1.05); }
+        }
+
+        /* Crash screen - arcade game over */
+        .crash-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #330000 0%, #110000 100%);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .crash-screen h1 {
+            color: var(--arcade-red);
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px var(--arcade-red);
+            animation: game-over 0.5s infinite;
+        }
+
+        @keyframes game-over {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .crash-screen p {
+            color: var(--arcade-yellow);
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+
+        .crash-screen button {
+            padding: 15px 30px;
+            background: transparent;
+            border: 3px solid var(--arcade-cyan);
+            color: var(--arcade-cyan);
+            font-family: 'Press Start 2P', monospace;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .crash-screen button:hover {
+            background: var(--arcade-cyan);
+            color: var(--arcade-black);
+            box-shadow: 0 0 20px var(--arcade-cyan);
+        }
+
+        /* Control hints */
+        .control-hints {
+            position: absolute;
+            bottom: 130px;
+            left: 10px;
+            z-index: 40;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid var(--arcade-cyan);
+            padding: 10px;
+            font-size: 6px;
+        }
+
+        .control-hints h3 {
+            color: var(--arcade-yellow);
+            margin-bottom: 5px;
+            font-size: 8px;
+        }
+
+        .control-hints p {
+            color: var(--arcade-white);
+            margin: 3px 0;
+        }
+
+        .control-hints kbd {
+            color: var(--arcade-cyan);
+        }
+
+        /* Touch controls */
+        .touch-controls {
+            display: none;
+            position: absolute;
+            bottom: 130px;
+            left: 0;
+            right: 0;
+            padding: 10px;
+            justify-content: space-between;
+            z-index: 35;
+        }
+
+        @media (max-width: 768px) {
+            .touch-controls { display: flex; }
+            .control-hints { display: none; }
+            .arcade-header { padding: 5px 10px; }
+            .game-title { font-size: 10px; letter-spacing: 2px; }
+            .score-display { gap: 15px; }
+            .score-value { font-size: 10px; }
+            .score-label { font-size: 6px; }
+            .arcade-panel { height: 100px; }
+            .radar-container { width: 70px; height: 70px; }
+            .compass-display, .attitude-display { width: 55px; height: 55px; }
+            .gauge-value { font-size: 12px; }
+        }
+
+        .touch-btn {
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid var(--arcade-cyan);
+            color: var(--arcade-cyan);
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .touch-btn:active {
+            background: rgba(0, 255, 255, 0.5);
+        }
+
+        .touch-stick {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .touch-stick-row {
+            display: flex;
+            gap: 3px;
+            justify-content: center;
+        }
+
+        /* Hide Leaflet attribution */
+        .leaflet-control-attribution { display: none !important; }
+
+        /* Combat elements */
+        .bullet {
+            position: absolute;
+            width: 4px;
+            height: 12px;
+            background: linear-gradient(180deg, #ffff00 0%, #ff6600 100%);
+            border-radius: 2px;
+            box-shadow: 0 0 8px #ffff00;
+            pointer-events: none;
+            z-index: 15;
+        }
+
+        .bomb {
+            position: absolute;
+            width: 10px;
+            height: 16px;
+            background: linear-gradient(180deg, #333 0%, #666 50%, #333 100%);
+            border-radius: 3px 3px 5px 5px;
+            pointer-events: none;
+            z-index: 14;
+        }
+
+        .bomb::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 3px;
+            width: 4px;
+            height: 4px;
+            background: #888;
+            border-radius: 50%;
+        }
+
+        .explosion {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 16;
+            animation: explode 0.5s ease-out forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: translate(-50%, -50%) scale(0.2);
+                background: radial-gradient(circle, #fff 0%, #ffff00 30%, #ff6600 60%, transparent 100%);
+                opacity: 1;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1);
+                background: radial-gradient(circle, #ffff00 0%, #ff6600 40%, #ff0000 70%, transparent 100%);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1.5);
+                background: radial-gradient(circle, #ff6600 0%, #333 50%, transparent 100%);
+                opacity: 0;
+            }
+        }
+
+        .ground-enemy {
+            position: absolute;
+            pointer-events: none;
+            z-index: 12;
+            transform-origin: center center;
+        }
+
+        .enemy-tank {
+            width: 24px;
+            height: 32px;
+        }
+
+        .enemy-aa {
+            width: 20px;
+            height: 28px;
+        }
+
+        .enemy-building {
+            width: 40px;
+            height: 40px;
+        }
+
+        .enemy-bullet {
+            position: absolute;
+            width: 3px;
+            height: 3px;
+            background: #ff0000;
+            border-radius: 50%;
+            box-shadow: 0 0 6px #ff0000;
+            pointer-events: none;
+            z-index: 17;
+        }
+
+        /* Damage flash */
+        .damage-flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.4);
+            pointer-events: none;
+            z-index: 500;
+            animation: damage 0.2s ease-out forwards;
+        }
+
+        @keyframes damage {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        /* Ammo display */
+        .ammo-display {
+            display: flex;
+            gap: 15px;
+        }
+
+        .ammo-item {
+            text-align: center;
+        }
+
+        .ammo-icon {
+            font-size: 12px;
+            color: var(--arcade-yellow);
+        }
+
+        .ammo-count {
+            color: var(--arcade-green);
+            font-size: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- CRT Scanline overlay -->
+    <div class="crt-overlay"></div>
+    <!-- Arcade Header -->
+    <div class="arcade-header">
+        <div class="game-title">BLUE MAX RECON</div>
+        <div class="score-display">
+            <div class="score-item">
+                <div class="score-label">SCORE</div>
+                <div class="score-value" id="hud-score">0</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">ALTITUDE</div>
+                <div class="score-value" id="hud-altitude">3000</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">SPEED</div>
+                <div class="score-value" id="hud-speed">110</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">HEADING</div>
+                <div class="score-value" id="hud-heading">360</div>
+            </div>
+            <div class="score-item">
+                <div class="score-label">FUEL</div>
+                <div class="score-value" id="hud-fuel">100%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game View -->
+    <div class="main-view">
+        <!-- 3D Perspective terrain -->
+        <div class="perspective-container" id="perspective-container">
+            <div id="terrain-map"></div>
+        </div>
+        
+        <!-- Horizon glow -->
+        <div class="horizon-glow"></div>
+        
+        <!-- Aircraft shadow -->
+        <div class="aircraft-shadow" id="aircraft-shadow"></div>
+        
+        <!-- Player aircraft sprite -->
+        <div class="player-aircraft" id="player-aircraft">
+            <div class="aircraft-body">
+                <svg class="aircraft-svg" viewBox="0 0 100 100">
+                    <!-- Fuselage -->
+                    <ellipse cx="50" cy="50" rx="8" ry="25" fill="#2c3e50" stroke="#1a252f" stroke-width="2"/>
+                    <!-- Wings -->
+                    <path d="M 50 40 L 15 50 L 15 55 L 50 48 L 85 55 L 85 50 Z" fill="#34495e" stroke="#1a252f" stroke-width="1"/>
+                    <!-- Tail -->
+                    <path d="M 50 70 L 40 80 L 50 75 L 60 80 Z" fill="#34495e" stroke="#1a252f" stroke-width="1"/>
+                    <!-- Horizontal stabilizer -->
+                    <path d="M 50 72 L 35 75 L 35 77 L 50 74 L 65 77 L 65 75 Z" fill="#2c3e50" stroke="#1a252f" stroke-width="1"/>
+                    <!-- Cockpit -->
+                    <ellipse cx="50" cy="38" rx="5" ry="8" fill="#5dade2" stroke="#3498db" stroke-width="1"/>
+                    <!-- Engine cowl highlight -->
+                    <ellipse cx="50" cy="28" rx="6" ry="3" fill="#7f8c8d"/>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- HUD Canvas -->
+        <canvas id="hud-canvas"></canvas>
+
+        <!-- Location Search -->
+        <div class="location-search">
+            <input type="text" id="location-input" placeholder="FLY TO...">
+            <button onclick="searchLocation()">GO</button>
+        </div>
+
+        <!-- Stall Warning -->
+        <div class="stall-warning" id="stall-warning">STALL!</div>
+
+        <!-- Crash Screen -->
+        <div class="crash-screen" id="crash-screen">
+            <h1>GAME OVER</h1>
+            <p>AIRCRAFT DESTROYED</p>
+            <button onclick="resetFlight()">CONTINUE?</button>
+        </div>
+
+        <!-- Touch Controls -->
+        <div class="touch-controls">
+            <div class="touch-stick">
+                <div class="touch-stick-row">
+                    <div class="touch-btn" data-control="pitch-up">▲</div>
+                </div>
+                <div class="touch-stick-row">
+                    <div class="touch-btn" data-control="roll-left">◀</div>
+                    <div class="touch-btn" data-control="pitch-down">▼</div>
+                    <div class="touch-btn" data-control="roll-right">▶</div>
+                </div>
+            </div>
+            <div class="touch-stick">
+                <div class="touch-btn" data-control="fire" style="background:rgba(255,255,0,0.3);border-color:#ffff00;color:#ffff00;">•</div>
+                <div class="touch-btn" data-control="bomb" style="background:rgba(255,100,0,0.3);border-color:#ff6600;color:#ff6600;">●</div>
+            </div>
+            <div class="touch-stick">
+                <div class="touch-btn" data-control="throttle-up">+</div>
+                <div class="touch-btn" data-control="throttle-down">−</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Arcade Instrument Panel -->
+    <div class="arcade-panel">
+        <!-- Throttle bar -->
+        <div class="arcade-gauge">
+            <div class="gauge-label">THROTTLE</div>
+            <div class="gauge-bar">
+                <div class="gauge-fill throttle" id="throttle-bar" style="width: 65%"></div>
+            </div>
+            <div class="gauge-value" id="throttle-value">65%</div>
+        </div>
+
+        <!-- Attitude indicator -->
+        <div class="arcade-gauge">
+            <div class="gauge-label">ATTITUDE</div>
+            <div class="attitude-display">
+                <div class="attitude-ball" id="attitude-ball"></div>
+                <div class="attitude-wings"><div class="center"></div></div>
+            </div>
+        </div>
+
+        <!-- Compass -->
+        <div class="arcade-gauge">
+            <div class="gauge-label">COMPASS</div>
+            <div class="compass-display">
+                <div class="compass-ring">
+                    <span class="dir-n">N</span>
+                    <span class="dir-e">E</span>
+                    <span class="dir-s">S</span>
+                    <span class="dir-w">W</span>
+                </div>
+                <div class="compass-needle" id="compass-needle"></div>
+            </div>
+        </div>
+
+        <!-- Vertical speed -->
+        <div class="arcade-gauge">
+            <div class="gauge-label">CLIMB</div>
+            <div class="gauge-value" id="vspeed">0</div>
+            <div class="gauge-label" style="font-size:6px">FT/MIN</div>
+        </div>
+
+        <!-- Radar/Map -->
+        <div class="arcade-gauge">
+            <div class="gauge-label">RADAR</div>
+            <div class="radar-container">
+                <div id="nav-map"></div>
+                <div class="radar-sweep"></div>
+                <div class="radar-grid"></div>
+            </div>
+        </div>
+
+        <!-- Status lights -->
+        <div class="status-lights">
+            <div class="status-light">
+                <div class="light-indicator green" id="light-gear"></div>
+                <span class="light-label">GEAR</span>
+            </div>
+            <div class="status-light">
+                <div class="light-indicator" id="light-stall"></div>
+                <span class="light-label">STALL</span>
+            </div>
+            <div class="status-light">
+                <div class="light-indicator" id="light-fuel"></div>
+                <span class="light-label">FUEL</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control hints -->
+    <div class="control-hints">
+        <h3>CONTROLS</h3>
+        <p><kbd>W</kbd><kbd>S</kbd> PITCH</p>
+        <p><kbd>A</kbd><kbd>D</kbd> ROLL</p>
+        <p><kbd>Q</kbd><kbd>E</kbd> YAW</p>
+        <p><kbd>↑</kbd><kbd>↓</kbd> THROTTLE</p>
+        <p><kbd>SPACE</kbd> FIRE</p>
+        <p><kbd>B</kbd> BOMB</p>
+        <p><kbd>V</kbd> VIEW MODE</p>
+    </div>
+
+    <!-- Ammo display -->
+    <div class="ammo-display" style="position:absolute; bottom:130px; right:10px; z-index:40;">
+        <div class="ammo-item">
+            <div class="ammo-icon">•••</div>
+            <div class="ammo-count" id="ammo-bullets">500</div>
+        </div>
+        <div class="ammo-item">
+            <div class="ammo-icon">●</div>
+            <div class="ammo-count" id="ammo-bombs">10</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Cessna 172 Flight State
+        const aircraft = {
+            lat: 52.3676,    // Amsterdam Schiphol area
+            lon: 4.9041,
+            altitude: 3000,  // feet AGL
+            heading: 360,    // degrees magnetic
+            pitch: 0,        // degrees
+            roll: 0,         // degrees
+            airspeed: 110,   // knots IAS
+            vspeed: 0,       // ft/min
+            throttle: 65,    // percent
+            mixture: 100,    // percent
+            rpm: 2300,       // engine RPM
+            gear: true,      // down = true
+            flaps: 0,        // degrees (0, 10, 20, 30, 40)
+            fuel: 53,        // gallons (Cessna 172 has 53 gal usable)
+            crashed: false,
+            onGround: false,
+            health: 100,     // player health
+            score: 0,        // player score
+            ammo: 500,       // machine gun rounds
+            bombs: 10        // bombs available
+        };
+
+        // Cessna 172 Performance specs
+        const C172 = {
+            stallSpeedClean: 48,      // knots
+            stallSpeedFull: 40,       // knots (full flaps)
+            cruiseSpeed: 122,         // knots
+            neverExceed: 163,         // knots Vne
+            maxRPM: 2700,
+            maxClimbRate: 730,        // ft/min
+            serviceCeiling: 14000,    // feet
+            fuelBurn: 8.5,            // gal/hour
+            weight: 2450,             // lbs gross
+            wingArea: 174,            // sq ft
+            wingSpan: 36.1            // feet
+        };
+
+        // Control inputs
+        const controls = {
+            pitchUp: false,
+            pitchDown: false,
+            rollLeft: false,
+            rollRight: false,
+            yawLeft: false,
+            yawRight: false,
+            throttleUp: false,
+            throttleDown: false,
+            firing: false,
+            bombing: false
+        };
+
+        // Combat arrays
+        let bullets = [];
+        let bombs = [];
+        let enemies = [];
+        let explosions = [];
+        let enemyBullets = [];
+        let lastFireTime = 0;
+        let lastBombTime = 0;
+        const FIRE_RATE = 100; // ms between shots
+        const BOMB_RATE = 500; // ms between bombs
+
+        // View mode
+        let viewMode = 'satellite'; // 'satellite', 'osm', 'terrain'
+
+        // Canvas setup
+        const hudCanvas = document.getElementById('hud-canvas');
+        const hudCtx = hudCanvas.getContext('2d');
+
+        function resizeCanvas() {
+            hudCanvas.width = hudCanvas.offsetWidth;
+            hudCanvas.height = hudCanvas.offsetHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Initialize main terrain map (satellite view)
+        const terrainMap = L.map('terrain-map', {
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false,
+            touchZoom: false
+        }).setView([aircraft.lat, aircraft.lon], 15);
+
+        // Satellite layer (using ESRI World Imagery)
+        const satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19,
+            attribution: ''
+        });
+
+        // OSM layer
+        const osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: ''
+        });
+
+        // OpenTopoMap for terrain
+        const topoLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            maxZoom: 17,
+            attribution: ''
+        });
+
+        // Start with satellite
+        satelliteLayer.addTo(terrainMap);
+
+        // Function to switch map layers
+        function setViewMode(mode) {
+            viewMode = mode;
+            terrainMap.eachLayer(layer => {
+                if (layer._url) terrainMap.removeLayer(layer);
+            });
+            switch(mode) {
+                case 'satellite':
+                    satelliteLayer.addTo(terrainMap);
+                    break;
+                case 'osm':
+                    osmLayer.addTo(terrainMap);
+                    break;
+                case 'terrain':
+                    topoLayer.addTo(terrainMap);
+                    break;
+            }
+        }
+
+        // Initialize navigation map (mini map)
+        const navMap = L.map('nav-map', {
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            scrollWheelZoom: false
+        }).setView([aircraft.lat, aircraft.lon], 10);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19
+        }).addTo(navMap);
+
+        // Aircraft icon for nav map
+        const planeIcon = L.divIcon({
+            html: `<svg viewBox="0 0 24 24" width="24" height="24" style="transform: rotate(0deg);">
+                <path fill="#ff0000" d="M12,2L4,12l8,2l8-2L12,2z M12,22l8-8l-8-2l-8,2L12,22z"/>
+            </svg>`,
+            className: 'plane-marker',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        const planeMarker = L.marker([aircraft.lat, aircraft.lon], {
+            icon: planeIcon
+        }).addTo(navMap);
+
+        // Draw sky/horizon overlay on canvas
+        function drawSkyOverlay() {
+            const w = hudCanvas.width;
+            const h = hudCanvas.height;
+            const viewHeight = h * 0.8; // Most of screen minus arcade panel
+
+            // Clear
+            hudCtx.clearRect(0, 0, w, h);
+
+            // Draw HUD elements (arcade style)
+            drawArcadeHUD(w, viewHeight);
+        }
+
+        // Draw arcade-style HUD overlay
+        function drawArcadeHUD(w, h) {
+            hudCtx.save();
+            
+            // Arcade crosshairs in center
+            const fpvX = w / 2;
+            const fpvY = h * 0.45;
+            
+            hudCtx.strokeStyle = '#00ffff';
+            hudCtx.lineWidth = 2;
+            hudCtx.shadowColor = '#000';
+            hudCtx.shadowBlur = 3;
+            
+            // Simple crosshair
+            hudCtx.beginPath();
+            hudCtx.moveTo(fpvX - 25, fpvY);
+            hudCtx.lineTo(fpvX - 8, fpvY);
+            hudCtx.moveTo(fpvX + 8, fpvY);
+            hudCtx.lineTo(fpvX + 25, fpvY);
+            hudCtx.moveTo(fpvX, fpvY - 25);
+            hudCtx.lineTo(fpvX, fpvY - 8);
+            hudCtx.stroke();
+            
+            // Center dot
+            hudCtx.fillStyle = '#00ffff';
+            hudCtx.beginPath();
+            hudCtx.arc(fpvX, fpvY, 3, 0, Math.PI * 2);
+            hudCtx.fill();
+
+            // Bank indicator at top - arcade style
+            hudCtx.save();
+            hudCtx.translate(w / 2, 70);
+            
+            hudCtx.strokeStyle = '#00ffff';
+            hudCtx.lineWidth = 2;
+            hudCtx.beginPath();
+            hudCtx.arc(0, 0, 40, Math.PI * 0.8, Math.PI * 0.2, true);
+            hudCtx.stroke();
+            
+            // Bank marks
+            [-45, -30, -15, 0, 15, 30, 45].forEach(mark => {
+                const angle = (mark - 90) * Math.PI / 180;
+                const inner = mark === 0 ? 32 : 35;
+                hudCtx.beginPath();
+                hudCtx.moveTo(Math.cos(angle) * inner, Math.sin(angle) * inner);
+                hudCtx.lineTo(Math.cos(angle) * 40, Math.sin(angle) * 40);
+                hudCtx.stroke();
+            });
+            
+            // Current bank pointer
+            hudCtx.fillStyle = '#ffff00';
+            hudCtx.save();
+            hudCtx.rotate(-aircraft.roll * Math.PI / 180);
+            hudCtx.beginPath();
+            hudCtx.moveTo(0, -44);
+            hudCtx.lineTo(-5, -52);
+            hudCtx.lineTo(5, -52);
+            hudCtx.closePath();
+            hudCtx.fill();
+            hudCtx.restore();
+            
+            hudCtx.restore();
+
+            // Pitch ladder - simple arcade style
+            hudCtx.font = 'bold 10px "Press Start 2P", monospace';
+            hudCtx.fillStyle = '#00ffff';
+            hudCtx.textAlign = 'center';
+            
+            for (let deg = -20; deg <= 20; deg += 10) {
+                if (deg === 0) continue;
+                const y = fpvY - (deg * 4) + (aircraft.pitch * 4);
+                if (y > 100 && y < h - 50) {
+                    const lineW = 30;
+                    hudCtx.strokeStyle = deg > 0 ? '#00ffff' : '#ff6600';
+                    hudCtx.setLineDash(deg < 0 ? [5, 5] : []);
+                    hudCtx.beginPath();
+                    hudCtx.moveTo(fpvX - lineW, y);
+                    hudCtx.lineTo(fpvX + lineW, y);
+                    hudCtx.stroke();
+                    hudCtx.setLineDash([]);
+                    hudCtx.fillText(Math.abs(deg).toString(), fpvX - lineW - 18, y + 4);
+                }
+            }
+
+            // Horizon line
+            const horizonY = fpvY + (aircraft.pitch * 4);
+            if (horizonY > 50 && horizonY < h - 50) {
+                hudCtx.strokeStyle = '#ffffff';
+                hudCtx.lineWidth = 1;
+                hudCtx.beginPath();
+                hudCtx.moveTo(fpvX - 80, horizonY);
+                hudCtx.lineTo(fpvX - 30, horizonY);
+                hudCtx.moveTo(fpvX + 30, horizonY);
+                hudCtx.lineTo(fpvX + 80, horizonY);
+                hudCtx.stroke();
+            }
+
+            hudCtx.restore();
+        }
+
+        // Physics update
+        function updatePhysics(dt) {
+            if (aircraft.crashed) return;
+
+            // Control rates (Cessna 172 characteristics)
+            const pitchRate = 15;
+            const rollRate = 30;
+            const yawRate = 10;
+            const throttleRate = 20;
+
+            if (controls.pitchUp) aircraft.pitch = Math.min(30, aircraft.pitch + pitchRate * dt);
+            if (controls.pitchDown) aircraft.pitch = Math.max(-20, aircraft.pitch - pitchRate * dt);
+            if (controls.rollLeft) aircraft.roll = Math.max(-45, aircraft.roll - rollRate * dt);
+            if (controls.rollRight) aircraft.roll = Math.min(45, aircraft.roll + rollRate * dt);
+            if (controls.yawLeft) aircraft.heading = (aircraft.heading - yawRate * dt + 360) % 360;
+            if (controls.yawRight) aircraft.heading = (aircraft.heading + yawRate * dt) % 360;
+            if (controls.throttleUp) aircraft.throttle = Math.min(100, aircraft.throttle + throttleRate * dt);
+            if (controls.throttleDown) aircraft.throttle = Math.max(0, aircraft.throttle - throttleRate * dt);
+
+            // Auto-coordination and stability
+            if (!controls.rollLeft && !controls.rollRight) {
+                aircraft.roll *= 0.97; // Gradual return to level
+            }
+            if (!controls.pitchUp && !controls.pitchDown) {
+                aircraft.pitch *= 0.99; // Slight pitch stability
+            }
+
+            // Engine simulation
+            aircraft.rpm = 700 + (aircraft.throttle / 100) * 2000;
+            
+            // Fuel consumption
+            const fuelFlow = (aircraft.rpm / C172.maxRPM) * C172.fuelBurn / 3600;
+            aircraft.fuel = Math.max(0, aircraft.fuel - fuelFlow * dt);
+
+            // Stall speed calculation (affected by flaps and load factor)
+            const loadFactor = 1 / Math.cos(aircraft.roll * Math.PI / 180);
+            const flapsFactor = 1 - (aircraft.flaps / 40) * 0.17;
+            const currentStallSpeed = C172.stallSpeedClean * flapsFactor * Math.sqrt(loadFactor);
+
+            // Check stall condition
+            const isStalling = aircraft.airspeed < currentStallSpeed && aircraft.altitude > 50;
+            document.getElementById('stall-warning').style.display = isStalling ? 'block' : 'none';
+
+            // Thrust calculation
+            const maxThrust = 300; // lbs (typical for Lycoming O-320)
+            const thrust = (aircraft.throttle / 100) * maxThrust * (aircraft.mixture / 100);
+
+            // Drag calculation
+            const velocityFps = aircraft.airspeed * 1.68781;
+            const dynamicPressure = 0.5 * 0.002377 * velocityFps * velocityFps;
+            const parasiteDrag = 0.025;
+            const inducedDrag = 0.04;
+            const flapDrag = aircraft.flaps * 0.002;
+            const gearDrag = aircraft.gear ? 0.01 : 0;
+            const totalDragCoeff = parasiteDrag + inducedDrag + flapDrag + gearDrag;
+            const drag = totalDragCoeff * dynamicPressure * C172.wingArea;
+
+            // Airspeed change
+            const netForce = thrust - drag;
+            const accel = (netForce / C172.weight) * 32.174;
+            aircraft.airspeed = Math.max(0, aircraft.airspeed + (accel * dt * 0.592484));
+
+            // Lift calculation
+            const liftCoeff = 0.4 + (aircraft.pitch * 0.02) + (aircraft.flaps * 0.01);
+            const lift = liftCoeff * dynamicPressure * C172.wingArea;
+
+            // Climb/descent calculation
+            let climbAngle = aircraft.pitch;
+            if (isStalling) {
+                climbAngle = Math.max(-45, aircraft.pitch - 20);
+                aircraft.pitch = Math.max(-15, aircraft.pitch - 10 * dt);
+                aircraft.roll += (Math.random() - 0.5) * 5; // Stall buffet
+            }
+
+            const excessThrust = lift - C172.weight * Math.cos(climbAngle * Math.PI / 180);
+            const climbRate = (excessThrust / C172.weight) * velocityFps * 60;
+            aircraft.vspeed = Math.max(-6000, Math.min(C172.maxClimbRate, climbRate + aircraft.pitch * 30));
+
+            // Altitude change
+            aircraft.altitude += aircraft.vspeed * dt / 60;
+
+            // Turn rate from bank angle
+            if (aircraft.airspeed > 20) {
+                const turnRate = (Math.tan(aircraft.roll * Math.PI / 180) * 32.174 / velocityFps) * (180 / Math.PI);
+                aircraft.heading = (aircraft.heading + turnRate * dt + 360) % 360;
+            }
+
+            // Position update
+            const groundSpeed = aircraft.airspeed * Math.cos(aircraft.pitch * Math.PI / 180);
+            const distanceNM = groundSpeed * dt / 3600;
+            const distanceDeg = distanceNM / 60;
+
+            const headingRad = aircraft.heading * Math.PI / 180;
+            aircraft.lat += Math.cos(headingRad) * distanceDeg;
+            aircraft.lon += Math.sin(headingRad) * distanceDeg / Math.cos(aircraft.lat * Math.PI / 180);
+
+            // Ground collision
+            if (aircraft.altitude <= 0) {
+                if (Math.abs(aircraft.vspeed) > 600 || Math.abs(aircraft.roll) > 15 || aircraft.airspeed > 80) {
+                    crash();
+                } else {
+                    // Successful landing
+                    aircraft.altitude = 0;
+                    aircraft.vspeed = 0;
+                    aircraft.pitch = 0;
+                    aircraft.onGround = true;
+                }
+            } else {
+                aircraft.onGround = false;
+            }
+        }
+
+        function crash() {
+            aircraft.crashed = true;
+            document.getElementById('crash-screen').style.display = 'flex';
+        }
+
+        function resetFlight() {
+            aircraft.altitude = 3000;
+            aircraft.airspeed = 110;
+            aircraft.vspeed = 0;
+            aircraft.pitch = 0;
+            aircraft.roll = 0;
+            aircraft.throttle = 65;
+            aircraft.fuel = 53;
+            aircraft.crashed = false;
+            aircraft.onGround = false;
+            aircraft.health = 100;
+            aircraft.score = 0;
+            aircraft.ammo = 500;
+            aircraft.bombs = 10;
+            bullets = [];
+            bombs = [];
+            enemies = [];
+            explosions = [];
+            enemyBullets = [];
+            spawnInitialEnemies();
+            document.getElementById('crash-screen').style.display = 'none';
+        }
+
+        // ============ COMBAT SYSTEM ============
+
+        // Spawn initial enemies around the player
+        function spawnInitialEnemies() {
+            for (let i = 0; i < 15; i++) {
+                spawnEnemy();
+            }
+        }
+
+        // Spawn a single enemy at random location ahead of player
+        function spawnEnemy() {
+            const headingRad = aircraft.heading * Math.PI / 180;
+            const distance = 0.01 + Math.random() * 0.03; // ~1-3 km ahead
+            const spread = (Math.random() - 0.5) * 0.04; // lateral spread
+            
+            const enemyLat = aircraft.lat + Math.cos(headingRad) * distance + Math.cos(headingRad + Math.PI/2) * spread;
+            const enemyLon = aircraft.lon + Math.sin(headingRad) * distance / Math.cos(aircraft.lat * Math.PI / 180) + Math.sin(headingRad + Math.PI/2) * spread / Math.cos(aircraft.lat * Math.PI / 180);
+            
+            const types = ['tank', 'tank', 'tank', 'aa', 'aa', 'building'];
+            const type = types[Math.floor(Math.random() * types.length)];
+            
+            enemies.push({
+                lat: enemyLat,
+                lon: enemyLon,
+                type: type,
+                health: type === 'building' ? 50 : (type === 'tank' ? 30 : 20),
+                lastFire: 0,
+                fireRate: type === 'aa' ? 800 : 2000, // AA guns fire faster
+                points: type === 'building' ? 500 : (type === 'tank' ? 200 : 100)
+            });
+        }
+
+        // Fire machine gun
+        function fireBullet() {
+            const now = performance.now();
+            if (now - lastFireTime < FIRE_RATE || aircraft.ammo <= 0) return;
+            
+            lastFireTime = now;
+            aircraft.ammo--;
+            
+            // Bullets fire forward from aircraft
+            const headingRad = aircraft.heading * Math.PI / 180;
+            bullets.push({
+                lat: aircraft.lat,
+                lon: aircraft.lon,
+                altitude: aircraft.altitude,
+                vLat: Math.cos(headingRad) * 0.0008,
+                vLon: Math.sin(headingRad) * 0.0008 / Math.cos(aircraft.lat * Math.PI / 180),
+                vAlt: -50, // bullets drop
+                life: 2 // seconds
+            });
+        }
+
+        // Drop bomb
+        function dropBomb() {
+            const now = performance.now();
+            if (now - lastBombTime < BOMB_RATE || aircraft.bombs <= 0) return;
+            
+            lastBombTime = now;
+            aircraft.bombs--;
+            
+            bombs.push({
+                lat: aircraft.lat,
+                lon: aircraft.lon,
+                altitude: aircraft.altitude,
+                vAlt: 0, // starts at plane speed
+                life: 10 // seconds max
+            });
+        }
+
+        // Create explosion
+        function createExplosion(lat, lon, size) {
+            explosions.push({
+                lat: lat,
+                lon: lon,
+                size: size,
+                life: 0.5
+            });
+        }
+
+        // Update combat elements
+        function updateCombat(dt) {
+            if (aircraft.crashed) return;
+            
+            // Handle firing
+            if (controls.firing) fireBullet();
+            if (controls.bombing) dropBomb();
+            
+            // Update bullets
+            bullets = bullets.filter(b => {
+                b.lat += b.vLat * dt;
+                b.lon += b.vLon * dt;
+                b.altitude += b.vAlt * dt;
+                b.life -= dt;
+                
+                // Check collision with enemies
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const e = enemies[i];
+                    const dist = Math.sqrt(
+                        Math.pow((b.lat - e.lat) * 111000, 2) + 
+                        Math.pow((b.lon - e.lon) * 111000 * Math.cos(e.lat * Math.PI / 180), 2)
+                    );
+                    if (dist < 30 && b.altitude < 200) { // hit if within 30m and low enough
+                        e.health -= 10;
+                        if (e.health <= 0) {
+                            aircraft.score += e.points;
+                            createExplosion(e.lat, e.lon, e.type === 'building' ? 80 : 50);
+                            enemies.splice(i, 1);
+                            spawnEnemy(); // replace enemy
+                        }
+                        return false;
+                    }
+                }
+                
+                return b.life > 0 && b.altitude > 0;
+            });
+            
+            // Update bombs
+            bombs = bombs.filter(b => {
+                b.vAlt -= 500 * dt; // gravity
+                b.altitude += b.vAlt * dt;
+                b.life -= dt;
+                
+                // Bomb hits ground
+                if (b.altitude <= 0) {
+                    createExplosion(b.lat, b.lon, 100);
+                    
+                    // Check damage to enemies
+                    for (let i = enemies.length - 1; i >= 0; i--) {
+                        const e = enemies[i];
+                        const dist = Math.sqrt(
+                            Math.pow((b.lat - e.lat) * 111000, 2) + 
+                            Math.pow((b.lon - e.lon) * 111000 * Math.cos(e.lat * Math.PI / 180), 2)
+                        );
+                        if (dist < 80) { // blast radius
+                            const damage = 100 * (1 - dist / 80);
+                            e.health -= damage;
+                            if (e.health <= 0) {
+                                aircraft.score += e.points;
+                                createExplosion(e.lat, e.lon, e.type === 'building' ? 80 : 50);
+                                enemies.splice(i, 1);
+                                spawnEnemy();
+                            }
+                        }
+                    }
+                    return false;
+                }
+                
+                return b.life > 0;
+            });
+            
+            // Update explosions
+            explosions = explosions.filter(e => {
+                e.life -= dt;
+                return e.life > 0;
+            });
+            
+            // Update enemies (fire at player)
+            const now = performance.now();
+            enemies.forEach(e => {
+                // Only AA and tanks can fire
+                if (e.type === 'building') return;
+                
+                // Check if player is in range (within 800m and below 2000ft)
+                const dist = Math.sqrt(
+                    Math.pow((aircraft.lat - e.lat) * 111000, 2) + 
+                    Math.pow((aircraft.lon - e.lon) * 111000 * Math.cos(e.lat * Math.PI / 180), 2)
+                );
+                
+                if (dist < 800 && aircraft.altitude < 2000 && now - e.lastFire > e.fireRate) {
+                    e.lastFire = now;
+                    
+                    // Fire at player
+                    const dirLat = (aircraft.lat - e.lat);
+                    const dirLon = (aircraft.lon - e.lon);
+                    const dirLen = Math.sqrt(dirLat * dirLat + dirLon * dirLon);
+                    
+                    enemyBullets.push({
+                        lat: e.lat,
+                        lon: e.lon,
+                        altitude: 0,
+                        vLat: (dirLat / dirLen) * 0.0003,
+                        vLon: (dirLon / dirLen) * 0.0003,
+                        vAlt: aircraft.altitude / 3, // aim up at player
+                        life: 3
+                    });
+                }
+            });
+            
+            // Update enemy bullets
+            enemyBullets = enemyBullets.filter(b => {
+                b.lat += b.vLat * dt;
+                b.lon += b.vLon * dt;
+                b.altitude += b.vAlt * dt;
+                b.life -= dt;
+                
+                // Check hit on player
+                const dist = Math.sqrt(
+                    Math.pow((aircraft.lat - b.lat) * 111000, 2) + 
+                    Math.pow((aircraft.lon - b.lon) * 111000 * Math.cos(aircraft.lat * Math.PI / 180), 2)
+                );
+                const altDiff = Math.abs(aircraft.altitude - b.altitude);
+                
+                if (dist < 20 && altDiff < 50) {
+                    aircraft.health -= 10;
+                    showDamage();
+                    if (aircraft.health <= 0) {
+                        crash();
+                    }
+                    return false;
+                }
+                
+                return b.life > 0;
+            });
+            
+            // Spawn new enemies as we fly
+            if (Math.random() < 0.02 * dt && enemies.length < 20) {
+                spawnEnemy();
+            }
+            
+            // Remove enemies that are too far behind
+            enemies = enemies.filter(e => {
+                const headingRad = aircraft.heading * Math.PI / 180;
+                const relLat = e.lat - aircraft.lat;
+                const relLon = (e.lon - aircraft.lon) * Math.cos(aircraft.lat * Math.PI / 180);
+                const behind = -(Math.cos(headingRad) * relLat + Math.sin(headingRad) * relLon);
+                return behind < 0.02; // remove if 2km behind
+            });
+        }
+
+        // Show damage flash
+        function showDamage() {
+            const flash = document.createElement('div');
+            flash.className = 'damage-flash';
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 200);
+        }
+
+        // Draw combat elements on canvas
+        function drawCombat() {
+            const w = hudCanvas.width;
+            const h = hudCanvas.height * 0.75; // game area height
+            const centerX = w / 2;
+            const centerY = h * 0.45;
+            
+            // Scale factor for world-to-screen
+            const scale = 50000; // pixels per degree lat
+            const headingRad = aircraft.heading * Math.PI / 180;
+            
+            // Helper to convert world position to screen position
+            function worldToScreen(lat, lon, alt) {
+                const relLat = lat - aircraft.lat;
+                const relLon = (lon - aircraft.lon) * Math.cos(aircraft.lat * Math.PI / 180);
+                
+                // Rotate by heading
+                const rotX = relLon * Math.cos(-headingRad) - relLat * Math.sin(-headingRad);
+                const rotY = relLon * Math.sin(-headingRad) + relLat * Math.cos(-headingRad);
+                
+                // Perspective projection
+                const depth = rotY * scale;
+                if (depth < 50) return null; // behind camera
+                
+                const screenX = centerX + (rotX * scale * 300) / depth;
+                const screenY = centerY + (300 * (aircraft.altitude - alt)) / depth + 100;
+                const size = 3000 / depth;
+                
+                return { x: screenX, y: screenY, size: size, depth: depth };
+            }
+            
+            // Draw enemies
+            enemies.forEach(e => {
+                const pos = worldToScreen(e.lat, e.lon, 0);
+                if (!pos || pos.x < 0 || pos.x > w || pos.y < 0 || pos.y > h) return;
+                
+                hudCtx.save();
+                hudCtx.translate(pos.x, pos.y);
+                
+                const size = Math.max(8, pos.size * 20);
+                
+                if (e.type === 'tank') {
+                    // Draw tank
+                    hudCtx.fillStyle = '#4a5c3a';
+                    hudCtx.fillRect(-size/2, -size/3, size, size/1.5);
+                    hudCtx.fillStyle = '#3a4c2a';
+                    hudCtx.fillRect(-size/4, -size/2, size/2, size/3);
+                    // Turret
+                    hudCtx.fillStyle = '#2a3c1a';
+                    hudCtx.fillRect(-size/6, -size/1.5, size/3, size/2);
+                } else if (e.type === 'aa') {
+                    // Draw AA gun
+                    hudCtx.fillStyle = '#5a6a5a';
+                    hudCtx.fillRect(-size/3, -size/4, size/1.5, size/2);
+                    // Gun barrel
+                    hudCtx.strokeStyle = '#3a4a3a';
+                    hudCtx.lineWidth = 2;
+                    hudCtx.beginPath();
+                    hudCtx.moveTo(0, 0);
+                    hudCtx.lineTo(0, -size);
+                    hudCtx.stroke();
+                } else if (e.type === 'building') {
+                    // Draw building
+                    hudCtx.fillStyle = '#8a7a6a';
+                    hudCtx.fillRect(-size/1.5, -size, size*1.3, size);
+                    // Windows
+                    hudCtx.fillStyle = '#4a4a4a';
+                    for (let row = 0; row < 3; row++) {
+                        for (let col = 0; col < 3; col++) {
+                            hudCtx.fillRect(-size/2 + col * size/3, -size + 0.2*size + row * size/3, size/5, size/5);
+                        }
+                    }
+                }
+                
+                hudCtx.restore();
+            });
+            
+            // Draw bullets
+            hudCtx.fillStyle = '#ffff00';
+            hudCtx.shadowColor = '#ffff00';
+            hudCtx.shadowBlur = 5;
+            bullets.forEach(b => {
+                const pos = worldToScreen(b.lat, b.lon, b.altitude);
+                if (!pos || pos.x < 0 || pos.x > w || pos.y < 0 || pos.y > h) return;
+                hudCtx.beginPath();
+                hudCtx.arc(pos.x, pos.y, Math.max(2, pos.size * 3), 0, Math.PI * 2);
+                hudCtx.fill();
+            });
+            hudCtx.shadowBlur = 0;
+            
+            // Draw bombs
+            hudCtx.fillStyle = '#333';
+            bombs.forEach(b => {
+                const pos = worldToScreen(b.lat, b.lon, b.altitude);
+                if (!pos || pos.x < 0 || pos.x > w || pos.y < 0 || pos.y > h) return;
+                const size = Math.max(4, pos.size * 8);
+                hudCtx.beginPath();
+                hudCtx.ellipse(pos.x, pos.y, size/2, size, 0, 0, Math.PI * 2);
+                hudCtx.fill();
+            });
+            
+            // Draw enemy bullets
+            hudCtx.fillStyle = '#ff0000';
+            hudCtx.shadowColor = '#ff0000';
+            hudCtx.shadowBlur = 5;
+            enemyBullets.forEach(b => {
+                const pos = worldToScreen(b.lat, b.lon, b.altitude);
+                if (!pos || pos.x < 0 || pos.x > w || pos.y < 0 || pos.y > h) return;
+                hudCtx.beginPath();
+                hudCtx.arc(pos.x, pos.y, Math.max(2, pos.size * 2), 0, Math.PI * 2);
+                hudCtx.fill();
+            });
+            hudCtx.shadowBlur = 0;
+            
+            // Draw explosions
+            explosions.forEach(e => {
+                const pos = worldToScreen(e.lat, e.lon, 0);
+                if (!pos || pos.x < 0 || pos.x > w || pos.y < 0 || pos.y > h) return;
+                
+                const progress = 1 - (e.life / 0.5);
+                const size = e.size * pos.size * (0.5 + progress);
+                
+                const gradient = hudCtx.createRadialGradient(pos.x, pos.y, 0, pos.x, pos.y, size);
+                if (progress < 0.3) {
+                    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                    gradient.addColorStop(0.3, 'rgba(255, 255, 0, 0.8)');
+                    gradient.addColorStop(0.7, 'rgba(255, 100, 0, 0.5)');
+                    gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                } else {
+                    gradient.addColorStop(0, 'rgba(255, 100, 0, 0.6)');
+                    gradient.addColorStop(0.5, 'rgba(100, 50, 0, 0.3)');
+                    gradient.addColorStop(1, 'rgba(50, 50, 50, 0)');
+                }
+                
+                hudCtx.fillStyle = gradient;
+                hudCtx.beginPath();
+                hudCtx.arc(pos.x, pos.y, size, 0, Math.PI * 2);
+                hudCtx.fill();
+            });
+        }
+
+        // Spawn initial enemies on load
+        spawnInitialEnemies();
+
+        // Update instruments display
+        function updateInstruments() {
+            // Arcade header displays
+            document.getElementById('hud-score').textContent = aircraft.score;
+            document.getElementById('hud-altitude').textContent = Math.round(aircraft.altitude);
+            document.getElementById('hud-speed').textContent = Math.round(aircraft.airspeed);
+            document.getElementById('hud-heading').textContent = Math.round(aircraft.heading) || 360;
+            document.getElementById('hud-fuel').textContent = Math.round((aircraft.fuel / 53) * 100) + '%';
+
+            // Ammo display
+            const ammoBullets = document.getElementById('ammo-bullets');
+            const ammoBombs = document.getElementById('ammo-bombs');
+            if (ammoBullets) ammoBullets.textContent = aircraft.ammo;
+            if (ammoBombs) ammoBombs.textContent = aircraft.bombs;
+
+            // Arcade panel instruments
+            document.getElementById('vspeed').textContent = Math.round(aircraft.vspeed);
+            document.getElementById('throttle-value').textContent = Math.round(aircraft.throttle) + '%';
+            document.getElementById('throttle-bar').style.width = aircraft.throttle + '%';
+
+            // Attitude indicator
+            const attitudeBall = document.getElementById('attitude-ball');
+            const pitchOffset = aircraft.pitch * 1.5;
+            const rollAngle = -aircraft.roll;
+            attitudeBall.style.transform = `rotate(${rollAngle}deg) translateY(${pitchOffset}%)`;
+
+            // Compass needle
+            const compassNeedle = document.getElementById('compass-needle');
+            compassNeedle.style.transform = `translate(-50%, 0) rotate(${-aircraft.heading}deg)`;
+
+            // Player aircraft visual - roll
+            const playerAircraft = document.getElementById('player-aircraft');
+            playerAircraft.style.transform = `translate(-50%, -50%) rotate(${aircraft.roll}deg)`;
+
+            // Shadow size based on altitude (higher = smaller shadow)
+            const shadowScale = Math.max(0.3, 1 - (aircraft.altitude / 10000));
+            const shadow = document.getElementById('aircraft-shadow');
+            shadow.style.transform = `translateX(-50%) scale(${shadowScale})`;
+
+            // Status lights
+            const lightGear = document.getElementById('light-gear');
+            const lightStall = document.getElementById('light-stall');
+            const lightFuel = document.getElementById('light-fuel');
+
+            if (lightGear) lightGear.classList.toggle('on', aircraft.gear);
+            
+            const stallSpeed = aircraft.flaps > 0 ? C172.stallSpeedFull : C172.stallSpeedClean;
+            if (lightStall) lightStall.classList.toggle('on', aircraft.airspeed < stallSpeed * 1.2);
+            
+            if (lightFuel) lightFuel.classList.toggle('on', aircraft.fuel < 10);
+
+            // Update maps
+            updateMaps();
+        }
+
+        function updateMaps() {
+            // Calculate map zoom based on altitude - Blue Max style (higher up view)
+            let zoom = 15;
+            if (aircraft.altitude > 15000) zoom = 9;
+            else if (aircraft.altitude > 10000) zoom = 10;
+            else if (aircraft.altitude > 5000) zoom = 11;
+            else if (aircraft.altitude > 2000) zoom = 12;
+            else if (aircraft.altitude > 1000) zoom = 13;
+            else if (aircraft.altitude > 500) zoom = 14;
+            else zoom = 16;
+
+            // Calculate look-ahead distance based on altitude and speed
+            const lookAheadNM = 0.3 + (aircraft.altitude / 5000) * 1.5;
+            const lookAheadDeg = lookAheadNM / 60;
+            const headingRad = aircraft.heading * Math.PI / 180;
+            const mapLat = aircraft.lat + Math.cos(headingRad) * lookAheadDeg;
+            const mapLon = aircraft.lon + Math.sin(headingRad) * lookAheadDeg / Math.cos(aircraft.lat * Math.PI / 180);
+
+            // Update terrain map
+            terrainMap.setView([mapLat, mapLon], zoom, { animate: false });
+            
+            // Blue Max isometric style - fixed tilt with heading rotation
+            const baseTilt = 65;
+            const tiltAdjust = aircraft.pitch * 0.5;
+            const tilt = Math.max(50, Math.min(75, baseTilt + tiltAdjust));
+            
+            // Apply 3D transform: tilt for perspective + rotation for heading
+            const terrainContainer = document.getElementById('terrain-map');
+            terrainContainer.style.transform = `rotateX(${tilt}deg) rotateZ(${-aircraft.heading}deg)`;
+            
+            // Apply roll to the perspective container for banking effect (subtle for arcade feel)
+            const perspectiveContainer = document.getElementById('perspective-container');
+            perspectiveContainer.style.transform = `rotate(${aircraft.roll * 0.5}deg)`;
+            perspectiveContainer.style.transformOrigin = '50% 100%';
+
+            // Update nav map (radar)
+            navMap.setView([aircraft.lat, aircraft.lon], 11, { animate: false });
+            planeMarker.setLatLng([aircraft.lat, aircraft.lon]);
+            
+            // Rotate plane icon on nav map
+            const iconElement = planeMarker.getElement();
+            if (iconElement) {
+                iconElement.style.transform = `translate(-50%, -50%) rotate(${aircraft.heading}deg)`;
+            }
+        }
+
+        // Keyboard controls
+        document.addEventListener('keydown', (e) => {
+            if (aircraft.crashed) return;
+            switch(e.key.toLowerCase()) {
+                case 'w': controls.pitchUp = true; break;
+                case 's': controls.pitchDown = true; break;
+                case 'a': controls.rollLeft = true; break;
+                case 'd': controls.rollRight = true; break;
+                case 'q': controls.yawLeft = true; break;
+                case 'e': controls.yawRight = true; break;
+                case 'arrowup': controls.throttleUp = true; e.preventDefault(); break;
+                case 'arrowdown': controls.throttleDown = true; e.preventDefault(); break;
+                case ' ': controls.firing = true; e.preventDefault(); break;
+                case 'b': controls.bombing = true; break;
+                case 'g': 
+                    aircraft.gear = !aircraft.gear;
+                    break;
+                case 'f': 
+                    aircraft.flaps = (aircraft.flaps + 10) % 50;
+                    if (aircraft.flaps > 40) aircraft.flaps = 0;
+                    break;
+                case 'v':
+                    // Cycle view modes
+                    if (viewMode === 'satellite') setViewMode('osm');
+                    else if (viewMode === 'osm') setViewMode('terrain');
+                    else setViewMode('satellite');
+                    break;
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            switch(e.key.toLowerCase()) {
+                case 'w': controls.pitchUp = false; break;
+                case 's': controls.pitchDown = false; break;
+                case 'a': controls.rollLeft = false; break;
+                case 'd': controls.rollRight = false; break;
+                case 'q': controls.yawLeft = false; break;
+                case 'e': controls.yawRight = false; break;
+                case 'arrowup': controls.throttleUp = false; break;
+                case 'arrowdown': controls.throttleDown = false; break;
+                case ' ': controls.firing = false; break;
+                case 'b': controls.bombing = false; break;
+            }
+        });
+
+        // Touch controls
+        document.querySelectorAll('.touch-btn').forEach(btn => {
+            const control = btn.dataset.control;
+            
+            const startHandler = (e) => {
+                e.preventDefault();
+                switch(control) {
+                    case 'pitch-up': controls.pitchUp = true; break;
+                    case 'pitch-down': controls.pitchDown = true; break;
+                    case 'roll-left': controls.rollLeft = true; break;
+                    case 'roll-right': controls.rollRight = true; break;
+                    case 'throttle-up': controls.throttleUp = true; break;
+                    case 'throttle-down': controls.throttleDown = true; break;
+                    case 'fire': controls.firing = true; break;
+                    case 'bomb': controls.bombing = true; break;
+                }
+            };
+            
+            const endHandler = (e) => {
+                e.preventDefault();
+                switch(control) {
+                    case 'pitch-up': controls.pitchUp = false; break;
+                    case 'pitch-down': controls.pitchDown = false; break;
+                    case 'roll-left': controls.rollLeft = false; break;
+                    case 'roll-right': controls.rollRight = false; break;
+                    case 'throttle-up': controls.throttleUp = false; break;
+                    case 'throttle-down': controls.throttleDown = false; break;
+                    case 'fire': controls.firing = false; break;
+                    case 'bomb': controls.bombing = false; break;
+                }
+            };
+            
+            btn.addEventListener('touchstart', startHandler);
+            btn.addEventListener('touchend', endHandler);
+            btn.addEventListener('mousedown', startHandler);
+            btn.addEventListener('mouseup', endHandler);
+            btn.addEventListener('mouseleave', endHandler);
+        });
+
+        // Location search
+        async function searchLocation() {
+            const query = document.getElementById('location-input').value;
+            if (!query) return;
+
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`
+                );
+                const data = await response.json();
+
+                if (data.length > 0) {
+                    aircraft.lat = parseFloat(data[0].lat);
+                    aircraft.lon = parseFloat(data[0].lon);
+                    aircraft.altitude = 3000;
+                    aircraft.airspeed = 110;
+                    aircraft.vspeed = 0;
+                    aircraft.pitch = 0;
+                    aircraft.roll = 0;
+                    aircraft.heading = 360;
+                    terrainMap.setView([aircraft.lat, aircraft.lon], 15);
+                    navMap.setView([aircraft.lat, aircraft.lon], 10);
+                }
+            } catch (error) {
+                console.error('Location search failed:', error);
+            }
+        }
+
+        document.getElementById('location-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchLocation();
+        });
+
+        // Main game loop
+        let lastTime = performance.now();
+
+        function gameLoop(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+
+            updatePhysics(dt);
+            updateCombat(dt);
+            drawSkyOverlay();
+            drawCombat();
+            updateInstruments();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
