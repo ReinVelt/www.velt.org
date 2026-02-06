@@ -40,9 +40,15 @@ def scan_directory(path, base_path, indent=0):
             folder_path = os.path.join(path, folder)
             rel_path = os.path.relpath(folder_path, base_path)
             
+            # Check if folder has an index.html
+            index_path = os.path.join(folder_path, 'index.html')
+            has_index = os.path.isfile(index_path)
+            index_rel_path = os.path.relpath(index_path, base_path) if has_index else ''
+            index_attr = f' data-index="{index_rel_path}"' if has_index else ''
+            
             html.append(f'''
 <li>
-    <div class="folder-row">
+    <div class="folder-row"{index_attr}>
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">{folder}</span>
@@ -700,6 +706,40 @@ def generate_sitemap():
         letter-spacing: 0.05em;
     }}
     
+    /* Folder with index.html link */
+    .folder-row[data-index] {{
+        border-left-color: var(--electric-blue);
+    }}
+    
+    .folder-row[data-index] .folder-name {{
+        color: var(--electric-blue);
+        text-shadow: 0 0 5px var(--electric-blue);
+    }}
+    
+    .folder-row[data-index] .folder-toggle {{
+        color: var(--electric-blue);
+        text-shadow: 0 0 5px var(--electric-blue);
+    }}
+    
+    .folder-row[data-index]::after {{
+        content: '↗';
+        margin-left: auto;
+        color: var(--electric-blue);
+        font-size: 1rem;
+        opacity: 0.7;
+    }}
+    
+    .folder-row[data-index]:hover {{
+        border-color: var(--electric-blue);
+        box-shadow: 
+            0 0 20px rgba(0, 212, 255, 0.3),
+            inset 0 0 20px rgba(0, 212, 255, 0.05);
+    }}
+    
+    .folder-row[data-index]:hover::after {{
+        opacity: 1;
+    }}
+    
     .file-row {{
         display: flex;
         align-items: center;
@@ -1263,6 +1303,14 @@ document.addEventListener('DOMContentLoaded', function() {{
     document.querySelectorAll('.folder-row').forEach(row => {{
         row.addEventListener('click', function(e) {{
             e.stopPropagation();
+            
+            // Check if folder has an index.html
+            const indexPath = this.dataset.index;
+            if (indexPath) {{
+                // Navigate to the index.html
+                window.location.href = indexPath;
+                return;
+            }}
             
             const li = this.closest('li');
             if (!li) return;

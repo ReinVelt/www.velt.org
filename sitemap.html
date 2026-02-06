@@ -539,6 +539,40 @@
         letter-spacing: 0.05em;
     }
     
+    /* Folder with index.html link */
+    .folder-row[data-index] {
+        border-left-color: var(--electric-blue);
+    }
+    
+    .folder-row[data-index] .folder-name {
+        color: var(--electric-blue);
+        text-shadow: 0 0 5px var(--electric-blue);
+    }
+    
+    .folder-row[data-index] .folder-toggle {
+        color: var(--electric-blue);
+        text-shadow: 0 0 5px var(--electric-blue);
+    }
+    
+    .folder-row[data-index]::after {
+        content: '↗';
+        margin-left: auto;
+        color: var(--electric-blue);
+        font-size: 1rem;
+        opacity: 0.7;
+    }
+    
+    .folder-row[data-index]:hover {
+        border-color: var(--electric-blue);
+        box-shadow: 
+            0 0 20px rgba(0, 212, 255, 0.3),
+            inset 0 0 20px rgba(0, 212, 255, 0.05);
+    }
+    
+    .folder-row[data-index]:hover::after {
+        opacity: 1;
+    }
+    
     .file-row {
         display: flex;
         align-items: center;
@@ -1019,7 +1053,7 @@
         <div class="section-content" id="content-projects" style="display:none;">
             <ul class="file-list">
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/ledder/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">ledder</span>
@@ -1028,14 +1062,14 @@
 <li>
     <div class="file-row">
         <span class="file-icon">🌐</span>
-        <a href="projects/ledder/ledder.html" class="file-link">ledder.html</a>
+        <a href="projects/ledder/index.html" class="file-link">index.html</a>
         <span class="file-size">15.8 KB</span>
     </div>
 </li>
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/loraap/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">loraap</span>
@@ -1044,14 +1078,14 @@
 <li>
     <div class="file-row">
         <span class="file-icon">🌐</span>
-        <a href="projects/loraap/loraap.html" class="file-link">loraap.html</a>
+        <a href="projects/loraap/index.html" class="file-link">index.html</a>
         <span class="file-size">20.3 KB</span>
     </div>
 </li>
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/regenwormen/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">regenwormen</span>
@@ -1066,6 +1100,13 @@
 </li>
 <li>
     <div class="file-row">
+        <span class="file-icon">🌐</span>
+        <a href="projects/regenwormen/index.html" class="file-link">index.html</a>
+        <span class="file-size">140.0 KB</span>
+    </div>
+</li>
+<li>
+    <div class="file-row">
         <span class="file-icon">📃</span>
         <a href="projects/regenwormen/readme.md" class="file-link">readme.md</a>
         <span class="file-size">2.8 KB</span>
@@ -1074,14 +1115,21 @@
 <li>
     <div class="file-row">
         <span class="file-icon">🌐</span>
-        <a href="projects/regenwormen/regenwormen.html" class="file-link">regenwormen.html</a>
-        <span class="file-size">140.0 KB</span>
+        <a href="projects/regenwormen/regenwormen-arcade.html" class="file-link">regenwormen-arcade.html</a>
+        <span class="file-size">40.0 KB</span>
+    </div>
+</li>
+<li>
+    <div class="file-row">
+        <span class="file-icon">🌐</span>
+        <a href="projects/regenwormen/regenwormen-space-shooter.html" class="file-link">regenwormen-space-shooter.html</a>
+        <span class="file-size">248.6 KB</span>
     </div>
 </li>
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/theos-mechanische-aap-archief/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">theos-mechanische-aap-archief</span>
@@ -2877,7 +2925,7 @@
     </div>
     <ul class="folder-content" style="display:none;">
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/vibecoding/Brammeloo/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">Brammeloo</span>
@@ -2893,7 +2941,7 @@
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/vibecoding/Brammelquest/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">Brammelquest</span>
@@ -2976,7 +3024,7 @@
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/vibecoding/Brammelslee/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">Brammelslee</span>
@@ -2992,7 +3040,7 @@
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/vibecoding/flightsim/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">flightsim</span>
@@ -3001,14 +3049,14 @@
 <li>
     <div class="file-row">
         <span class="file-icon">🌐</span>
-        <a href="projects/vibecoding/flightsim/flightsim.html" class="file-link">flightsim.html</a>
+        <a href="projects/vibecoding/flightsim/index.html" class="file-link">index.html</a>
         <span class="file-size">71.1 KB</span>
     </div>
 </li>
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/vibecoding/loom/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">loom</span>
@@ -3024,7 +3072,7 @@
     </ul>
 </li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/vibecoding/speeskwest/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">speeskwest</span>
@@ -3047,30 +3095,25 @@
     </ul>
 </li>
 <li>
-    <div class="file-row">
-        <span class="file-icon">🌐</span>
-        <a href="projects/vibecoding/regenwormen-arcade.html" class="file-link">regenwormen-arcade.html</a>
-        <span class="file-size">40.0 KB</span>
+    <div class="folder-row" data-index="projects/vibecoding/wargames/index.html">
+        <span class="folder-toggle">▶</span>
+        <span class="folder-icon">📁</span>
+        <span class="folder-name">wargames</span>
     </div>
-</li>
+    <ul class="folder-content" style="display:none;">
 <li>
     <div class="file-row">
         <span class="file-icon">🌐</span>
-        <a href="projects/vibecoding/regenwormen-space-shooter.html" class="file-link">regenwormen-space-shooter.html</a>
-        <span class="file-size">248.6 KB</span>
-    </div>
-</li>
-<li>
-    <div class="file-row">
-        <span class="file-icon">🌐</span>
-        <a href="projects/vibecoding/wargames.html" class="file-link">wargames.html</a>
+        <a href="projects/vibecoding/wargames/index.html" class="file-link">index.html</a>
         <span class="file-size">323.6 KB</span>
     </div>
 </li>
     </ul>
 </li>
+    </ul>
+</li>
 <li>
-    <div class="folder-row">
+    <div class="folder-row" data-index="projects/youtube/index.html">
         <span class="folder-toggle">▶</span>
         <span class="folder-icon">📁</span>
         <span class="folder-name">youtube</span>
@@ -3382,6 +3425,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.folder-row').forEach(row => {
         row.addEventListener('click', function(e) {
             e.stopPropagation();
+            
+            // Check if folder has an index.html
+            const indexPath = this.dataset.index;
+            if (indexPath) {
+                // Navigate to the index.html
+                window.location.href = indexPath;
+                return;
+            }
             
             const li = this.closest('li');
             if (!li) return;
