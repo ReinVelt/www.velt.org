@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
+  <!-- CHRIS KUBECKA - South Park Style Character -->
+  <!-- American cybersecurity expert, confident, tactical, professional -->
+  
+  <defs>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- BODY (athletic build) -->
+  <!-- Dark tactical jacket -->
+  <path d="M65,135 L60,280 L140,280 L135,135 Q100,125 65,135 Z" fill="#2c3e50" filter="url(#shadow)"/>
+  
+  <!-- Jacket collar -->
+  <path d="M70,135 Q100,145 130,135 Q100,155 70,135 Z" fill="#34495e"/>
+  <ellipse cx="100" cy="135" rx="30" ry="12" fill="#34495e"/>
+  
+  <!-- Zipper detail -->
+  <line x1="100" y1="145" x2="100" y2="275" stroke="#7f8c8d" stroke-width="3"/>
+  <rect x="98" y="145" width="4" height="8" fill="#95a5a6"/>
+  
+  <!-- Shoulder patches (tactical) -->
+  <rect x="68" y="140" width="15" height="12" rx="2" fill="#27ae60" opacity="0.8"/>
+  <rect x="117" y="140" width="15" height="12" rx="2" fill="#27ae60" opacity="0.8"/>
+  
+  <!-- LEGS (tactical pants) -->
+  <rect x="75" y="275" width="20" height="20" fill="#2c3e50"/>
+  <rect x="105" y="275" width="20" height="20" fill="#2c3e50"/>
+  <!-- Boots (combat style) -->
+  <rect x="72" y="290" width="26" height="9" rx="2" fill="#1a1a1a"/>
+  <rect x="102" y="290" width="26" height="9" rx="2" fill="#1a1a1a"/>
+  
+  <!-- ARMS (strong, ready stance) -->
+  <path d="M65,145 Q45,185 55,225 L70,225 Q65,185 75,155" fill="#2c3e50"/>
+  <path d="M135,145 Q155,185 145,225 L130,225 Q135,185 125,155" fill="#2c3e50"/>
+  
+  <!-- Hands (confident pose) -->
+  <circle cx="57" cy="225" r="9" fill="#d4a574"/>
+  <circle cx="143" cy="225" r="9" fill="#d4a574"/>
+  
+  <!-- HEAD (determined expression) -->
+  <ellipse cx="100" cy="80" rx="42" ry="52" fill="#d4a574" filter="url(#shadow)"/>
+  
+  <!-- HAIR (short, professional, brown) -->
+  <path d="M58,65 Q58,28 100,22 Q142,28 142,65 L142,55 Q100,38 58,55 Z" fill="#5d4037"/>
+  <!-- Side hair (neat) -->
+  <path d="M58,65 Q54,72 56,82" fill="#5d4037"/>
+  <path d="M142,65 Q146,72 144,82" fill="#5d4037"/>
+  <!-- Top styled -->
+  <ellipse cx="100" cy="45" rx="35" ry="18" fill="#6d4c41"/>
+  
+  <!-- EARS -->
+  <ellipse cx="58" cy="80" rx="7" ry="11" fill="#d4a574"/>
+  <ellipse cx="142" cy="80" rx="7" ry="11" fill="#d4a574"/>
+  <ellipse cx="58" cy="80" rx="4" ry="7" fill="#c89464"/>
+  <ellipse cx="142" cy="80" rx="4" ry="7" fill="#c89464"/>
+  
+  <!-- EYES (alert, focused) -->
+  <ellipse cx="82" cy="75" rx="10" ry="14" fill="white"/>
+  <ellipse cx="118" cy="75" rx="10" ry="14" fill="white"/>
+  <circle cx="84" cy="77" r="6" fill="#3e2723"/>
+  <circle cx="120" cy="77" r="6" fill="#3e2723"/>
+  <circle cx="85" cy="75" r="2" fill="white"/>
+  <circle cx="121" cy="75" r="2" fill="white"/>
+  
+  <!-- EYEBROWS (confident, slightly raised) -->
+  <path d="M73,62 Q82,58 91,60" stroke="#5d4037" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M109,60 Q118,58 127,62" stroke="#5d4037" stroke-width="3" fill="none" stroke-linecap="round"/>
+  
+  <!-- NOSE -->
+  <ellipse cx="100" cy="88" rx="4" ry="6" fill="#c89464"/>
+  
+  <!-- MOUTH (slight confident smile) -->
+  <path d="M85,100 Q100,105 115,100" stroke="#8b6f47" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <path d="M87,102 Q100,106 113,102" stroke="#fff" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.3"/>
+  
+  <!-- NECK -->
+  <rect x="88" y="118" width="24" height="18" fill="#d4a574"/>
+  
+  <!-- Tactical communication device (earpiece) -->
+  <circle cx="143" cy="78" r="3" fill="#34495e"/>
+  <path d="M143,78 L150,76" stroke="#34495e" stroke-width="2"/>
+  
+  <!-- Badge on jacket (security) -->
+  <rect x="115" y="165" width="18" height="12" rx="2" fill="#e74c3c"/>
+  <text x="124" y="173" font-size="8" fill="white" font-weight="bold" text-anchor="middle">SEC</text>
+</svg>

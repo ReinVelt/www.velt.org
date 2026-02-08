@@ -1,0 +1,91 @@
+<!-- Agent Van der Berg - AIVD Intelligence Officer -->
+<!-- Dutch Intelligence - Professional, Pragmatic, Recruiting -->
+<svg width="200" height="300" viewBox="0 0 200 300" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .sp-stroke { stroke: #000; stroke-width: 3px; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+  
+  <!-- Shadow -->
+  <ellipse cx="100" cy="285" rx="40" ry="8" fill="rgba(0,0,0,0.2)"/>
+  
+  <!-- Body - Dark suit (professional AIVD agent) -->
+  <ellipse cx="100" cy="200" rx="45" ry="60" fill="#1a1a2e" class="sp-stroke"/>
+  
+  <!-- Legs -->
+  <rect x="75" y="245" width="20" height="50" rx="3" fill="#2c3e50" class="sp-stroke"/>
+  <rect x="105" y="245" width="20" height="50" rx="3" fill="#2c3e50" class="sp-stroke"/>
+  
+  <!-- Shoes - Black dress shoes -->
+  <ellipse cx="85" cy="293" rx="12" ry="6" fill="#000" class="sp-stroke"/>
+  <ellipse cx="115" cy="293" rx="12" ry="6" fill="#000" class="sp-stroke"/>
+  
+  <!-- White shirt collar -->
+  <path d="M 85 170 Q 100 175 115 170 L 115 185 L 85 185 Z" fill="#fff" class="sp-stroke"/>
+  
+  <!-- Dark tie (professional) -->
+  <path d="M 100 175 L 95 200 L 100 220 L 105 200 Z" fill="#8b0000" class="sp-stroke"/>
+  <circle cx="100" cy="175" r="3" fill="#8b0000" class="sp-stroke"/>
+  
+  <!-- Arms - Professional at sides -->
+  <!-- Left arm -->
+  <rect x="52" y="180" width="18" height="55" rx="8" fill="#1a1a2e" class="sp-stroke"/>
+  <ellipse cx="61" cy="240" rx="10" ry="12" fill="#f4d3b0" class="sp-stroke"/>
+  
+  <!-- Right arm -->
+  <rect x="130" y="180" width="18" height="55" rx="8" fill="#1a1a2e" class="sp-stroke"/>
+  <ellipse cx="139" cy="240" rx="10" ry="12" fill="#f4d3b0" class="sp-stroke"/>
+  
+  <!-- Neck -->
+  <rect x="92" y="160" width="16" height="15" rx="3" fill="#f4d3b0" class="sp-stroke"/>
+  
+  <!-- Head - Dutch features, professional -->
+  <ellipse cx="100" cy="135" rx="35" ry="40" fill="#f4d3b0" class="sp-stroke"/>
+  
+  <!-- Hair - Short professional cut, light brown -->
+  <ellipse cx="100" cy="110" rx="36" ry="28" fill="#8b6f47" class="sp-stroke"/>
+  <path d="M 65 120 Q 70 100 85 105" fill="#8b6f47" class="sp-stroke"/>
+  <path d="M 135 120 Q 130 100 115 105" fill="#8b6f47" class="sp-stroke"/>
+  
+  <!-- Ears -->
+  <ellipse cx="65" cy="135" rx="8" ry="12" fill="#f4d3b0" class="sp-stroke"/>
+  <ellipse cx="135" cy="135" rx="8" ry="12" fill="#f4d3b0" class="sp-stroke"/>
+  
+  <!-- Eyes - Steady, intelligent gaze -->
+  <ellipse cx="85" cy="135" rx="8" ry="10" fill="#fff" class="sp-stroke"/>
+  <ellipse cx="115" cy="135" rx="8" ry="10" fill="#fff" class="sp-stroke"/>
+  <circle cx="86" cy="137" r="5" fill="#4169e1"/>
+  <circle cx="116" cy="137" r="5" fill="#4169e1"/>
+  <circle cx="87" cy="136" r="2" fill="#000"/>
+  <circle cx="117" cy="136" r="2" fill="#000"/>
+  
+  <!-- Eyebrows - Professional, controlled expression -->
+  <path d="M 75 125 Q 85 122 95 124" fill="none" stroke="#654321" stroke-width="2.5"/>
+  <path d="M 105 124 Q 115 122 125 125" fill="none" stroke="#654321" stroke-width="2.5"/>
+  
+  <!-- Nose -->
+  <path d="M 100 140 L 100 150" fill="none" stroke="#000" stroke-width="2"/>
+  <path d="M 100 150 Q 95 152 93 150" fill="none" stroke="#000" stroke-width="2"/>
+  <path d="M 100 150 Q 105 152 107 150" fill="none" stroke="#000" stroke-width="2"/>
+  
+  <!-- Mouth - Thin smile (Van der Berg's characteristic expression) -->
+  <path d="M 85 160 Q 100 165 115 160" fill="none" stroke="#000" stroke-width="2.5" stroke-linecap="round"/>
+  
+  <!-- ID Badge on suit jacket -->
+  <rect x="115" y="195" width="18" height="25" rx="2" fill="#fff" class="sp-stroke"/>
+  <rect x="117" y="197" width="14" height="10" rx="1" fill="#0066cc"/>
+  <line x1="118" y1="210" x2="130" y2="210" stroke="#333" stroke-width="1"/>
+  <line x1="118" y1="213" x2="130" y2="213" stroke="#333" stroke-width="1"/>
+  <line x1="118" y1="216" x2="130" y2="216" stroke="#333" stroke-width="1"/>
+  
+  <!-- Subtle Dutch flag pin on lapel -->
+  <rect x="70" y="185" width="10" height="8" rx="1" fill="#fff" stroke="#000" stroke-width="1"/>
+  <rect x="70" y="185" width="10" height="2.7" fill="#c8102e"/>
+  <rect x="70" y="190.3" width="10" height="2.7" fill="#003DA5"/>
+  
+  <!-- Espresso cup in right hand -->
+  <ellipse cx="139" cy="238" rx="8" ry="6" fill="#8b4513" class="sp-stroke"/>
+  <rect x="131" y="235" width="16" height="10" rx="2" fill="#fff" class="sp-stroke"/>
+  <ellipse cx="139" cy="235" rx="6" ry="4" fill="#3e2723"/>
+  <path d="M 147 238 Q 152 238 152 242 Q 152 245 147 245" fill="none" stroke="#000" stroke-width="2"/>

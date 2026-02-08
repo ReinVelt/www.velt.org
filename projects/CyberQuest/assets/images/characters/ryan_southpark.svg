@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 300">
+  <!-- RYAN WEYLANT - South Park Style Character -->
+  <!-- 55 year old Dutch hacker, chubby, gray beard, round glasses -->
+  
+  <defs>
+    <!-- Gradient for beard -->
+    <linearGradient id="beardGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#888888"/>
+      <stop offset="100%" style="stop-color:#666666"/>
+    </linearGradient>
+    
+    <!-- Shadow filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="2" dy="2" stdDeviation="2" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- BODY -->
+  <!-- Large oval body (South Park Cartman-style but bigger) -->
+  <ellipse cx="100" cy="220" rx="60" ry="70" fill="#333333" filter="url(#shadow)"/>
+  <!-- Body - Hoodie -->
+  <ellipse cx="100" cy="220" rx="58" ry="68" fill="#2d4a6b"/>
+  
+  <!-- Hoodie pocket -->
+  <rect x="65" y="210" width="70" height="35" rx="5" fill="#234058"/>
+  
+  <!-- Hoodie text: "I void warranties" -->
+  <text x="100" y="190" text-anchor="middle" font-family="Arial, sans-serif" font-size="8" fill="#aaccff" font-weight="bold">I VOID</text>
+  <text x="100" y="200" text-anchor="middle" font-family="Arial, sans-serif" font-size="7" fill="#aaccff">WARRANTIES</text>
+  
+  <!-- LEGS (simple rectangles, South Park style) -->
+  <rect x="65" y="280" width="25" height="15" fill="#4a4a4a" rx="3"/>
+  <rect x="110" y="280" width="25" height="15" fill="#4a4a4a" rx="3"/>
+  <!-- Shoes -->
+  <rect x="62" y="290" width="30" height="8" rx="3" fill="#1a1a1a"/>
+  <rect x="108" y="290" width="30" height="8" rx="3" fill="#1a1a1a"/>
+  
+  <!-- ARMS (simple) -->
+  <!-- Left arm -->
+  <ellipse cx="45" cy="210" rx="15" ry="25" fill="#2d4a6b"/>
+  <!-- Right arm -->
+  <ellipse cx="155" cy="210" rx="15" ry="25" fill="#2d4a6b"/>
+  
+  <!-- Hands -->
+  <circle cx="45" cy="235" r="12" fill="#f5d0b5"/>
+  <circle cx="155" cy="235" r="12" fill="#f5d0b5"/>
+  
+  <!-- HEAD -->
+  <!-- Large round head -->
+  <circle cx="100" cy="90" r="65" fill="#f5d0b5" filter="url(#shadow)"/>
+  
+  <!-- GRAY HAIR (messy) -->
+  <ellipse cx="100" cy="45" rx="50" ry="25" fill="#888888"/>
+  <ellipse cx="60" cy="55" rx="15" ry="20" fill="#777777"/>
+  <ellipse cx="140" cy="55" rx="15" ry="20" fill="#777777"/>
+  <ellipse cx="75" cy="40" rx="12" ry="15" fill="#999999"/>
+  <ellipse cx="125" cy="40" rx="12" ry="15" fill="#999999"/>
+  
+  <!-- EARS -->
+  <ellipse cx="38" cy="90" rx="10" ry="15" fill="#f5d0b5"/>
+  <ellipse cx="162" cy="90" rx="10" ry="15" fill="#f5d0b5"/>
+  
+  <!-- GRAY BEARD -->
+  <path d="M55,110 Q50,140 60,165 Q100,185 140,165 Q150,140 145,110 Q130,105 100,105 Q70,105 55,110 Z" 
+        fill="url(#beardGrad)"/>
+  <!-- Beard texture lines -->
+  <path d="M70,130 Q68,145 75,160" stroke="#777" stroke-width="1" fill="none"/>
+  <path d="M90,125 Q88,150 92,165" stroke="#777" stroke-width="1" fill="none"/>
+  <path d="M110,125 Q112,150 108,165" stroke="#777" stroke-width="1" fill="none"/>
+  <path d="M130,130 Q132,145 125,160" stroke="#777" stroke-width="1" fill="none"/>
+  
+  <!-- Mustache -->
+  <path d="M70,105 Q85,115 100,110 Q115,115 130,105 Q115,120 100,118 Q85,120 70,105 Z" fill="#888888"/>
+  
+  <!-- MOUTH (visible through beard) -->
+  <path d="M85,120 Q100,125 115,120" stroke="#8b4513" stroke-width="3" fill="none"/>
+  
+  <!-- NOSE (South Park style - small) -->
+  <ellipse cx="100" cy="95" rx="6" ry="8" fill="#e5c0a5"/>
+  
+  <!-- GLASSES -->
+  <!-- Frame -->
+  <circle cx="75" cy="80" r="22" fill="none" stroke="#333" stroke-width="4"/>
+  <circle cx="125" cy="80" r="22" fill="none" stroke="#333" stroke-width="4"/>
+  <!-- Bridge -->
+  <line x1="97" y1="80" x2="103" y2="80" stroke="#333" stroke-width="4"/>
+  <!-- Temples -->
+  <line x1="53" y1="80" x2="38" y2="75" stroke="#333" stroke-width="3"/>
+  <line x1="147" y1="80" x2="162" y2="75" stroke="#333" stroke-width="3"/>
+  
+  <!-- Lenses (slightly tinted) -->
+  <circle cx="75" cy="80" r="18" fill="#f8f8ff" opacity="0.3"/>
+  <circle cx="125" cy="80" r="18" fill="#f8f8ff" opacity="0.3"/>
+  
+  <!-- EYES (South Park dot style) -->
+  <circle cx="75" cy="80" r="4" fill="#333"/>
+  <circle cx="125" cy="80" r="4" fill="#333"/>
+  <!-- Tiny white reflection -->
+  <circle cx="73" cy="78" r="1" fill="#fff"/>
+  <circle cx="123" cy="78" r="1" fill="#fff"/>
+  
+  <!-- EYEBROWS (slightly raised, curious expression) -->
+  <path d="M55,60 Q75,52 95,58" stroke="#666" stroke-width="4" fill="none"/>
+  <path d="M105,58 Q125,52 145,60" stroke="#666" stroke-width="4" fill="none"/>
+  
+  <!-- Expression lines (tired but determined) -->
+  <path d="M54,90 Q48,95 54,100" stroke="#d4b0a0" stroke-width="1" fill="none"/>
+  <path d="M146,90 Q152,95 146,100" stroke="#d4b0a0" stroke-width="1" fill="none"/>
+  
+  <!-- HOODIE HOOD (behind head) -->
+  <path d="M45,140 Q35,100 50,60 Q100,30 150,60 Q165,100 155,140" 
+        stroke="#234058" stroke-width="10" fill="none"/>
+        
+  <!-- Coffee cup in hand (optional, can remove) -->
+  <g transform="translate(145, 225)">
+    <rect x="0" y="0" width="15" height="20" fill="#fff" rx="2"/>
+    <ellipse cx="7.5" cy="2" rx="7" ry="3" fill="#eee"/>
+    <ellipse cx="7.5" cy="5" rx="5" ry="2" fill="#3a2a1a"/>
+    <path d="M15,5 Q22,8 15,15" stroke="#fff" stroke-width="3" fill="none"/>
+    <!-- Steam -->
+    <path d="M5,0 Q2,-8 6,-12" stroke="#888" stroke-width="1" fill="none" opacity="0.5"/>
+    <path d="M10,0 Q12,-8 8,-12" stroke="#888" stroke-width="1" fill="none" opacity="0.5"/>
+  </g>
+</svg>

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 120" width="180" height="120">
+  <!-- White dog with brown spots - South Park style -->
+  
+  <!-- Body -->
+  <ellipse cx="90" cy="75" rx="50" ry="30" fill="#FFFFFF" stroke="#000" stroke-width="2"/>
+  
+  <!-- Brown spots on body -->
+  <ellipse cx="70" cy="70" rx="15" ry="12" fill="#8B4513" stroke="#000" stroke-width="1.5"/>
+  <ellipse cx="110" cy="80" rx="18" ry="13" fill="#8B4513" stroke="#000" stroke-width="1.5"/>
+  
+  <!-- Legs -->
+  <rect x="60" y="95" width="12" height="20" rx="2" fill="#FFFFFF" stroke="#000" stroke-width="1.5"/>
+  <rect x="80" y="95" width="12" height="20" rx="2" fill="#FFFFFF" stroke="#000" stroke-width="1.5"/>
+  <rect x="100" y="95" width="12" height="20" rx="2" fill="#FFFFFF" stroke="#000" stroke-width="1.5"/>
+  <rect x="120" y="95" width="12" height="20" rx="2" fill="#FFFFFF" stroke="#000" stroke-width="1.5"/>
+  
+  <!-- Paws -->
+  <ellipse cx="66" cy="115" rx="8" ry="5" fill="#FFD39B" stroke="#000" stroke-width="1"/>
+  <ellipse cx="86" cy="115" rx="8" ry="5" fill="#FFD39B" stroke="#000" stroke-width="1"/>
+  <ellipse cx="106" cy="115" rx="8" ry="5" fill="#FFD39B" stroke="#000" stroke-width="1"/>
+  <ellipse cx="126" cy="115" rx="8" ry="5" fill="#FFD39B" stroke="#000" stroke-width="1"/>
+  
+  <!-- Head -->
+  <circle cx="110" cy="55" r="25" fill="#FFFFFF" stroke="#000" stroke-width="2"/>
+  
+  <!-- Brown spot on head -->
+  <circle cx="115" cy="50" r="12" fill="#8B4513" stroke="#000" stroke-width="1.5"/>
+  
+  <!-- Ears - floppy -->
+  <ellipse cx="95" cy="40" rx="10" ry="18" fill="#FFFFFF" stroke="#000" stroke-width="1.5" transform="rotate(-20 95 40)"/>
+  <ellipse cx="125" cy="40" rx="10" ry="18" fill="#8B4513" stroke="#000" stroke-width="1.5" transform="rotate(20 125 40)"/>
+  
+  <!-- Eyes -->
+  <circle cx="105" cy="50" r="5" fill="#000"/>
+  <circle cx="103" cy="48" r="2" fill="#FFFFFF"/>
+  <circle cx="120" cy="50" r="5" fill="#000"/>
+  <circle cx="118" cy="48" r="2" fill="#FFFFFF"/>
+  
+  <!-- Nose -->
+  <ellipse cx="112" cy="62" rx="6" ry="5" fill="#000"/>
+  
+  <!-- Mouth -->
+  <path d="M 112 62 L 112 68" stroke="#000" stroke-width="1.5"/>
+  <path d="M 105 68 Q 112 72 119 68" fill="none" stroke="#000" stroke-width="1.5"/>
+  
+  <!-- Tail -->
+  <path d="M 45 75 Q 35 65 30 70 Q 25 75 35 78" fill="#FFFFFF" stroke="#000" stroke-width="1.5"/>
+  <ellipse cx="32" cy="68" rx="8" ry="6" fill="#8B4513" stroke="#000" stroke-width="1"/>
+</svg>
