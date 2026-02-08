@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blog Index - Rein Velt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --ink: #0b0f16;
+        --night: #0e1b1f;
+        --fog: #f3f2ec;
+        --glow: #22d3ee;
+        --ember: #ffb000;
+        --acid: #a3e635;
+        --steel: #94a3b8;
+        --card: rgba(15, 23, 42, 0.78);
+        --card-border: rgba(148, 163, 184, 0.35);
+        --shadow: 0 24px 60px rgba(2, 6, 23, 0.55);
+        --grid-gap: clamp(1rem, 3vw, 1.75rem);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: "Space Grotesk", "IBM Plex Mono", "Courier New", monospace;
+        color: var(--fog);
+        background:
+            radial-gradient(1200px 800px at 15% 10%, rgba(34, 211, 238, 0.25), transparent 60%),
+            radial-gradient(1200px 800px at 90% 0%, rgba(255, 176, 0, 0.22), transparent 60%),
+            linear-gradient(120deg, #0a0f14 0%, #0c1820 45%, #111827 100%);
+        min-height: 100vh;
+        padding: clamp(1.2rem, 3vw, 2.5rem);
+        overflow-x: hidden;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+            linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mix-blend-mode: screen;
+        opacity: 0.35;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        inset: -20% -20% auto -20%;
+        height: 60%;
+        background: radial-gradient(circle at 50% 50%, rgba(163, 230, 53, 0.25), transparent 70%);
+        opacity: 0.2;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .shell {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .hero {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: clamp(1.5rem, 4vw, 2.8rem);
+        background: linear-gradient(140deg, rgba(10, 20, 28, 0.9), rgba(15, 23, 42, 0.7));
+        box-shadow: var(--shadow);
+        border-radius: 18px;
+        display: grid;
+        gap: 1rem;
+        margin-bottom: clamp(2rem, 4vw, 3rem);
+        animation: rise 0.8s ease-out both;
+    }
+
+    .hero .kicker {
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.75rem;
+        color: var(--acid);
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        line-height: 1.05;
+        color: var(--fog);
+    }
+
+    .hero p {
+        color: var(--steel);
+        font-size: clamp(1rem, 2vw, 1.15rem);
+        max-width: 65ch;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: var(--grid-gap);
+    }
+
+    .card {
+        position: relative;
+        display: grid;
+        gap: 1rem;
+        padding: 1.1rem;
+        border-radius: 16px;
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        box-shadow: 0 14px 40px rgba(2, 8, 23, 0.4);
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        transform: translateY(10px);
+        opacity: 0;
+        animation: float-in 0.7s ease forwards;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.16s; }
+    .card:nth-child(4) { animation-delay: 0.24s; }
+
+    .thumb {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        background: #0f172a;
+    }
+
+    .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: saturate(1.05);
+        transition: transform 0.4s ease;
+    }
+
+    .thumb.placeholder {
+        background:
+            linear-gradient(135deg, rgba(34, 211, 238, 0.3), transparent 60%),
+            linear-gradient(180deg, rgba(255, 176, 0, 0.22), transparent 55%),
+            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 10px);
+        display: grid;
+        place-items: center;
+        color: rgba(243, 242, 236, 0.7);
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+
+    .card:hover .thumb img {
+        transform: scale(1.03);
+    }
+
+    .meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.75rem;
+        color: var(--acid);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+    }
+
+    .title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .teaser {
+        color: var(--steel);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .badge {
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ember);
+        border: 1px solid rgba(255, 176, 0, 0.4);
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        background: rgba(255, 176, 0, 0.12);
+    }
+
+    .footer {
+        margin-top: clamp(2rem, 4vw, 3rem);
+        color: rgba(148, 163, 184, 0.8);
+        font-size: 0.9rem;
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .footer a {
+        color: var(--glow);
+        text-decoration: none;
+    }
+
+    @keyframes rise {
+        from { transform: translateY(12px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes float-in {
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 720px) {
+        .hero {
+            padding: 1.5rem;
+        }
+
+        .footer {
+            flex-direction: column;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="shell">
+    <header class="hero">
+        <span class="kicker">Velthack logbook</span>
+        <h1>Blog Index // verhalen met soldeer op de vingers</h1>
+        <p>Een catalogus van herinneringen, storingen en stille upgrades. Proza dat vonkt, logs die ruiken naar regen en ozon. Creative writer energy met hacker pols.</p>
+    </header>
+
+    <main class="grid">
+        <a class="card" href="2026-01-24-mijn-eerste-computerliefde--de-vic-20-van-knijnenberg.html">
+<div class="thumb">
+    <img src="images/Vic-20.jpg" alt="Mijn Eerste Computerliefde: De VIC-20 van Knijnenberg">
+</div>
+            <div class="meta">
+                <span>24 jan 2026</span>
+                <span class="badge">VIC-20</span>
+            </div>
+            <div class="title">Mijn Eerste Computerliefde: De VIC-20 van Knijnenberg</div>
+            <p class="teaser">Er zijn momenten in een kinderleven die zich met een helderheid in het geheugen etsen die later, volwassen ervaringen ontberen. Voor mij was dat de dag waarop mijn vader thuiskwam met een beige doos...</p>
+        </a>
+
+        <a class="card" href="2026-01-16-het-huis-waar-de-robots-woonden.html">
+<div class="thumb">
+    <img src="images/google-satmap-van-alexander-gogelweg.png" alt="Villa Grijpsheert">
+</div>
+            <div class="meta">
+                <span>16 jan 2026</span>
+                <span class="badge">Hackerspace</span>
+            </div>
+            <div class="title">Villa Grijpsheert</div>
+            <p class="teaser">Hoe een koloniaal monument in Den Haag tien jaar lang onderdak bood aan Theo&#x27;s Mechanische Aap</p>
+        </a>
+
+        <a class="card" href="2026-01-13-bauxiet-en-bits--hoe-de-revolutie-begon-in-de-regen-van-noordwijkerhout.html">
+<div class="thumb placeholder" aria-hidden="true">Signal lost</div>
+            <div class="meta">
+                <span>13 jan 2026</span>
+                <span class="badge">Linux</span>
+            </div>
+            <div class="title">Bauxiet en Bits: Hoe de revolutie begon in de regen van Noordwijkerhout</div>
+            <p class="teaser">In de herfst van 1991 bevond mijn universum zich aan het Louis Couperusplein 19 in Den Haag. De Sector Informatica van de Haagse Hogeschool — het &quot;Insi&quot; — was gehuisvest in het oude Billiton-gebouw,...</p>
+        </a>
+
+        <a class="card" href="2026-01-12-terug-naar-het-begin.html">
+<div class="thumb placeholder" aria-hidden="true">Signal lost</div>
+            <div class="meta">
+                <span>12 jan 2026</span>
+                <span class="badge">Manifest</span>
+            </div>
+            <div class="title">Terug naar het Begin</div>
+            <p class="teaser">Het internet is volgegroeid. Wat ooit een wirwar van persoonlijke homepages was, is verworden tot een gestroomlijnd landschap van platforms en algoritmes. Wie nu een plek wil claimen in de digitale...</p>
+        </a>
+    </main>
+
+    <footer class="footer">
+        <span>Index powered by hand-rolled HTML. No trackers. No noise.</span>
+        <a href="../sitemap.html">Terug naar sitemap</a>
+    </footer>
+</div>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Projects Index // AI Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --ink: #070a0f;
+        --night: #0b111a;
+        --fog: #e7f7f2;
+        --glow: #00f6ff;
+        --ember: #ffb100;
+        --acid: #39ff14;
+        --steel: #8aa2b5;
+        --card: rgba(8, 16, 26, 0.82);
+        --card-border: rgba(57, 255, 20, 0.25);
+        --shadow: 0 26px 70px rgba(0, 6, 12, 0.6);
+        --grid-gap: clamp(1rem, 3vw, 1.75rem);
+    }
+
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: "Space Grotesk", "IBM Plex Mono", "Share Tech Mono", "Courier New", monospace;
+        color: var(--fog);
+        background:
+            radial-gradient(900px 700px at 12% 12%, rgba(0, 246, 255, 0.25), transparent 62%),
+            radial-gradient(900px 700px at 90% 5%, rgba(255, 177, 0, 0.18), transparent 60%),
+            linear-gradient(130deg, #04070c 0%, #0a111c 45%, #0c1a22 100%);
+        min-height: 100vh;
+        padding: clamp(1.2rem, 3vw, 2.5rem);
+        overflow-x: hidden;
+    }
+
+    body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image: linear-gradient(
+            rgba(255, 255, 255, 0.05) 1px,
+            transparent 1px
+        );
+        background-size: 100% 3px;
+        mix-blend-mode: screen;
+        opacity: 0.2;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    body::after {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background:
+            linear-gradient(90deg, rgba(0, 246, 255, 0.05), transparent 40%),
+            radial-gradient(circle at 70% 20%, rgba(57, 255, 20, 0.18), transparent 55%);
+        opacity: 0.35;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .noise {
+        position: fixed;
+        inset: 0;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.08'/></svg>");
+        mix-blend-mode: soft-light;
+        opacity: 0.15;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .shell {
+        position: relative;
+        z-index: 1;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .hero {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        padding: clamp(1.5rem, 4vw, 2.8rem);
+        background: linear-gradient(145deg, rgba(5, 12, 20, 0.95), rgba(10, 20, 32, 0.8));
+        box-shadow: var(--shadow);
+        border-radius: 18px;
+        display: grid;
+        gap: 1rem;
+        margin-bottom: clamp(2rem, 4vw, 3rem);
+        animation: rise 0.8s ease-out both;
+    }
+
+    .hero .kicker {
+        font-family: "Share Tech Mono", "IBM Plex Mono", "Courier New", monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        font-size: 0.75rem;
+        color: var(--acid);
+        text-shadow: 0 0 10px rgba(57, 255, 20, 0.5);
+    }
+
+    .hero h1 {
+        font-size: clamp(2rem, 5vw, 3.4rem);
+        line-height: 1.05;
+        color: var(--fog);
+        text-shadow: 0 0 18px rgba(0, 246, 255, 0.35);
+    }
+
+    .hero p {
+        color: var(--steel);
+        font-size: clamp(1rem, 2vw, 1.15rem);
+        max-width: 65ch;
+    }
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: var(--grid-gap);
+    }
+
+    .group {
+        display: grid;
+        gap: 1.25rem;
+        margin-bottom: clamp(2rem, 4vw, 3rem);
+    }
+
+    .group-title {
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--acid);
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    .card {
+        position: relative;
+        display: grid;
+        gap: 1rem;
+        padding: 1.1rem;
+        border-radius: 16px;
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        box-shadow: 0 18px 45px rgba(0, 12, 20, 0.45);
+        text-decoration: none;
+        color: inherit;
+        overflow: hidden;
+        transform: translateY(10px);
+        opacity: 0;
+        animation: float-in 0.7s ease forwards;
+    }
+
+    .card:nth-child(2) { animation-delay: 0.08s; }
+    .card:nth-child(3) { animation-delay: 0.16s; }
+    .card:nth-child(4) { animation-delay: 0.24s; }
+
+    .thumb {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid rgba(57, 255, 20, 0.25);
+        background: #070f18;
+    }
+
+    .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: saturate(1.05);
+        transition: transform 0.4s ease;
+    }
+
+    .thumb.placeholder {
+        background:
+            linear-gradient(135deg, rgba(34, 211, 238, 0.3), transparent 60%),
+            linear-gradient(180deg, rgba(255, 176, 0, 0.22), transparent 55%),
+            repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px 10px);
+        display: grid;
+        place-items: center;
+        color: rgba(243, 242, 236, 0.7);
+        font-family: "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+
+    .card:hover .thumb img {
+        transform: scale(1.03);
+    }
+
+    .meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-family: "Share Tech Mono", "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.75rem;
+        color: var(--acid);
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        gap: 0.75rem;
+    }
+
+    .meta .path {
+        color: var(--steel);
+        font-size: 0.7rem;
+        text-transform: none;
+        letter-spacing: 0.08em;
+    }
+
+    .title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .teaser {
+        color: var(--steel);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+
+    .badge {
+        font-family: "Share Tech Mono", "IBM Plex Mono", "Courier New", monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ember);
+        border: 1px solid rgba(255, 177, 0, 0.5);
+        padding: 0.25rem 0.5rem;
+        border-radius: 999px;
+        background: rgba(255, 177, 0, 0.12);
+        white-space: nowrap;
+    }
+
+    .footer {
+        margin-top: clamp(2rem, 4vw, 3rem);
+        color: rgba(148, 163, 184, 0.8);
+        font-size: 0.9rem;
+        font-family: "Share Tech Mono", "IBM Plex Mono", "Courier New", monospace;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .footer a {
+        color: var(--glow);
+        text-decoration: none;
+    }
+
+    @keyframes rise {
+        from { transform: translateY(12px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes float-in {
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    @media (max-width: 720px) {
+        .hero {
+            padding: 1.5rem;
+        }
+
+        .footer {
+            flex-direction: column;
+        }
+
+        .meta {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="shell">
+    <header class="hero">
+        <span class="kicker">Operator console</span>
+        <h1>Projects Index // hacker-AI field log</h1>
+        <p>Signalen, simulaties en zelfgebouwde systemen. Elke map is een node, elk indexbestand een toegangspoort naar het lab.</p>
+    </header>
+
+    <main>
+    <section class="group">
+        <div class="group-title">Ledder</div>
+        <div class="grid">
+        <a class="card" href="ledder/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28149%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28189%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Eledder%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Eledder%20/%20Ledder%20LED%20Matrix%20Framework%3C/text%3E%0A%3C/svg%3E" alt="Ledder LED Matrix Framework">
+</div>
+            <div class="meta">
+                <span class="path">ledder</span>
+                <span class="badge">LEDDER</span>
+            </div>
+            <div class="title">Ledder LED Matrix Framework</div>
+            <p class="teaser">It will automatically create a displayconf.js configuration file. Open your browser and navigate to http://localhost:3000</p>
+        </a>
+        </div>
+    </section>
+
+    <section class="group">
+        <div class="group-title">Loraap</div>
+        <div class="grid">
+        <a class="card" href="loraap/index.html">
+<div class="thumb">
+    <img src="https://github.com/ReinVelt/loraap/blob/master/Documentation/lora-receiver.jpg?raw=true" alt="LoRaAP">
+</div>
+            <div class="meta">
+                <span class="path">loraap</span>
+                <span class="badge">LORAAP</span>
+            </div>
+            <div class="title">LoRaAP</div>
+            <p class="teaser">The project is planned to be modernized and ported to the Tanmatsu hardware platform, which offers improved capabilities and a more integrated design.</p>
+        </a>
+        </div>
+    </section>
+
+    <section class="group">
+        <div class="group-title">Regenwormen</div>
+        <div class="grid">
+        <a class="card" href="regenwormen/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28125%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28165%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Eregenwormen%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Eregenwormen%20/%20%F0%9F%90%9B%20Regenwormen%20%28Pickomino%29%20%F0%9F%90%9B%3C/text%3E%0A%3C/svg%3E" alt="🐛 Regenwormen (Pickomino) 🐛">
+</div>
+            <div class="meta">
+                <span class="path">regenwormen</span>
+                <span class="badge">REGENWORMEN</span>
+            </div>
+            <div class="title">🐛 Regenwormen (Pickomino) 🐛</div>
+            <p class="teaser">Verzamel zoveel mogelijk regenwormen door tegels te pakken! De speler met de meeste regenwormen wint!</p>
+        </a>
+        </div>
+    </section>
+
+    <section class="group">
+        <div class="group-title">Theos Mechanische Aap Archief</div>
+        <div class="grid">
+        <a class="card" href="theos-mechanische-aap-archief/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28124%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28164%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Etheos-mechanische-aap-archief%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Etheos-mechanische-aap-archief%20/%20Theo%26%23x27%3Bs%20Mec%3C/text%3E%0A%3C/svg%3E" alt="Theo&#x27;s Mechanische Aap">
+</div>
+            <div class="meta">
+                <span class="path">theos-mechanische-aap-archief</span>
+                <span class="badge">THEOS MECHANISCHE AAP ARCHIEF</span>
+            </div>
+            <div class="title">Theo&#x27;s Mechanische Aap</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+        </div>
+    </section>
+
+    <section class="group">
+        <div class="group-title">Vibecoding</div>
+        <div class="grid">
+        <a class="card" href="vibecoding/Brammeloo/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28237%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28277%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20%F0%9F%90%95%20BRAM%20THE%20SUPERPUG%20%F0%9F%90%95%3C/text%3E%0A%3C/svg%3E" alt="🐕 BRAM THE SUPERPUG 🐕">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/Brammeloo</span>
+                <span class="badge">BRAMMELOO</span>
+            </div>
+            <div class="title">🐕 BRAM THE SUPERPUG 🐕</div>
+            <p class="teaser">Meet Bram, the small but VERY dirty pug who has a special superpower... he poops EVERYWHERE!</p>
+        </a>
+
+        <a class="card" href="vibecoding/Brammelquest/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28105%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28145%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20%F0%9F%8C%AD%20BRAM%20%F0%9F%8C%AD%3C/text%3E%0A%3C/svg%3E" alt="🌭 BRAM 🌭">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/Brammelquest</span>
+                <span class="badge">BRAMMELQUEST</span>
+            </div>
+            <div class="title">🌭 BRAM 🌭</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+
+        <a class="card" href="vibecoding/Brammelslee/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%2876%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28116%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20%F0%9F%9B%B7%20Bram%26%23x27%3Bs%20Winter%20Sled%20Race%21%20%F0%9F%9B%B7%3C/text%3E%0A%3C/svg%3E" alt="🛷 Bram&#x27;s Winter Sled Race! 🛷">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/Brammelslee</span>
+                <span class="badge">BRAMMELSLEE</span>
+            </div>
+            <div class="title">🛷 Bram&#x27;s Winter Sled Race! 🛷</div>
+            <p class="teaser">Help Bram sled down the long mountain slope! Collect food, avoid trees and obstacles, and race against Kino and Tessy to reach the bottom first!</p>
+        </a>
+
+        <a class="card" href="vibecoding/flightsim/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28172%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28212%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20GAME%20OVER%3C/text%3E%0A%3C/svg%3E" alt="GAME OVER">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/flightsim</span>
+                <span class="badge">FLIGHTSIM</span>
+            </div>
+            <div class="title">GAME OVER</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+
+        <a class="card" href="vibecoding/loom/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28246%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28286%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20THREADS%20OF%20FATE%3C/text%3E%0A%3C/svg%3E" alt="THREADS OF FATE">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/loom</span>
+                <span class="badge">LOOM</span>
+            </div>
+            <div class="title">THREADS OF FATE</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+
+        <a class="card" href="vibecoding/speeskwest/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28158%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28198%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20YOU%20DIED%3C/text%3E%0A%3C/svg%3E" alt="YOU DIED">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/speeskwest</span>
+                <span class="badge">SPEESKWEST</span>
+            </div>
+            <div class="title">YOU DIED</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+
+        <a class="card" href="vibecoding/wargames/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28212%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28252%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Evibecoding%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Evibecoding%20/%20%E2%9A%94%EF%B8%8F%20WARGAMES%20-%20Good%20vs%20Evil%20%F0%9F%98%88%3C/text%3E%0A%3C/svg%3E" alt="⚔️ WARGAMES - Good vs Evil 😈">
+</div>
+            <div class="meta">
+                <span class="path">vibecoding/wargames</span>
+                <span class="badge">WARGAMES</span>
+            </div>
+            <div class="title">⚔️ WARGAMES - Good vs Evil 😈</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+        </div>
+    </section>
+
+    <section class="group">
+        <div class="group-title">Youtube</div>
+        <div class="grid">
+        <a class="card" href="youtube/index.html">
+<div class="thumb">
+    <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27600%27%20height%3D%27375%27%3E%0A%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%270%25%27%20stop-color%3D%27hsl%28185%2C70%25%2C20%25%29%27/%3E%0A%20%20%20%20%20%20%20%20%3Cstop%20offset%3D%27100%25%27%20stop-color%3D%27hsl%28225%2C80%25%2C30%25%29%27/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%20%20%3Cpattern%20id%3D%27grid%27%20width%3D%2740%27%20height%3D%2740%27%20patternUnits%3D%27userSpaceOnUse%27%3E%0A%20%20%20%20%20%20%20%20%3Cpath%20d%3D%27M40%200H0V40%27%20fill%3D%27none%27%20stroke%3D%27rgba%28255%2C255%2C255%2C0.08%29%27%20stroke-width%3D%271%27/%3E%0A%20%20%20%20%3C/pattern%3E%0A%3C/defs%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23g%29%27/%3E%0A%3Crect%20width%3D%27600%27%20height%3D%27375%27%20fill%3D%27url%28%23grid%29%27/%3E%0A%3Ccircle%20cx%3D%27470%27%20cy%3D%2790%27%20r%3D%2780%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.08%29%27/%3E%0A%3Ccircle%20cx%3D%27130%27%20cy%3D%27280%27%20r%3D%27120%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.06%29%27/%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%2780%27%20font-family%3D%27IBM%20Plex%20Mono%2C%20monospace%27%20font-size%3D%2728%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.85%29%27%3EPROJECT%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27140%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2740%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.95%29%27%3Eyoutube%3C/text%3E%0A%3Ctext%20x%3D%2740%27%20y%3D%27210%27%20font-family%3D%27Space%20Grotesk%2C%20sans-serif%27%20font-size%3D%2722%27%20fill%3D%27rgba%28255%2C255%2C255%2C0.8%29%27%3Eyoutube%20/%20YouTube%20Channel%20-%20Rein%20Velt%3C/text%3E%0A%3C/svg%3E" alt="YouTube Channel - Rein Velt">
+</div>
+            <div class="meta">
+                <span class="path">youtube</span>
+                <span class="badge">YOUTUBE</span>
+            </div>
+            <div class="title">YouTube Channel - Rein Velt</div>
+            <p class="teaser">Project entry point zonder beschrijving. Klik door voor de rest.</p>
+        </a>
+        </div>
+    </section>
+    </main>
+
+    <footer class="footer">
+        <span>Index generated from project entry points. No trackers. No noise.</span>
+        <a href="../sitemap.html">Terug naar sitemap</a>
+    </footer>
+</div>
+</body>
+</html>

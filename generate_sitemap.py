@@ -24,77 +24,6 @@ def get_file_icon(filename):
     else:
         return '📄'
 
-def scan_directory(path, base_path, indent=0):
-    """Recursively scan directory and generate HTML list"""
-    html = []
-    
-    try:
-        items = sorted(os.listdir(path))
-        
-        # Separate folders and files
-        folders = [item for item in items if os.path.isdir(os.path.join(path, item))]
-        files = [item for item in items if os.path.isfile(os.path.join(path, item))]
-        
-        # Process folders first
-        for folder in folders:
-            folder_path = os.path.join(path, folder)
-            rel_path = os.path.relpath(folder_path, base_path)
-            
-            # Check if folder has an index.html
-            index_path = os.path.join(folder_path, 'index.html')
-            has_index = os.path.isfile(index_path)
-            index_rel_path = os.path.relpath(index_path, base_path) if has_index else ''
-            index_attr = f' data-index="{index_rel_path}"' if has_index else ''
-            
-            html.append(f'''
-<li>
-    <div class="folder-row"{index_attr}>
-        <span class="folder-toggle">▶</span>
-        <span class="folder-icon">📁</span>
-        <span class="folder-name">{folder}</span>
-    </div>
-    <ul class="folder-content" style="display:none;">''')
-            
-            # Recursively process subfolder
-            html.extend(scan_directory(folder_path, base_path, indent + 1))
-            
-            html.append('\n    </ul>\n</li>')
-        
-        # Process files
-        for file in files:
-            file_path = os.path.join(path, file)
-            rel_path = os.path.relpath(file_path, base_path)
-            size = os.path.getsize(file_path)
-            icon = get_file_icon(file)
-            
-            html.append(f'''
-<li>
-    <div class="file-row">
-        <span class="file-icon">{icon}</span>
-        <a href="{rel_path}" class="file-link">{file}</a>
-        <span class="file-size">{format_size(size)}</span>
-    </div>
-</li>''')
-    
-    except PermissionError:
-        html.append('\n<li><em>Permission denied</em></li>')
-    
-    return html
-
-def count_files(path):
-    """Count files recursively in a directory"""
-    count = 0
-    try:
-        for item in os.listdir(path):
-            item_path = os.path.join(path, item)
-            if os.path.isfile(item_path):
-                count += 1
-            elif os.path.isdir(item_path):
-                count += count_files(item_path)
-    except PermissionError:
-        pass
-    return count
-
 def generate_sitemap():
     """Generate complete sitemap.html"""
     base_path = Path(__file__).parent
@@ -121,30 +50,17 @@ def generate_sitemap():
         }
     }
     
-    # Generate the file structure HTML for each section
-    section_contents = {}
-    section_stats = {}
-    
-    for folder in sections.keys():
-        folder_path = base_path / folder
-        if folder_path.exists():
-            section_contents[folder] = scan_directory(folder_path, base_path, 0)
-            section_stats[folder] = count_files(folder_path)
-        else:
-            section_contents[folder] = []
-            section_stats[folder] = 0
-    
     # Get generation timestamp
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     
     # Build teaser cards HTML
     teaser_html = []
     for folder, info in sections.items():
-        file_count = section_stats.get(folder, 0)
-        content_html = ''.join(section_contents.get(folder, []))
+        index_path = base_path / folder / 'index.html'
+        href = f"{folder}/index.html" if index_path.exists() else f"{folder}/"
         
         teaser_html.append(f'''
-        <div class="section-teaser" data-section="{folder}">
+        <a class="section-teaser" href="{href}">
             <div class="teaser-graphic">
                 <canvas class="teaser-canvas" data-icon="{info['icon']}"></canvas>
             </div>
@@ -152,16 +68,8 @@ def generate_sitemap():
                 <h2 class="teaser-title">{info['title']}</h2>
                 <div class="teaser-subtitle">{info['subtitle']}</div>
                 <p class="teaser-desc">{info['description']}</p>
-                <div class="teaser-stats">
-                    <span class="stat-item"><span class="stat-icon">📄</span> {file_count} FILES</span>
-                </div>
             </div>
-            <div class="teaser-arrow">▼</div>
-        </div>
-        <div class="section-content" id="content-{folder}" style="display:none;">
-            <ul class="file-list">{content_html}
-            </ul>
-        </div>
+        </a>
 ''')
     
     # Complete HTML template - CRT HACKER CYBERPUNK style with heavy animations
@@ -527,7 +435,7 @@ def generate_sitemap():
     
     .section-teaser {{
         display: grid;
-        grid-template-columns: 180px 1fr 50px;
+        grid-template-columns: 180px 1fr;
         gap: 20px;
         align-items: center;
         padding: 20px;
@@ -538,6 +446,8 @@ def generate_sitemap():
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
+        text-decoration: none;
+        color: inherit;
     }}
     
     .section-teaser::before {{
@@ -564,14 +474,6 @@ def generate_sitemap():
         left: 150%;
     }}
     
-    .section-teaser.active {{
-        border-color: var(--phosphor-green);
-        background: rgba(0, 255, 65, 0.08);
-    }}
-    
-    .section-teaser.active .teaser-arrow {{
-        transform: rotate(180deg);
-    }}
     
     .teaser-graphic {{
         width: 180px;
@@ -617,169 +519,6 @@ def generate_sitemap():
         line-height: 1.5;
     }}
     
-    .teaser-stats {{
-        display: flex;
-        gap: 20px;
-        margin-top: 5px;
-    }}
-    
-    .stat-item {{
-        font-size: 0.9rem;
-        color: var(--text-dim);
-        display: flex;
-        align-items: center;
-        gap: 5px;
-    }}
-    
-    .stat-icon {{
-        font-size: 1rem;
-    }}
-    
-    .teaser-arrow {{
-        font-size: 1.5rem;
-        color: var(--phosphor-green);
-        text-shadow: 0 0 10px var(--phosphor-glow);
-        transition: transform 0.3s ease;
-        text-align: center;
-    }}
-    
-    .section-content {{
-        margin-left: 0;
-        padding: 20px;
-        background: rgba(0, 10, 0, 0.6);
-        border: 1px solid var(--phosphor-dim);
-        border-top: none;
-        animation: slideDown 0.3s ease;
-    }}
-    
-    @keyframes slideDown {{
-        from {{
-            opacity: 0;
-            max-height: 0;
-        }}
-        to {{
-            opacity: 1;
-            max-height: 2000px;
-        }}
-    }}
-    
-    .folder-row {{
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 12px 15px;
-        background: rgba(0, 255, 65, 0.05);
-        border: 1px solid var(--phosphor-dim);
-        border-left: 4px solid var(--cyber-purple);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 1.2rem;
-    }}
-    
-    .folder-row:hover {{
-        background: rgba(0, 255, 65, 0.15);
-        border-color: var(--phosphor-green);
-        box-shadow: 
-            0 0 20px rgba(0, 255, 65, 0.3),
-            inset 0 0 20px rgba(0, 255, 65, 0.05);
-        transform: translateX(5px);
-    }}
-    
-    .folder-toggle {{
-        color: var(--cyber-purple);
-        text-shadow: 0 0 5px var(--cyber-purple);
-        transition: transform 0.2s;
-    }}
-    
-    .folder-toggle.expanded {{
-        transform: rotate(90deg);
-    }}
-    
-    .folder-icon {{
-        font-size: 1.3rem;
-    }}
-    
-    .folder-name {{
-        color: var(--cyber-purple);
-        text-shadow: 0 0 5px var(--cyber-purple);
-        font-weight: bold;
-        letter-spacing: 0.05em;
-    }}
-    
-    /* Folder with index.html link */
-    .folder-row[data-index] {{
-        border-left-color: var(--electric-blue);
-    }}
-    
-    .folder-row[data-index] .folder-name {{
-        color: var(--electric-blue);
-        text-shadow: 0 0 5px var(--electric-blue);
-    }}
-    
-    .folder-row[data-index] .folder-toggle {{
-        color: var(--electric-blue);
-        text-shadow: 0 0 5px var(--electric-blue);
-    }}
-    
-    .folder-row[data-index]::after {{
-        content: '↗';
-        margin-left: auto;
-        color: var(--electric-blue);
-        font-size: 1rem;
-        opacity: 0.7;
-    }}
-    
-    .folder-row[data-index]:hover {{
-        border-color: var(--electric-blue);
-        box-shadow: 
-            0 0 20px rgba(0, 212, 255, 0.3),
-            inset 0 0 20px rgba(0, 212, 255, 0.05);
-    }}
-    
-    .folder-row[data-index]:hover::after {{
-        opacity: 1;
-    }}
-    
-    .file-row {{
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 15px;
-        margin: 4px 0;
-        background: rgba(0, 212, 255, 0.03);
-        border: 1px solid transparent;
-        transition: all 0.2s ease;
-        font-size: 1.1rem;
-    }}
-    
-    .file-row:hover {{
-        background: rgba(0, 212, 255, 0.1);
-        border-color: var(--electric-blue);
-        box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
-        transform: translateX(5px);
-    }}
-    
-    .file-row:hover .file-link {{
-        color: var(--electric-blue);
-        text-shadow: 0 0 10px var(--electric-blue);
-    }}
-    
-    .file-icon {{
-        color: var(--electric-blue);
-        text-shadow: 0 0 5px var(--electric-blue);
-    }}
-    
-    .file-link {{
-        color: var(--text-bright);
-        text-decoration: none;
-        flex: 1;
-        transition: all 0.2s;
-    }}
-    
-    .file-size {{
-        color: var(--text-dim);
-        font-size: 0.9rem;
-    }}
     
     /* === FOOTER === */
     .terminal-footer {{
@@ -984,11 +723,6 @@ def generate_sitemap():
         
         .teaser-info {{
             align-items: center;
-        }}
-        
-        .teaser-arrow {{
-            order: -1;
-            margin-bottom: 10px;
         }}
         
         .terminal-footer {{
@@ -1271,69 +1005,6 @@ document.addEventListener('DOMContentLoaded', function() {{
         if (icon === 'log') drawLog();
         else if (icon === 'code') drawCode();
         else if (icon === 'profile') drawProfile();
-    }});
-    
-    // === TEASER TOGGLE FUNCTIONALITY ===
-    document.querySelectorAll('.section-teaser').forEach(teaser => {{
-        teaser.addEventListener('click', function() {{
-            const section = this.dataset.section;
-            const content = document.getElementById('content-' + section);
-            
-            if (content) {{
-                const isVisible = content.style.display !== 'none';
-                
-                // Close all sections first
-                document.querySelectorAll('.section-content').forEach(c => {{
-                    c.style.display = 'none';
-                }});
-                document.querySelectorAll('.section-teaser').forEach(t => {{
-                    t.classList.remove('active');
-                }});
-                
-                // Toggle this section
-                if (!isVisible) {{
-                    content.style.display = 'block';
-                    this.classList.add('active');
-                }}
-            }}
-        }});
-    }});
-    
-    // === FOLDER TOGGLE FUNCTIONALITY ===
-    document.querySelectorAll('.folder-row').forEach(row => {{
-        row.addEventListener('click', function(e) {{
-            e.stopPropagation();
-            
-            // Check if folder has an index.html
-            const indexPath = this.dataset.index;
-            if (indexPath) {{
-                // Navigate to the index.html
-                window.location.href = indexPath;
-                return;
-            }}
-            
-            const li = this.closest('li');
-            if (!li) return;
-            
-            const toggle = this.querySelector('.folder-toggle');
-            const content = li.querySelector('.folder-content');
-            
-            if (content) {{
-                if (content.style.display === 'none') {{
-                    content.style.display = 'block';
-                    if (toggle) {{
-                        toggle.textContent = '▼';
-                        toggle.classList.add('expanded');
-                    }}
-                }} else {{
-                    content.style.display = 'none';
-                    if (toggle) {{
-                        toggle.textContent = '▶';
-                        toggle.classList.remove('expanded');
-                    }}
-                }}
-            }}
-        }});
     }});
     
     // Random glitch effect on title
