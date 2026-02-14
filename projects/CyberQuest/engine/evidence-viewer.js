@@ -451,17 +451,23 @@ class EvidenceViewer {
     attachEventListeners() {
         const closeBtn = document.getElementById('ev-close-btn');
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
+            const closeHandler = (e) => { e.preventDefault(); this.close(); };
+            closeBtn.addEventListener('click', closeHandler);
+            closeBtn.addEventListener('touchend', closeHandler);
         }
 
         const prevBtn = document.getElementById('ev-prev-btn');
         if (prevBtn) {
-            prevBtn.addEventListener('click', () => this.previousPage());
+            const prevHandler = (e) => { e.preventDefault(); this.previousPage(); };
+            prevBtn.addEventListener('click', prevHandler);
+            prevBtn.addEventListener('touchend', prevHandler);
         }
 
         const nextBtn = document.getElementById('ev-next-btn');
         if (nextBtn) {
-            nextBtn.addEventListener('click', () => this.nextPage());
+            const nextHandler = (e) => { e.preventDefault(); this.nextPage(); };
+            nextBtn.addEventListener('click', nextHandler);
+            nextBtn.addEventListener('touchend', nextHandler);
         }
 
         // ESC key to close

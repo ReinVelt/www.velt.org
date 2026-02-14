@@ -19,7 +19,21 @@ const MancaveScene = {
         "Weird RF activity today.",
         "SDR needs an update... eventually.",
         "Wonder what signals I'll catch.",
-        "This stuff is older than millennials."
+        "This stuff is older than millennials.",
+        "Need to organize these SDR dongles.",
+        "That antenna array took forever to calibrate.",
+        "Maybe I should clean up... nah.",
+        "The cold war called, wants its equipment back.",
+        "Still faster than cloud computing.",
+        "This is why Ies stays upstairs.",
+        "Nothing beats air-gapped security.",
+        "Signal processing is poetry.",
+        "These racks hum like a data center.",
+        "Local processing. No cloud spying.",
+        "My own little SIGINT station.",
+        "Every frequency tells a story.",
+        "RF spectrum never sleeps.",
+        "This is what freedom looks like."
     ],
     
     hotspots: [
@@ -205,27 +219,27 @@ const MancaveScene = {
                     
                     game.startDialogue([
                         { speaker: 'Ryan', text: 'Living in Drenthe has perks. Radio astronomy capital of the world.' },
-                        { speaker: 'Ryan', text: 'Henk at ASTRON - brilliant, rebellious, hates military corruption.' },
-                        { speaker: 'Ryan', text: 'Marieke from LOFAR - signal processing genius. Paranoid but sharp.' },
-                        { speaker: 'Ryan', text: 'Pieter, the Bluetooth legend. Burnt out but deadly smart.' },
+                        { speaker: 'Ryan', text: 'David Prinsloo at TU Eindhoven - antenna engineering genius, lunar telescope designer.' },
+                        { speaker: 'Ryan', text: 'Cees Bassa from LOFAR - signal processing genius. Paranoid but sharp.' },
+                        { speaker: 'Ryan', text: 'Jaap Haartsen, the Bluetooth inventor. Brilliant and sharp.' },
                         { speaker: 'Ryan', text: 'Three experts. Three different channels. Let\'s make contact.' }
                     ]);
                     
                     setTimeout(() => {
-                        // Henk contact via email
+                        // David Prinsloo contact via email
                         game.showChat({
                             id: 'contact_henk',
                             type: 'signal',
-                            contact: 'Dr. Henk Visser',
-                            contactSubtitle: 'ASTRON / WSRT',
+                            contact: 'Dr. David Prinsloo',
+                            contactSubtitle: 'TU Eindhoven',
                             messages: [
                                 {
                                     from: 'Ryan',
-                                    text: 'Henk - long time. Need your expertise on something urgent. RF weaponization, military-grade. Have schematics that need expert analysis. Can we talk? Secure channel only.',
+                                    text: 'David - long time. Need your expertise on something urgent. RF weaponization, military-grade. Have schematics that need expert analysis. Can we talk? Secure channel only.',
                                     timestamp: '04:32'
                                 },
                                 {
-                                    from: 'Dr. Henk Visser',
+                                    from: 'Dr. David Prinsloo',
                                     text: 'Ryan? Didn\'t expect to hear from you. RF weapons? That\'s heavy. What kind of schematics are we talking about?',
                                     timestamp: '05:18'
                                 },
@@ -235,38 +249,38 @@ const MancaveScene = {
                                     timestamp: '05:20'
                                 },
                                 {
-                                    from: 'Dr. Henk Visser',
+                                    from: 'Dr. David Prinsloo',
                                     text: 'Jesus. Eight casualties? Are you sure this is real? Not some elaborate hoax?',
                                     timestamp: '05:22'
                                 },
                                 {
                                     from: 'Ryan',
-                                    text: 'Internal emails, test reports, casualty logs. All timestamped, all signed. This is real, Henk. And they\'re moving to urban testing. More people will die.',
+                                    text: 'Internal emails, test reports, casualty logs. All timestamped, all signed. This is real, David. And they\'re moving to urban testing. More people will die.',
                                     timestamp: '05:24'
                                 },
                                 {
-                                    from: 'Dr. Henk Visser',
+                                    from: 'Dr. David Prinsloo',
                                     text: 'Send me what you have. Encrypted. If this is what you say it is, I\'ll help. But I need to verify first. This could destroy careers... or save lives.',
                                     timestamp: '05:27'
                                 },
                                 {
                                     from: 'Ryan',
-                                    text: 'Sending now. Check your secure drop. And Henk? Watch your back.',
+                                    text: 'Sending now. Check your secure drop. And David? Watch your back.',
                                     timestamp: '05:28'
                                 },
                                 {
-                                    from: 'Dr. Henk Visser',
+                                    from: 'Dr. David Prinsloo',
                                     text: 'Received. Reviewing now. Ryan... if this is legitimate, this is bigger than both of us. We\'ll need more help.',
                                     timestamp: '05:45'
                                 }
                             ],
                             onClose: (game) => {
                                 game.setFlag('henk_contacted', true);
-                                game.showNotification('Henk will review the evidence');
+                                game.showNotification('David Prinsloo will review the evidence');
                                 
                                 // Trigger next contact
                                 setTimeout(() => {
-                                    game.showNotification('Click laptop again to contact Marieke');
+                                    game.showNotification('Click laptop again to contact Cees Bassa');
                                 }, 2000);
                             }
                         });
@@ -274,15 +288,15 @@ const MancaveScene = {
                     return;
                 }
                 
-                // Second ally: Marieke via Meshtastic
-                if (game.getFlag('henk_contacted') && !game.getFlag('marieke_contacted')) {
-                    game.setFlag('marieke_contacted', true);
+                // Second ally: Cees Bassa via Meshtastic
+                if (game.getFlag('henk_contacted') && !game.getFlag('cees_contacted')) {
+                    game.setFlag('cees_contacted', true);
                     
                     setTimeout(() => {
                         game.showChat({
-                            id: 'contact_marieke',
+                            id: 'contact_cees',
                             type: 'meshtastic',
-                            contact: 'Marieke',
+                            contact: 'Cees Bassa',
                             contactSubtitle: 'Node: NL-DRN-042 (LoRa Mesh)',
                             messages: [
                                 {
@@ -291,7 +305,7 @@ const MancaveScene = {
                                     timestamp: '06:12'
                                 },
                                 {
-                                    from: 'Marieke',
+                                    from: 'Cees Bassa',
                                     text: '[ACK] Ryan? Unexpected ping. Define "military scale".',
                                     timestamp: '06:18'
                                 },
@@ -301,7 +315,7 @@ const MancaveScene = {
                                     timestamp: '06:19'
                                 },
                                 {
-                                    from: 'Marieke',
+                                    from: 'Cees Bassa',
                                     text: 'That\'s... Jesus. How dangerous are we talking?',
                                     timestamp: '06:21'
                                 },
@@ -311,7 +325,7 @@ const MancaveScene = {
                                     timestamp: '06:22'
                                 },
                                 {
-                                    from: 'Marieke',
+                                    from: 'Cees Bassa',
                                     text: 'And you want me to analyze signal processing? Ryan, I have kids. This sounds like something that gets people disappeared.',
                                     timestamp: '06:24'
                                 },
@@ -321,7 +335,7 @@ const MancaveScene = {
                                     timestamp: '06:26'
                                 },
                                 {
-                                    from: 'Marieke',
+                                    from: 'Cees Bassa',
                                     text: 'DAMN it, Ryan. You\'re right. Send via dead drop. I\'ll analyze off-grid. But you keep me anonymous. Always.',
                                     timestamp: '06:30'
                                 },
@@ -331,17 +345,17 @@ const MancaveScene = {
                                     timestamp: '06:31'
                                 },
                                 {
-                                    from: 'Marieke',
+                                    from: 'Cees Bassa',
                                     text: 'File received. Analyzing. This better be worth the risk. Stay safe, Ryan.',
                                     timestamp: '06:48'
                                 }
                             ],
                             onClose: (game) => {
-                                game.setFlag('marieke_contacted', true);
-                                game.showNotification('Marieke will analyze signal patterns');
+                                game.setFlag('cees_contacted', true);
+                                game.showNotification('Cees Bassa will analyze signal patterns');
                                 
                                 setTimeout(() => {
-                                    game.showNotification('Click laptop again to contact Pieter');
+                                    game.showNotification('Click laptop again to contact Jaap Haartsen');
                                 }, 2000);
                             }
                         });
@@ -349,29 +363,29 @@ const MancaveScene = {
                     return;
                 }
                 
-                // Third ally: Pieter via BBS
-                if (game.getFlag('marieke_contacted') && !game.getFlag('pieter_contacted')) {
-                    game.setFlag('pieter_contacted', true);
+                // Third ally: Jaap Haartsen via BBS
+                if (game.getFlag('cees_contacted') && !game.getFlag('jaap_contacted')) {
+                    game.setFlag('jaap_contacted', true);
                     
                     setTimeout(() => {
                         game.showChat({
-                            id: 'contact_pieter',
+                            id: 'contact_jaap',
                             type: 'bbs',
                             contact: '>>> SHADOWBOARD BBS',
-                            contactSubtitle: 'Connected: 2400 baud | User: PIETER',
+                            contactSubtitle: 'Connected: 2400 baud | User: JAAP',
                             messages: [
                                 {
                                     from: 'SYSOP',
-                                    text: '=== SECURE BOARD ===\\nDead drop for: PIETER\\nEncryption: ROT47+AES256',
+                                    text: '=== SECURE BOARD ===\\nDead drop for: JAAP\\nEncryption: ROT47+AES256',
                                     timestamp: '07:05'
                                 },
                                 {
                                     from: 'Ryan',
-                                    text: 'P - remember when you said corporations were the enemy? Found something worse. RF weapon. Russian architect, German money, civilian casualties. Want in?',
+                                    text: 'J - remember when you said corporations were the enemy? Found something worse. RF weapon. Russian architect, German money, civilian casualties. Want in?',
                                     timestamp: '07:06'
                                 },
                                 {
-                                    from: 'Pieter',
+                                    from: 'Jaap Haartsen',
                                     text: 'Ryan?? Hell, haven\'t heard from you in years. RF weapon? Define parameters.',
                                     timestamp: '07:23'
                                 },
@@ -381,7 +395,7 @@ const MancaveScene = {
                                     timestamp: '07:25'
                                 },
                                 {
-                                    from: 'Pieter',
+                                    from: 'Jaap Haartsen',
                                     text: 'VOLKOV. Holy shit. I know that name. Bluetooth conferences, 2000s. Always asking weird questions about protocol vulnerabilities. Creepy Russian dude.',
                                     timestamp: '07:27'
                                 },
@@ -391,17 +405,17 @@ const MancaveScene = {
                                     timestamp: '07:28'
                                 },
                                 {
-                                    from: 'Pieter',
+                                    from: 'Jaap Haartsen',
                                     text: 'DEF CON 2003, maybe 2004. Claimed to be "independent consultant." Kept pressing me about medical device protocols - pacemakers, insulin pumps. Said it was for "security research." I got bad vibes. Avoided him after that.',
                                     timestamp: '07:31'
                                 },
                                 {
                                     from: 'Ryan',
-                                    text: 'He was researching targets. Even back then. Pieter, I need your help. Need to understand wireless protocol vulnerabilities. How to defend against this thing.',
+                                    text: 'He was researching targets. Even back then. Jaap, I need your help. Need to understand wireless protocol vulnerabilities. How to defend against this thing.',
                                     timestamp: '07:33'
                                 },
                                 {
-                                    from: 'Pieter',
+                                    from: 'Jaap Haartsen',
                                     text: 'You got it. Send me everything. If Volkov is behind this, he\'s been planning it for DECADES. This is the enemy I\'ve been waiting for. Real. Tangible. Evil.',
                                     timestamp: '07:36'
                                 },
@@ -411,13 +425,13 @@ const MancaveScene = {
                                     timestamp: '07:37'
                                 },
                                 {
-                                    from: 'Pieter',
+                                    from: 'Jaap Haartsen',
                                     text: 'Downloaded. Analyzing. Holy hell, Ryan. This is sophisticated. Military-grade signal processing. Decades of research. We\'ve got our work cut out for us.',
                                     timestamp: '08:15'
                                 }
                             ],
                             onClose: (game) => {
-                                game.setFlag('pieter_contacted', true);
+                                game.setFlag('jaap_contacted', true);
                                 game.setFlag('all_allies_contacted', true);
                                 game.completeQuest('find_allies');
                                 game.showNotification('All three allies recruited!');
@@ -893,6 +907,97 @@ NOTES:
                         { speaker: 'Ryan', text: 'I\'ve already got my Flipper Zero. It\'s in my pocket.' }
                     ]);
                 }
+            }
+        },
+        {
+            id: 'wifi-pineapple',
+            name: 'WiFi Pineapple',
+            // Near workbench with other tools
+            x: 68.0,
+            y: 67.0,
+            width: 4.0,
+            height: 5.5,
+            cursor: 'pointer',
+            action: function(game) {
+                if (!game.hasItem('wifi_pineapple')) {
+                    game.addToInventory({
+                        id: 'wifi_pineapple',
+                        name: 'WiFi Pineapple',
+                        description: 'Portable WiFi auditing tool for network penetration testing.',
+                        icon: 'assets/images/icons/wifi-pineapple.svg'
+                    });
+                    game.startDialogue([
+                        { speaker: 'Ryan', text: 'WiFi Pineapple. Perfect for network auditing on the go.' },
+                        { speaker: 'Ryan', text: 'Might come in handy if I need to intercept wireless traffic.' }
+                    ]);
+                } else {
+                    game.startDialogue([
+                        { speaker: 'Ryan', text: 'Already packed the WiFi Pineapple.' }
+                    ]);
+                }
+            }
+        },
+        {
+            id: 'night-vision',
+            name: 'Night Vision Monocular',
+            // Near tactical equipment
+            x: 78.0,
+            y: 38.0,
+            width: 3.5,
+            height: 5.0,
+            cursor: 'pointer',
+            action: function(game) {
+                if (!game.hasItem('night_vision')) {
+                    game.addToInventory({
+                        id: 'night_vision',
+                        name: 'Night Vision Monocular',
+                        description: 'Military-grade night vision device. Essential for nocturnal operations.',
+                        icon: 'assets/images/icons/night-vision.svg'
+                    });
+                    game.startDialogue([
+                        { speaker: 'Ryan', text: 'Night vision monocular. Bought from surplus years ago.' },
+                        { speaker: 'Ryan', text: 'If this goes south, I might need to move in the dark.' }
+                    ]);
+                } else {
+                    game.startDialogue([
+                        { speaker: 'Ryan', text: 'Night vision already in my bag.' }
+                    ]);
+                }
+            }
+        },
+        {
+            id: 'espresso-machine',
+            name: 'Espresso Machine',
+            // SVG: Small corner unit near workbench
+            x: 15.0,
+            y: 65.0,
+            width: 4.0,
+            height: 8.0,
+            cursor: 'pointer',
+            action: function(game) {
+                const coffeeCount = game.getFlag('espresso_count') || 0;
+                game.setFlag('espresso_count', coffeeCount + 1);
+                const newCount = coffeeCount + 1;
+                
+                const responses = [
+                    { speaker: 'Ryan', text: '*Makes espresso. The machine hisses and gurgles.*' },
+                    { speaker: 'Ryan', text: `Coffee number ${newCount}. Still coherent... mostly.` }
+                ];
+                
+                if (newCount === 1) {
+                    responses[1] = { speaker: 'Ryan', text: 'First espresso of the session. Fuel for the brain.' };
+                } else if (newCount === 3) {
+                    responses[1] = { speaker: 'Ryan', text: 'Third espresso. Now we\'re cooking with gas.' };
+                } else if (newCount === 5) {
+                    responses[1] = { speaker: 'Ryan', text: 'Fifth espresso. I can taste colors now.' };
+                } else if (newCount === 8) {
+                    responses[1] = { speaker: 'Ryan', text: 'Eight espressos. My heart is a drum machine.' };
+                } else if (newCount >= 10) {
+                    responses[1] = { speaker: 'Ryan', text: `Espresso #${newCount}. I\'ve transcended the need for sleep.` };
+                }
+                
+                game.startDialogue(responses);
+                game.advanceTime(5);
             }
         },
         {
@@ -1404,6 +1509,25 @@ SUPERVISOR NOTES:
             }
         },
         {
+            id: 'video-terminal',
+            name: 'Video Conference Terminal',
+            x: 65.1,
+            y: 25.9,
+            width: 15.6,
+            height: 18.5,
+            cursor: 'pointer',
+            lookMessage: 'Secure video terminal for encrypted calls with my contacts.',
+            action: function(game) {
+                game.startDialogue([
+                    { speaker: 'Ryan', text: 'Video terminal - encrypted connection to David Prinsloo, Cees Bassa, and Jaap Haartsen.' },
+                    { speaker: 'Ryan', text: 'Let\'s see who\'s available...' }
+                ]);
+                setTimeout(() => {
+                    game.loadScene('videocall');
+                }, 1000);
+            }
+        },
+        {
             id: 'door-house',
             name: 'Door to House',
             // SVG: translate(30, 250), w=140, h=500
@@ -1453,6 +1577,95 @@ SUPERVISOR NOTES:
                 { speaker: 'Ryan', text: 'Everything a hacker needs: radios, computers, tools.' },
                 { speaker: 'Ryan', text: 'Check emails and get to work.' }
             ]);
+        }
+        
+        // Random incoming calls from mother or father-in-law
+        const randomCallChance = Math.random();
+        const motherCallCount = game.getFlag('mother_call_count') || 0;
+        const fatherCallCount = game.getFlag('father_call_count') || 0;
+        
+        // Mother calls sometimes when you've been busy
+        if (randomCallChance < 0.15 && motherCallCount < 3 && game.getFlag('sstv_decoded')) {
+            game.setFlag('mother_call_count', motherCallCount + 1);
+            setTimeout(() => {
+                game.startDialogue([
+                    { speaker: '', text: '📞 *Incoming video call...*' },
+                    { speaker: '', text: '*Mother calling*' },
+                    { speaker: 'Mother', text: 'Ryan! Finally! I haven\'t heard from you in days!' },
+                    { speaker: 'Ryan', text: 'Hi Mom. Sorry, I\'ve been busy with work.' },
+                    { speaker: 'Mother', text: 'Too busy for your mother? When are you coming to visit?' },
+                    { speaker: 'Mother', text: 'I\'ll cook your favorite - stamppot with rookworst and gravy!' },
+                    { speaker: 'Ryan', text: 'That sounds amazing, Mom. Soon, I promise.' },
+                    { speaker: 'Mother', text: 'You always say "soon"! It\'s been three weeks!' },
+                    { speaker: 'Mother', text: 'I made erwtensoep. Froze some for you.' },
+                    { speaker: 'Ryan', text: 'You\'re the best. I really will come visit.' },
+                    { speaker: 'Mother', text: 'You look tired, schat. Are you eating properly?' },
+                    { speaker: 'Ryan', text: 'Yes, Mom. Ies takes good care of me.' },
+                    { speaker: 'Mother', text: 'Good. Don\'t forget your old mother! Love you, lieverd.' },
+                    { speaker: 'Ryan', text: 'Love you too, Mom.' }
+                ]);
+            }, 3000);
+        }
+        
+        // Father-in-law calls with technical questions
+        if (randomCallChance > 0.85 && fatherCallCount < 3) {
+            game.setFlag('father_call_count', fatherCallCount + 1);
+            const questions = [
+                [
+                    { speaker: '', text: '📞 *Incoming video call...*' },
+                    { speaker: '', text: '*Father-in-Law calling*' },
+                    { speaker: 'Father-in-Law', text: 'Ryan! Quick question - you got a minute?' },
+                    { speaker: 'Ryan', text: 'Sure, what\'s up?' },
+                    { speaker: 'Father-in-Law', text: 'My 3D printer keeps under-extruding on the first layer.' },
+                    { speaker: 'Father-in-Law', text: 'Z-offset is set correctly. Bed is leveled. What am I missing?' },
+                    { speaker: 'Ryan', text: 'Check your nozzle temperature. Might be too low.' },
+                    { speaker: 'Ryan', text: 'Also, flow rate - try bumping it to 105% for the first layer.' },
+                    { speaker: 'Father-in-Law', text: 'Ah! I had it at 200°C for PLA. Should go to 210?' },
+                    { speaker: 'Ryan', text: 'Yeah, 210-215 for the first layer helps with bed adhesion.' },
+                    { speaker: 'Father-in-Law', text: 'Perfect! I\'ll try that. Thanks!' },
+                    { speaker: 'Ryan', text: 'No problem. Let me know how it goes.' },
+                    { speaker: 'Father-in-Law', text: 'Will do! Coffee sometime?' },
+                    { speaker: 'Ryan', text: 'Sounds good!' }
+                ],
+                [
+                    { speaker: '', text: '📞 *Incoming video call...*' },
+                    { speaker: '', text: '*Father-in-Law calling*' },
+                    { speaker: 'Father-in-Law', text: 'Ryan, got a weird Arduino issue.' },
+                    { speaker: 'Ryan', text: 'What\'s happening?' },
+                    { speaker: 'Father-in-Law', text: 'Reading analog values from a potentiometer. They\'re super noisy.' },
+                    { speaker: 'Father-in-Law', text: 'Jumping all over the place. 512, 489, 523, 501...' },
+                    { speaker: 'Ryan', text: 'Classic noise problem. Add a small capacitor across the pot terminals.' },
+                    { speaker: 'Ryan', text: '0.1µF should smooth it out. Also use analogRead averaging in code.' },
+                    { speaker: 'Father-in-Law', text: 'Average multiple readings?' },
+                    { speaker: 'Ryan', text: 'Yeah, take 10 readings, discard outliers, average the rest.' },
+                    { speaker: 'Father-in-Law', text: 'Makes sense. Software and hardware filtering together!' },
+                    { speaker: 'Ryan', text: 'Exactly. Should give you stable values.' },
+                    { speaker: 'Father-in-Law', text: 'Brilliant! This is why I call you. Thanks!' },
+                    { speaker: 'Ryan', text: 'Anytime!' }
+                ],
+                [
+                    { speaker: '', text: '📞 *Incoming video call...*' },
+                    { speaker: '', text: '*Father-in-Law calling*' },
+                    { speaker: 'Father-in-Law', text: 'Hey Ryan! Quick one - stepper motor question.' },
+                    { speaker: 'Ryan', text: 'Shoot.' },
+                    { speaker: 'Father-in-Law', text: 'NEMA 17 stepper gets hot after running for 20 minutes.' },
+                    { speaker: 'Father-in-Law', text: 'Like, really hot. Too hot to touch. Is that normal?' },
+                    { speaker: 'Ryan', text: 'Depends. What\'s your driver current set to?' },
+                    { speaker: 'Father-in-Law', text: 'Uh... whatever the default was?' },
+                    { speaker: 'Ryan', text: 'That\'s probably your issue. Check the motor specs - likely 1.5A max.' },
+                    { speaker: 'Ryan', text: 'Set your driver to about 70% of that. 1.0-1.2A should be good.' },
+                    { speaker: 'Father-in-Law', text: 'Too much current means too much heat!' },
+                    { speaker: 'Ryan', text: 'Exactly. Adjust the little potentiometer on your driver board.' },
+                    { speaker: 'Father-in-Law', text: 'Got it. I\'ll tune it down. Thanks!' },
+                    { speaker: 'Ryan', text: 'No problem. Don\'t burn down your workshop!' },
+                    { speaker: 'Father-in-Law', text: '*Laughs* I\'ll try not to!' }
+                ]
+            ];
+            
+            const questionIndex = fatherCallCount % questions.length;
+            setTimeout(() => {
+                game.startDialogue(questions[questionIndex]);
+            }, 3000);
         }
     }
 };

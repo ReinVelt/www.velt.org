@@ -88,7 +88,7 @@ class VoiceManager {
             },
             
             // Dutch friends - varied male voices
-            'Henk': {
+            'David Prinsloo': {
                 pitch: 0.95,
                 rate: 1.0,
                 voicePreference: ['Google UK English Male', 'Microsoft David', 'male'],
@@ -100,7 +100,7 @@ class VoiceManager {
                 voicePreference: ['Google UK English Male', 'Microsoft David', 'male'],
                 lang: 'en-GB'
             },
-            'Marieke': {
+            'Cees Bassa': {
                 pitch: 1.2,
                 rate: 0.95,
                 voicePreference: ['Google UK English Female', 'Microsoft Zira', 'Samantha', 'female'],
@@ -356,7 +356,7 @@ class VoiceManager {
         }
         
         // Always show subtitle for accessibility
-        this.showSubtitle(cleanText, character);
+        //this.showSubtitle(cleanText, character);
         
         // Try TTS if voices are available
         if (this.synth && this.voices.length > 0) {
@@ -476,9 +476,9 @@ class VoiceManager {
             'Chris Kubecka': '#ffa726',
             'Volkov': '#ff4444',
             'Dmitri Volkov': '#ff4444',
-            'Henk': '#66bb6a',
+            'David Prinsloo': '#66bb6a',
             'Pieter': '#ab47bc',
-            'Marieke': '#26c6da',
+            'Cees Bassa': '#26c6da',
             'Narrator': '#ffd54f',
             '': '#ffd54f'
         };
@@ -594,7 +594,7 @@ console.log('🎮 CyberQuest Voice System initialized');
 console.log('💡 Type voiceManager.diagnose() in console for detailed status');
 
 // Try to unlock TTS on first user interaction
-document.addEventListener('click', () => {
+const unlockVoice = () => {
     if (window.voiceManager && window.voiceManager.synth) {
         const voices = window.voiceManager.synth.getVoices();
         if (voices.length > 0) {
@@ -615,4 +615,7 @@ document.addEventListener('click', () => {
             }
         }
     }
-}, { once: true });
+};
+
+document.addEventListener('click', unlockVoice, { once: true });
+document.addEventListener('touchstart', unlockVoice, { once: true });

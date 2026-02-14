@@ -39,11 +39,11 @@ const FacilityScene = {
             id: 'trash_bin',
             name: 'Trash Bin',
             // SVG: translate(300, 650), bin body from x=-35 to x=35, y=10 to y=90
-            // Absolute: x=260 to x=340, y=655 to y=745
-            x: (260 / 1920) * 100,     // 13.54%
-            y: (655 / 1080) * 100,     // 60.65%
-            width: (85 / 1920) * 100,   // 4.43%
-            height: (95 / 1080) * 100,  // 8.80%
+            // Absolute: x=265 to x=335, y=660 to y=740
+            x: (265 / 1920) * 100,     // 13.80%
+            y: (660 / 1080) * 100,     // 61.11%
+            width: (70 / 1920) * 100,   // 3.65%
+            height: (80 / 1080) * 100,  // 7.41%
             cursor: 'pointer',
             enabled: () => game.gameState.storyPart >= 17,
             action: function(game) {
@@ -121,11 +121,12 @@ const FacilityScene = {
         {
             id: 'camera',
             name: 'Surveillance Camera',
-            // SVG: translate(350,500), camera rect x=-20, total ~w=50, h=55
+            // SVG: translate(350,500), camera body x=-20 to x=25, y=-15 to y=50
+            // Absolute: x=330 to x=375, y=485 to y=550
             x: (330 / 1920) * 100,    // 17.19%
             y: (485 / 1080) * 100,    // 44.91%
-            width: (50 / 1920) * 100,  // 2.60%
-            height: (55 / 1080) * 100, // 5.09%
+            width: (45 / 1920) * 100,  // 2.34%
+            height: (65 / 1080) * 100, // 6.02%
             cursor: 'pointer',
             action: function(game) {
                 if (game.hasItem('flipper_zero')) {
@@ -171,7 +172,7 @@ const FacilityScene = {
                     game.showDialogue([
                         "The guard tower. Searchlight sweeping the perimeter.",
                         "Military police - Feldjäger. Not people to mess with.",
-                        "We'll need Henk's distraction to draw them away."
+                        "We'll need David's distraction to draw them away."
                     ], "Ryan observes");
                 }
             }

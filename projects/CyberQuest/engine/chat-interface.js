@@ -626,7 +626,9 @@ class ChatInterface {
     attachEventListeners() {
         const closeBtn = document.getElementById('chat-close-btn');
         if (closeBtn) {
-            closeBtn.addEventListener('click', () => this.close());
+            const closeHandler = (e) => { e.preventDefault(); this.close(); };
+            closeBtn.addEventListener('click', closeHandler);
+            closeBtn.addEventListener('touchend', closeHandler);
         }
 
         // ESC to close
@@ -640,7 +642,9 @@ class ChatInterface {
         // Send button (if reply is enabled)
         const sendBtn = document.getElementById('chat-send-btn');
         if (sendBtn) {
-            sendBtn.addEventListener('click', () => this.sendReply());
+            const sendHandler = (e) => { e.preventDefault(); this.sendReply(); };
+            sendBtn.addEventListener('click', sendHandler);
+            sendBtn.addEventListener('touchend', sendHandler);
         }
 
         const input = document.getElementById('chat-input');

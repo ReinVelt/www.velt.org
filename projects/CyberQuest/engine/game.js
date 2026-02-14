@@ -26,6 +26,7 @@ class CyberQuestEngine {
         this.evidenceViewer = null;
         this.passwordPuzzle = null;
         this.chatInterface = null;
+        this.typewriterAbortController = null;
     }
     
     init() {
@@ -132,46 +133,72 @@ class CyberQuestEngine {
     }
     
     bindEvents() {
-        // Dialogue continuation
-        document.addEventListener('click', (e) => {
+        // Dialogue continuation (click and touch)
+        const handleDialogueInteraction = (e) => {
             if (this.isDialogueActive && e.target.closest('#dialogue-box')) {
+                e.preventDefault();
                 this.advanceDialogue();
             }
-        });
+        };
+        document.addEventListener('click', handleDialogueInteraction);
+        document.addEventListener('touchend', handleDialogueInteraction);
         
-        // Scene click for walking
-        document.getElementById('scene-container')?.addEventListener('click', (e) => {
+        // Scene interaction for walking (click and touch)
+        const handleSceneInteraction = (e) => {
             // Don't walk if clicking on UI, hotspots, or during dialogue/puzzle
             if (this.isDialogueActive || this.isPuzzleActive) return;
             if (e.target.closest('.hotspot')) return;
             if (e.target.closest('#ui-overlay')) return;
             
-            // Calculate click position as percentage
+            e.preventDefault();
+            
+            // Calculate position as percentage
             const sceneContainer = document.getElementById('scene-container');
             const rect = sceneContainer.getBoundingClientRect();
-            const x = ((e.clientX - rect.left) / rect.width) * 100;
-            const y = ((e.clientY - rect.top) / rect.height) * 100;
             
-            // Walk to clicked position
+            // Handle both touch and mouse events
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            const x = ((clientX - rect.left) / rect.width) * 100;
+            const y = ((clientY - rect.top) / rect.height) * 100;
+            
+            // Walk to position
             if (this.player) {
                 this.player.walkTo(x, y);
             }
-        });
+        };
+        document.getElementById('scene-container')?.addEventListener('click', handleSceneInteraction);
+        document.getElementById('scene-container')?.addEventListener('touchstart', handleSceneInteraction);
         
-        // Inventory toggle
-        document.getElementById('inventory-toggle')?.addEventListener('click', () => {
+        // Inventory toggle (click and touch)
+        const inventoryToggle = document.getElementById('inventory-toggle');
+        const toggleInventory = (e) => {
+            e.preventDefault();
             document.getElementById('inventory-items')?.classList.toggle('hidden');
-        });
+        };
+        inventoryToggle?.addEventListener('click', toggleInventory);
+        inventoryToggle?.addEventListener('touchend', toggleInventory);
         
-        // Quest log toggle
-        document.getElementById('quest-toggle')?.addEventListener('click', () => {
+        // Quest log toggle (click and touch)
+        const questToggle = document.getElementById('quest-toggle');
+        const toggleQuest = (e) => {
+            e.preventDefault();
             document.getElementById('quest-list')?.classList.toggle('hidden');
-        });
+        };
+        questToggle?.addEventListener('click', toggleQuest);
+        questToggle?.addEventListener('touchend', toggleQuest);
         
-        // Menu buttons
-        document.getElementById('menu-save')?.addEventListener('click', () => this.saveGame());
-        document.getElementById('menu-load')?.addEventListener('click', () => this.loadGame());
-        document.getElementById('menu-voice')?.addEventListener('click', () => this.toggleVoice());
+        // Menu buttons (click and touch)
+        const addButtonHandler = (id, handler) => {
+            const btn = document.getElementById(id);
+            const wrappedHandler = (e) => { e.preventDefault(); handler(); };
+            btn?.addEventListener('click', wrappedHandler);
+            btn?.addEventListener('touchend', wrappedHandler);
+        };
+        addButtonHandler('menu-save', () => this.saveGame());
+        addButtonHandler('menu-load', () => this.loadGame());
+        addButtonHandler('menu-voice', () => this.toggleVoice());
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
@@ -292,6 +319,11 @@ class CyberQuestEngine {
         container.innerHTML = '';
         
         hotspots.forEach(hotspot => {
+            // Skip hotspots that are explicitly hidden
+            if (hotspot.visible === false) {
+                return;
+            }
+            
             const element = document.createElement('div');
             element.className = 'hotspot';
             element.id = `hotspot-${hotspot.id}`;
@@ -309,10 +341,14 @@ class CyberQuestEngine {
                 element.setAttribute('data-tooltip', hotspot.name);
             }
             
-            // Click handler
-            element.addEventListener('click', () => {
+            // Click and touch handlers
+            const handleHotspotInteraction = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
                 this.handleHotspotClick(hotspot);
-            });
+            };
+            element.addEventListener('click', handleHotspotInteraction);
+            element.addEventListener('touchstart', handleHotspotInteraction);
             
             container.appendChild(element);
         });
@@ -431,7 +467,12 @@ class CyberQuestEngine {
                 <span class="item-name">${item.name}</span>
             `;
             element.setAttribute('data-tooltip', item.description || item.name);
-            element.addEventListener('click', () => this.useItem(item));
+            const useItemHandler = (e) => {
+                e.preventDefault();
+                this.useItem(item);
+            };
+            element.addEventListener('click', useItemHandler);
+            element.addEventListener('touchend', useItemHandler);
             container.appendChild(element);
         });
     }
@@ -464,6 +505,12 @@ class CyberQuestEngine {
             return;
         }
         
+        // Abort any ongoing typewriter effect
+        if (this.typewriterAbortController) {
+            this.typewriterAbortController.abort();
+        }
+        this.typewriterAbortController = new AbortController();
+        
         const current = this.dialogueQueue[0];
         const speakerEl = document.getElementById('dialogue-speaker');
         const textEl = document.getElementById('dialogue-text');
@@ -473,24 +520,42 @@ class CyberQuestEngine {
         speakerEl.textContent = speaker;
         portraitEl.style.backgroundImage = current.portrait ? `url('${current.portrait}')` : '';
         
+        // Execute action callback if provided (for visual changes, etc.)
+        if (current.action && typeof current.action === 'function') {
+            current.action(this);
+        }
+        
         // Typewriter effect
-        this.typeText(textEl, current.text);
+        this.typeText(textEl, current.text, 30, this.typewriterAbortController.signal);
         
         // Speak the dialogue
         this.speakText(current.text, speaker);
     }
     
-    async typeText(element, text, speed = 30) {
+    async typeText(element, text, speed = 30, signal = null) {
         element.textContent = '';
-        for (let i = 0; i < text.length; i++) {
-            element.textContent += text[i];
-            await this.wait(speed);
+        try {
+            for (let i = 0; i < text.length; i++) {
+                if (signal && signal.aborted) {
+                    return;
+                }
+                element.textContent += text[i];
+                await this.wait(speed);
+            }
+        } catch (error) {
+            // Abort or other error - just stop typing
+            return;
         }
     }
     
     advanceDialogue() {
         // Stop current speech when advancing
         this.stopSpeech();
+        
+        // Abort any ongoing typewriter effect
+        if (this.typewriterAbortController) {
+            this.typewriterAbortController.abort();
+        }
         
         this.dialogueQueue.shift();
         if (this.dialogueQueue.length > 0) {
@@ -503,6 +568,13 @@ class CyberQuestEngine {
     endDialogue() {
         this.isDialogueActive = false;
         this.stopSpeech();
+        
+        // Abort any ongoing typewriter effect
+        if (this.typewriterAbortController) {
+            this.typewriterAbortController.abort();
+            this.typewriterAbortController = null;
+        }
+        
         document.getElementById('dialogue-box').classList.add('hidden');
     }
     
@@ -667,11 +739,19 @@ class CyberQuestEngine {
             </div>
         `;
         
-        document.getElementById('hint-btn')?.addEventListener('click', () => {
-            document.getElementById('hint-text').classList.toggle('hidden');
-        });
+        const hintBtn = document.getElementById('hint-btn');
+        if (hintBtn) {
+            const hintHandler = (e) => {
+                e.preventDefault();
+                document.getElementById('hint-text').classList.toggle('hidden');
+            };
+            hintBtn.addEventListener('click', hintHandler);
+            hintBtn.addEventListener('touchend', hintHandler);
+        }
         
-        document.getElementById('puzzle-submit').addEventListener('click', () => {
+        const submitBtn = document.getElementById('puzzle-submit');
+        const submitHandler = (e) => {
+            e.preventDefault();
             const answer = document.getElementById('puzzle-answer').value.trim().toUpperCase();
             const solution = config.solution.toUpperCase();
             
@@ -680,11 +760,17 @@ class CyberQuestEngine {
             } else {
                 this.showNotification('That doesn\'t seem right. Try again.');
             }
-        });
+        };
+        submitBtn.addEventListener('click', submitHandler);
+        submitBtn.addEventListener('touchend', submitHandler);
         
-        document.getElementById('puzzle-close').addEventListener('click', () => {
+        const closeBtn = document.getElementById('puzzle-close');
+        const closeHandler = (e) => {
+            e.preventDefault();
             this.closePuzzle();
-        });
+        };
+        closeBtn.addEventListener('click', closeHandler);
+        closeBtn.addEventListener('touchend', closeHandler);
     }
     
     loadPasswordPuzzle(container, config) {
@@ -705,22 +791,36 @@ class CyberQuestEngine {
             </div>
         `;
         
-        document.getElementById('hint-btn')?.addEventListener('click', () => {
-            document.getElementById('hint-text').classList.toggle('hidden');
-        });
+        const hintBtn = document.getElementById('hint-btn');
+        if (hintBtn) {
+            const hintHandler = (e) => {
+                e.preventDefault();
+                document.getElementById('hint-text').classList.toggle('hidden');
+            };
+            hintBtn.addEventListener('click', hintHandler);
+            hintBtn.addEventListener('touchend', hintHandler);
+        }
         
-        document.getElementById('puzzle-submit').addEventListener('click', () => {
+        const submitBtn = document.getElementById('puzzle-submit');
+        const submitHandler = (e) => {
+            e.preventDefault();
             const answer = document.getElementById('puzzle-answer').value.trim();
             if (answer === config.solution) {
                 this.puzzleSolved(config);
             } else {
                 this.showNotification('Incorrect password.');
             }
-        });
+        };
+        submitBtn.addEventListener('click', submitHandler);
+        submitBtn.addEventListener('touchend', submitHandler);
         
-        document.getElementById('puzzle-close').addEventListener('click', () => {
+        const closeBtn = document.getElementById('puzzle-close');
+        const closeHandler = (e) => {
+            e.preventDefault();
             this.closePuzzle();
-        });
+        };
+        closeBtn.addEventListener('click', closeHandler);
+        closeBtn.addEventListener('touchend', closeHandler);
     }
     
     loadFrequencyPuzzle(container, config) {
@@ -767,12 +867,21 @@ class CyberQuestEngine {
             document.getElementById('signal-strength').style.width = `${strength}%`;
         };
         
-        document.getElementById('freq-down-10').addEventListener('click', () => updateFreq(-10));
-        document.getElementById('freq-down-1').addEventListener('click', () => updateFreq(-1));
-        document.getElementById('freq-down-01').addEventListener('click', () => updateFreq(-0.1));
-        document.getElementById('freq-up-01').addEventListener('click', () => updateFreq(0.1));
-        document.getElementById('freq-up-1').addEventListener('click', () => updateFreq(1));
-        document.getElementById('freq-up-10').addEventListener('click', () => updateFreq(10));
+        // Add button handlers with both click and touch events
+        const addFreqHandler = (id, delta) => {
+            const btn = document.getElementById(id);
+            const handler = (e) => { e.preventDefault(); updateFreq(delta); };
+            btn.addEventListener('click', handler);
+            btn.addEventListener('touchend', handler);
+        };
+        
+        addFreqHandler('freq-down-10', -10);
+        addFreqHandler('freq-down-1', -1);
+        addFreqHandler('freq-down-01', -0.1);
+        addFreqHandler('freq-up-01', 0.1);
+        addFreqHandler('freq-up-1', 1);
+        addFreqHandler('freq-up-10', 10);
+        
         document.getElementById('freq-slider').addEventListener('input', (e) => {
             currentFreq = parseFloat(e.target.value);
             document.getElementById('freq-value').textContent = currentFreq.toFixed(1);
@@ -781,17 +890,25 @@ class CyberQuestEngine {
             document.getElementById('signal-strength').style.width = `${strength}%`;
         });
         
-        document.getElementById('puzzle-submit').addEventListener('click', () => {
+        const submitBtn = document.getElementById('puzzle-submit');
+        const submitHandler = (e) => {
+            e.preventDefault();
             if (Math.abs(currentFreq - targetFreq) < 0.5) {
                 this.puzzleSolved(config);
             } else {
                 this.showNotification('No clear signal at this frequency.');
             }
-        });
+        };
+        submitBtn.addEventListener('click', submitHandler);
+        submitBtn.addEventListener('touchend', submitHandler);
         
-        document.getElementById('puzzle-close').addEventListener('click', () => {
+        const closeBtn = document.getElementById('puzzle-close');
+        const closeHandler = (e) => {
+            e.preventDefault();
             this.closePuzzle();
-        });
+        };
+        closeBtn.addEventListener('click', closeHandler);
+        closeBtn.addEventListener('touchend', closeHandler);
     }
     
     puzzleSolved(config) {
@@ -1283,7 +1400,7 @@ Good luck.
         this.showChat({
             id: 'test_meshtastic',
             type: 'meshtastic',
-            contact: 'Marieke',
+            contact: 'Cees Bassa',
             contactSubtitle: 'Node: NL-DRN-042',
             messages: [
                 {
@@ -1292,7 +1409,7 @@ Good luck.
                     timestamp: '22:15'
                 },
                 {
-                    from: 'Marieke',
+                    from: 'Cees Bassa',
                     text: '[ACK] Switching to private mesh. What\'s up?',
                     timestamp: '22:17'
                 },
@@ -1302,7 +1419,7 @@ Good luck.
                     timestamp: '22:18'
                 },
                 {
-                    from: 'Marieke',
+                    from: 'Cees Bassa',
                     text: 'How big? And how dangerous?',
                     timestamp: '22:19'
                 },
@@ -1312,7 +1429,7 @@ Good luck.
                     timestamp: '22:20'
                 },
                 {
-                    from: 'Marieke',
+                    from: 'Cees Bassa',
                     text: '...Jesus. Send me the schematics over dead drop. Will analyze.',
                     timestamp: '22:23'
                 }

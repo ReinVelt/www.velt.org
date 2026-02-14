@@ -32,10 +32,10 @@ const FacilityServerScene = {
         {
             id: 'server_door',
             name: 'Server Room Door',
-            x: 15,
-            y: 70,
-            width: 12,
-            height: 20,
+            x: 5.21,
+            y: 64.81,
+            width: 9.38,
+            height: 29.63,
             cursor: 'look',
             action: function(game) {
                 if (FacilityServerScene.state.doorUnlocked) {
@@ -54,10 +54,10 @@ const FacilityServerScene = {
         {
             id: 'override_panel',
             name: 'Maintenance Override',
-            x: 10,
-            y: 72,
-            width: 6,
-            height: 8,
+            x: 2.60,
+            y: 77.78,
+            width: 1.82,
+            height: 5.56,
             cursor: 'pointer',
             enabled: () => !FacilityServerScene.state.doorUnlocked,
             action: function(game) {
@@ -79,10 +79,10 @@ const FacilityServerScene = {
         {
             id: 'server_racks',
             name: 'Server Racks',
-            x: 35,
-            y: 25,
-            width: 30,
-            height: 50,
+            x: 10.42,
+            y: 18.52,
+            width: 57.29,
+            height: 55.56,
             cursor: 'look',
             action: function(game) {
                 game.showDialogue([
@@ -95,10 +95,10 @@ const FacilityServerScene = {
         {
             id: 'terminal',
             name: 'Air-Gapped Terminal',
-            x: 70,
-            y: 35,
-            width: 15,
-            height: 20,
+            x: 78.13,
+            y: 50.93,
+            width: 10.42,
+            height: 13.89,
             cursor: 'pointer',
             enabled: () => FacilityServerScene.state.doorUnlocked && !FacilityServerScene.state.evidenceDownloaded,
             action: function(game) {
@@ -155,10 +155,10 @@ const FacilityServerScene = {
         {
             id: 'cooling_system',
             name: 'Cooling System',
-            x: 10,
-            y: 20,
-            width: 15,
-            height: 25,
+            x: 2.60,
+            y: 13.89,
+            width: 6.25,
+            height: 23.15,
             cursor: 'look',
             action: function(game) {
                 game.showDialogue([
@@ -170,7 +170,7 @@ const FacilityServerScene = {
         {
             id: 'volkov_npc',
             name: 'Dmitri Volkov',
-            x: 7.8,
+            x: 16,
             y: 63,
             width: 5.2,
             height: 18,
@@ -186,7 +186,7 @@ const FacilityServerScene = {
         {
             id: 'kubecka_npc',
             name: 'Chris Kubecka',
-            x: 2.6,
+            x: 0.5,
             y: 62,
             width: 5.2,
             height: 18,
@@ -203,7 +203,7 @@ const FacilityServerScene = {
         {
             id: 'eva_npc',
             name: 'Eva Weber',
-            x: 13,
+            x: 22,
             y: 63.4,
             width: 5.2,
             height: 18,
@@ -237,21 +237,21 @@ const FacilityServerScene = {
             const volkov = document.createElement('img');
             volkov.id = 'volkov_character';
             volkov.src = 'assets/images/characters/volkov_southpark.svg';
-            volkov.style.cssText = 'position: absolute; left: 7.8%; bottom: 0; width: 5.2%; height: auto; opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 10;';
+            volkov.style.cssText = 'position: absolute; left: 16%; bottom: 0; width: 5.2%; height: auto; opacity: 0; transition: opacity 1s; pointer-events: none; z-index: 10;';
             charactersContainer.appendChild(volkov);
             
             // Create Kubecka
             const kubecka = document.createElement('img');
             kubecka.id = 'kubecka_character';
             kubecka.src = 'assets/images/characters/kubecka_southpark.svg';
-            kubecka.style.cssText = 'position: absolute; left: 2.6%; bottom: 0; width: 5.2%; height: auto; opacity: 0; transition: opacity 0.8s; pointer-events: none; z-index: 10;';
+            kubecka.style.cssText = 'position: absolute; left: 0.5%; bottom: 0; width: 5.2%; height: auto; opacity: 0; transition: opacity 0.8s; pointer-events: none; z-index: 10;';
             charactersContainer.appendChild(kubecka);
             
             // Create Eva
             const eva = document.createElement('img');
             eva.id = 'eva_character';
             eva.src = 'assets/images/characters/eva_southpark.svg';
-            eva.style.cssText = 'position: absolute; left: 13%; bottom: 0; width: 5.2%; height: auto; opacity: 0; transition: opacity 0.8s; pointer-events: none; z-index: 10;';
+            eva.style.cssText = 'position: absolute; left: 22%; bottom: 0; width: 5.2%; height: auto; opacity: 0; transition: opacity 0.8s; pointer-events: none; z-index: 10;';
             charactersContainer.appendChild(eva);
         }
         
@@ -383,7 +383,7 @@ function showEpilogue(game) {
         { speaker: 'Ryan', text: 'Eva was promoted. Leads NATO\'s new cyber defense task force now.' },
         { speaker: 'Ryan', text: 'Chris Kubecka went back to Geneva. We email sometimes.' },
         { speaker: 'Ryan', text: 'She says hi. Asks if I need any more "exciting field work".' },
-        { speaker: 'Ryan', text: 'Henk got his equipment back. Still drives that rusty Opel.' },
+        { speaker: 'Ryan', text: 'David got his equipment back. Still drives that rusty Opel.' },
         { speaker: 'Ryan', text: 'Still complains about everything. Some things never change.' },
         { speaker: '', text: '' },
         { speaker: 'Ryan', text: '*Meshtastic device chirps*' },

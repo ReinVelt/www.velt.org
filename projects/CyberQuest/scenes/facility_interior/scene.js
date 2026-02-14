@@ -77,10 +77,11 @@ const FacilityInteriorScene = {
         {
             id: 'security_office',
             name: 'Security Office',
-            x: 10,
-            y: 45,
-            width: 15,
-            height: 20,
+            // SVG: translate(150, 480), rect width=180, height=280
+            x: (150 / 1920) * 100,    // 7.81%
+            y: (480 / 1080) * 100,    // 44.44%
+            width: (180 / 1920) * 100, // 9.38%
+            height: (280 / 1080) * 100, // 25.93%
             cursor: 'look',
             action: function(game) {
                 game.showDialogue([
@@ -93,10 +94,11 @@ const FacilityInteriorScene = {
         {
             id: 'lab_door',
             name: 'Laboratory 3',
-            x: 45,
-            y: 45,
-            width: 15,
-            height: 20,
+            // SVG: translate(450, 500), rect width=160, height=250
+            x: (450 / 1920) * 100,    // 23.44%
+            y: (500 / 1080) * 100,    // 46.30%
+            width: (160 / 1920) * 100, // 8.33%
+            height: (250 / 1080) * 100, // 23.15%
             cursor: 'look',
             action: function(game) {
                 game.showDialogue([
@@ -109,10 +111,11 @@ const FacilityInteriorScene = {
         {
             id: 'basement_stairs',
             name: 'Basement Stairwell',
-            x: 75,
-            y: 60,
-            width: 20,
-            height: 25,
+            // SVG: translate(1550, 520), rect width=140, height=220
+            x: (1550 / 1920) * 100,   // 80.73%
+            y: (520 / 1080) * 100,    // 48.15%
+            width: (140 / 1920) * 100, // 7.29%
+            height: (220 / 1080) * 100, // 20.37%
             cursor: 'pointer',
             enabled: () => FacilityInteriorScene.state.basementUnlocked,
             action: function(game) {
