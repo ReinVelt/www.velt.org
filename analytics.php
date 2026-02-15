@@ -7,7 +7,7 @@
 // Configuration
 define('TRACKING_LOG', __DIR__ . '/visitor_tracking.log');
 define('APACHE_LOG', '/var/log/apache2/access.log'); // Adjust path as needed
-define('LINES_TO_READ', 10000); // Number of recent log lines to analyze
+define('LINES_TO_READ', 100000); // Number of recent log lines to analyze
 
 // Try to find Apache log in common locations
 $apacheLogs = [
