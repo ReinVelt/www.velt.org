@@ -244,9 +244,12 @@
     <script src="scenes/livingroom/scene.js?v=2"></script>
     <script src="scenes/tvdocumentary/scene.js"></script>
     <script src="scenes/mancave/scene.js?v=3"></script>
+    <script src="scenes/planboard/scene.js"></script>
+    <script src="scenes/regional_map/scene.js"></script>
     <script src="scenes/videocall/scene.js?v=2"></script>
     <script src="scenes/garden/scene.js"></script>
     <script src="scenes/klooster/scene.js"></script>
+    <script src="scenes/car_discovery/scene.js"></script>
     <script src="scenes/driving/scene.js"></script>
     <script src="scenes/facility/scene.js?v=3"></script>
     <script src="scenes/facility_interior/scene.js?v=3"></script>
@@ -306,15 +309,21 @@
             // Initialize game engine
             game = new CyberQuestEngine();
             
+            // Make game globally accessible
+            window.game = game;
+            
             // Register all scenes
             game.registerScene(IntroScene);
             game.registerScene(HomeScene);
             game.registerScene(LivingroomScene);
             game.registerScene(TvdocumentaryScene);
             game.registerScene(MancaveScene);
+            game.registerScene(PlanboardScene);
+            game.registerScene(RegionalMapScene);
             game.registerScene(VideocallScene);
             game.registerScene(GardenScene);
             game.registerScene(KloosterScene);
+            game.registerScene(CarDiscoveryScene);
             game.registerScene(DrivingScene);
             game.registerScene(FacilityScene);
             game.registerScene(FacilityInteriorScene);
