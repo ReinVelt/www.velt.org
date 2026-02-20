@@ -184,6 +184,20 @@ const MancaveScene = {
             }
         },
         {
+            id: 'sdr-workbench',
+            name: 'SDR Workbench',
+            // PortaPack H2 display – SVG translate(1360,500), rect 120x140
+            // on 1920x1080 canvas: x=70.8%, y=46.3%, w=6.25%, h=13%
+            x: 70.8,
+            y: 46.3,
+            width: 6.5,
+            height: 13.0,
+            cursor: 'pointer',
+            action: function(game) {
+                game.loadScene('sdr_bench');
+            }
+        },
+        {
             id: 'laptop',
             name: 'Laptop',
             // On desk - translate(0, 20) relative to desk at (250, 450)
@@ -359,11 +373,15 @@ const MancaveScene = {
                             ],
                             onClose: (game) => {
                                 game.setFlag('cees_contacted', true);
+                                game.setFlag('astron_unlocked', true);
                                 game.showNotification('Cees Bassa will analyze signal patterns');
                                 
                                 setTimeout(() => {
-                                    game.showNotification('Click laptop again to contact Jaap Haartsen');
+                                    game.showNotification('Cees wants you at the WSRT — head to the garden when ready');
                                 }, 2000);
+                                setTimeout(() => {
+                                    game.showNotification('Click laptop again to contact Jaap Haartsen');
+                                }, 5000);
                             }
                         });
                     }, 500);
@@ -1528,7 +1546,7 @@ SUPERVISOR NOTES:
             name: 'Video Conference Terminal',
             x: 65.1,
             y: 25.9,
-            width: 15.6,
+            width: 12.5,
             height: 18.5,
             cursor: 'pointer',
             lookMessage: 'Secure video terminal for encrypted calls with my contacts.',
@@ -1537,7 +1555,7 @@ SUPERVISOR NOTES:
                     { speaker: 'Ryan', text: 'Video terminal - encrypted connection to David Prinsloo, Cees Bassa, and Jaap Haartsen.' },
                     { speaker: 'Ryan', text: 'Let\'s see who\'s available...' }
                 ]);
-                setTimeout(() => {
+                game.sceneTimeout(() => {
                     game.loadScene('videocall');
                 }, 1000);
             }
@@ -1567,14 +1585,14 @@ SUPERVISOR NOTES:
                     game.startDialogue([
                         { speaker: 'Ryan', text: 'Time to head out. The Volvo is parked in the back.' }
                     ]);
-                    setTimeout(() => {
+                    game.sceneTimeout(() => {
                         game.loadScene('garden');
                     }, 1500);
                 } else {
                     game.startDialogue([
                         { speaker: 'Ryan', text: 'The side door leads to the garden. Nice for some fresh air.' }
                     ]);
-                    setTimeout(() => {
+                    game.sceneTimeout(() => {
                         game.loadScene('garden');
                     }, 1500);
                 }
@@ -1604,7 +1622,7 @@ SUPERVISOR NOTES:
                     { speaker: 'Ryan', text: 'Let me check what I\'ve got so far...' }
                 ]);
                 
-                setTimeout(() => {
+                game.sceneTimeout(() => {
                     game.loadScene('planboard');
                 }, 1500);
             }
@@ -1624,7 +1642,7 @@ SUPERVISOR NOTES:
                     { speaker: 'Ryan', text: 'Let me check the map. See where everything is...' }
                 ]);
                 
-                setTimeout(() => {
+                game.sceneTimeout(() => {
                     game.loadScene('regional_map');
                 }, 1500);
             }

@@ -190,6 +190,18 @@ const GardenScene = {
             targetScene: 'home'
         },
         {
+            id: 'mancave',
+            name: 'Mancave',
+            // SVG: translate(400,370), garage door at x=20,y=110 w=120 h=170
+            // Actual: x=400+20=420, y=370+110=480, w=120, h=170
+            x: (420 / 1920) * 100,    // 21.88%
+            y: (480 / 1080) * 100,    // 44.44%
+            width: (120 / 1920) * 100, // 6.25%
+            height: (170 / 1080) * 100, // 15.74%
+            cursor: 'pointer',
+            targetScene: 'mancave'
+        },
+        {
             id: 'volvo',
             name: 'Old Volvo',
             // SVG: Parked near the shed on right side
@@ -199,6 +211,20 @@ const GardenScene = {
             height: 15,
             cursor: 'pointer',
             action: function(game) {
+                // Drive to WSRT to meet Cees Bassa
+                if (game.getFlag('astron_unlocked') && !game.getFlag('visited_astron')) {
+                    game.startDialogue([
+                        { speaker: 'Ryan', text: 'Cees is expecting me at the WSRT. Westerbork, 40 minutes south-west.' },
+                        { speaker: 'Ryan', text: 'He said he\'d run the schematics through ASTRON\'s pipeline. Let\'s see what he found.' }
+                    ]);
+                    
+                    game.sceneTimeout(() => {
+                        game.setFlag('driving_destination', 'astron');
+                        game.loadScene('driving_day');
+                    }, 2500);
+                    return;
+                }
+                
                 // Part 17: Drive to facility for infiltration
                 if (game.questManager.hasQuest('infiltrate_facility') && !game.getFlag('drove_to_facility')) {
                     game.setFlag('drove_to_facility', true);
@@ -208,7 +234,7 @@ const GardenScene = {
                         { speaker: 'Ryan', text: 'Eva is waiting. Let\'s do this.' }
                     ]);
                     
-                    setTimeout(() => {
+                    game.sceneTimeout(() => {
                         game.setFlag('driving_destination', 'facility');
                         game.loadScene('driving');
                     }, 3000);
@@ -224,7 +250,7 @@ const GardenScene = {
                         { speaker: 'Ryan', text: 'Ter Apel is 20 minutes from here. Time to go.' }
                     ]);
                     
-                    setTimeout(() => {
+                    game.sceneTimeout(() => {
                         console.log('Garden: Setting driving_destination to klooster');
                         game.setFlag('driving_destination', 'klooster');
                         console.log('Garden: Loading driving scene');

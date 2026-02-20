@@ -14,14 +14,14 @@ const RegionalMapScene = {
   // Track distance display state
   showDistances: false,
   
-  onEnter: function() {
+  onEnter: function(game) {
     console.log('Entering regional map scene');
     
     // Update status indicators based on game progress
-    this.updateStatus();
+    this.updateStatus(game);
     
     // Update location marker states
-    this.updateLocationMarkers();
+    this.updateLocationMarkers(game);
   },
   
   onExit: function() {
@@ -31,7 +31,8 @@ const RegionalMapScene = {
   /**
    * Update status panel based on game flags
    */
-  updateStatus: function() {
+  updateStatus: function(game) {
+    game = game || window.game;
     const svg = document.querySelector('svg');
     if (!svg) return;
     
@@ -72,7 +73,8 @@ const RegionalMapScene = {
   /**
    * Update location marker appearance based on visit status
    */
-  updateLocationMarkers: function() {
+  updateLocationMarkers: function(game) {
+    game = game || window.game;
     const svg = document.querySelector('svg');
     if (!svg) return;
     
@@ -306,28 +308,37 @@ const RegionalMapScene = {
       
       wsrt: {
         name: 'WSRT - WESTERBORK',
-        subtitle: 'Westerbork Synthesis Radio Telescope',
-        coordinates: '52.9°N, 6.6°E',
+        subtitle: 'Westerbork Synthesis Radio Telescope — Cees Bassa',
+        coordinates: '52.91°N, 6.60°E (between Westerbork and Hooghalen)',
         description: `
-          <p>The Westerbork Synthesis Radio Telescope - one of the world's most 
-          important radio astronomy facilities. Operated by ASTRON.</p>
+          <p>The Westerbork Synthesis Radio Telescope — 14 iconic 25-metre dishes 
+          stretching 1.5 km across the Drenthe heath. Operated by ASTRON, the 
+          Netherlands Institute for Radio Astronomy.</p>
           
           <p><strong>Specifications:</strong></p>
           <ul style="margin: 10px 0;">
-            <li>14 parabolic dishes (25 meters diameter each)</li>
+            <li>14 parabolic dishes (25 metres diameter each)</li>
             <li>Observing frequencies: 115 MHz to 15 GHz</li>
             <li>1.5 km baseline for interferometry</li>
-            <li>Major contributions to pulsar research</li>
-            <li>Famous for detecting Fast Radio Bursts</li>
+            <li>Apertif wide-field survey instrument</li>
+            <li>Famous for pulsar and Fast Radio Burst research</li>
           </ul>
           
-          <p><strong>Historical Note:</strong> Built in 1970, WSRT has been instrumental 
-          in advancing radio astronomy. The site was chosen for its radio-quiet environment.</p>
+          <p><strong>Contact:</strong> Cees Bassa — satellite tracker, radio astronomer, 
+          and Ryan's ally. Has access to ASTRON's signal-analysis infrastructure.</p>
           
-          <p style="color: #ffa502;">This facility represents the legitimate use of 
-          radio frequency technology - in contrast to Project Echo's weaponization.</p>
+          <p>${game.getFlag('signal_triangulated') ? 
+            '<span style="color: #00ff88;">✓ Signal triangulated — Steckerdoser Heide confirmed</span>' : 
+            game.getFlag('visited_astron') ? 
+            '<span style="color: #ffa502;">⚠ Visited — analysis in progress</span>' :
+            game.getFlag('astron_unlocked') ?
+            '<span style="color: #4a90e2;">→ Cees is expecting you</span>' :
+            '<span style="color: #888;">○ Contact Cees Bassa first</span>'
+          }</p>
         `,
-        status: '○ Reference location - not mission critical'
+        status: game.getFlag('signal_triangulated') ? '✓ Signal triangulated' : 
+                game.getFlag('visited_astron') ? '⚠ Visited' :
+                game.getFlag('astron_unlocked') ? '→ Ready to visit' : '○ Reference location'
       },
       
       lofar: {
@@ -424,10 +435,10 @@ const RegionalMapScene = {
     {
       id: 'location-compascuum-hotspot',
       name: 'Compascuum',
-      x: 38.2,
-      y: 53.3,
-      width: 10,
-      height: 12,
+      x: 39.23,
+      y: 54.33,
+      width: 8,
+      height: 8,
       cursor: 'pointer',
       action: function(game) {
         game.currentScene.showLocationInfo('compascuum');
@@ -437,10 +448,10 @@ const RegionalMapScene = {
     {
       id: 'location-terapel-hotspot',
       name: 'Ter Apel',
-      x: 45,
-      y: 45,
-      width: 10,
-      height: 12,
+      x: 46,
+      y: 46,
+      width: 8,
+      height: 8,
       cursor: 'pointer',
       action: function(game) {
         game.currentScene.showLocationInfo('terapel');
@@ -463,23 +474,49 @@ const RegionalMapScene = {
     {
       id: 'location-wsrt-hotspot',
       name: 'WSRT',
-      x: 18,
-      y: 45,
-      width: 12,
-      height: 12,
+      x: 19.96,
+      y: 46,
+      width: 8,
+      height: 8,
       cursor: 'pointer',
       action: function(game) {
         game.currentScene.showLocationInfo('wsrt');
       }
     },
-    
+
+    {
+      id: 'location-dwingeloo-hotspot',
+      name: 'Dwingeloo Observatory',
+      x: 11.5,
+      y: 51,
+      width: 8,
+      height: 8,
+      cursor: 'pointer',
+      action: function(game) {
+        game.loadScene('dwingeloo');
+      }
+    },
+
+    {
+      id: 'location-westerbork-memorial-hotspot',
+      name: 'Westerbork Memorial',
+      x: 19.96,
+      y: 54,
+      width: 8,
+      height: 8,
+      cursor: 'pointer',
+      action: function(game) {
+        game.loadScene('westerbork_memorial');
+      }
+    },
+
     {
       id: 'location-lofar-hotspot',
       name: 'LOFAR',
-      x: 13.75,
-      y: 44.1,
-      width: 10,
-      height: 10,
+      x: 14.75,
+      y: 45.07,
+      width: 8,
+      height: 8,
       cursor: 'pointer',
       action: function(game) {
         game.currentScene.showLocationInfo('lofar');
