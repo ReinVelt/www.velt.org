@@ -832,11 +832,14 @@ class CyberQuestEngine {
             return;
         }
         
-        if (!this.gameState.activeQuests.find(q => q.id === quest.id)) {
-            this.gameState.activeQuests.push(quest);
-            this.updateQuestUI();
-            this.showNotification(`New Quest: ${quest.name || quest.id}`);
+        // Skip if quest is already active or was already completed
+        if (this.gameState.activeQuests.find(q => q.id === quest.id) ||
+            this.gameState.questsCompleted.includes(quest.id)) {
+            return;
         }
+        this.gameState.activeQuests.push(quest);
+        this.updateQuestUI();
+        this.showNotification(`New Quest: ${quest.name || quest.id}`);
     }
     
     // Add item to inventory (shortcut method)
