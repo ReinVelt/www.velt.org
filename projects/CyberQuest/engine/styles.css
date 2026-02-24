@@ -162,6 +162,36 @@ body {
     box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
 }
 
+/* Navigation hotspots - always visible with subtle indicator */
+.hotspot.hotspot-nav {
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(10px, 1.2vw, 14px);
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 1px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+.hotspot.hotspot-nav::before {
+    content: attr(data-tooltip);
+    white-space: nowrap;
+    pointer-events: none;
+}
+.hotspot.hotspot-nav:hover {
+    border-color: rgba(255, 255, 255, 0.6);
+    background: rgba(0, 0, 0, 0.5);
+    color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+}
+/* Hide the default ::after tooltip for nav hotspots since label is always shown */
+.hotspot.hotspot-nav[data-tooltip]:hover::after {
+    display: none;
+}
+
 .hotspot[data-tooltip]:hover::after {
     content: attr(data-tooltip);
     position: absolute;
@@ -462,6 +492,81 @@ body {
 #menu-voice.muted {
     opacity: 0.6;
     border-color: var(--color-text-dim);
+}
+
+/* Pause button */
+#menu-pause {
+    min-width: 100px;
+}
+
+#menu-pause.paused {
+    background: linear-gradient(135deg, #1a3a1a 0%, #0a2a0a 100%);
+    border-color: #44ff44;
+    color: #44ff44;
+    animation: pause-btn-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pause-btn-pulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(68, 255, 68, 0.3); }
+    50% { box-shadow: 0 0 12px rgba(68, 255, 68, 0.6); }
+}
+
+/* Pause overlay — covers the entire game */
+#pause-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    animation: pause-fade-in 0.2s ease-out;
+}
+
+#pause-overlay.hidden {
+    display: none;
+}
+
+@keyframes pause-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+#pause-content {
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+}
+
+#pause-icon {
+    font-size: 72px;
+    margin-bottom: 16px;
+    filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.5));
+}
+
+#pause-title {
+    font-family: Impact, 'Arial Black', sans-serif;
+    font-size: 56px;
+    color: #eaeaea;
+    letter-spacing: 12px;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.5), 0 2px 8px rgba(0, 0, 0, 0.8);
+    margin-bottom: 12px;
+}
+
+#pause-hint {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--color-text-dim);
+    opacity: 0.8;
+    animation: pause-hint-blink 2s ease-in-out infinite;
+}
+
+@keyframes pause-hint-blink {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 0.3; }
 }
 
 /* Time Display — centred in #game-top-bar */

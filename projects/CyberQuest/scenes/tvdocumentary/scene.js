@@ -951,11 +951,11 @@ const TvdocumentaryScene = {
             {
                 duration: 9000,
                 sound: 'whoosh',
-                voice: { text: 'While Drenthe scientists pushed the boundaries of listening to the universe, a Dutch engineer working in Sweden was about to change the way every device on Earth communicates.', speaker: 'Documentary' },
+                voice: { text: 'While Drenthe scientists pushed the boundaries of listening to the universe, a Dutch engineer working in Emmen was about to change the way every device on Earth communicates.', speaker: 'Documentary' },
                 content: `
                     <div class="docu-bg" style="background-image: url('assets/images/scenes/tvdoc_lofar.svg'); animation-direction: reverse; animation-duration: 12s;"></div>
                     <div class="docu-text-overlay">
-                        <p>While Drenthe scientists pushed the boundaries of listening to the universe, a Dutch engineer in Sweden was about to change the way every device on Earth communicates.</p>
+                        <p>While Drenthe scientists pushed the boundaries of listening to the universe, a Dutch engineer in Emmen was about to change the way every device on Earth communicates.</p>
                     </div>
                 `
             },
@@ -973,7 +973,7 @@ const TvdocumentaryScene = {
                     </div>
                     <div class="docu-text-overlay">
                         <p>Named after Viking king Harald Bl&aring;tand &mdash; "Bluetooth" &mdash; who united the tribes of Denmark.</p>
-                        <p><span class="docu-fact">In the early 1990s, Dutch engineer Jaap Haartsen developed a short-range wireless protocol at Ericsson in Sweden.</span></p>
+                        <p><span class="docu-fact">In the early 1990s, Dutch engineer Jaap Haartsen developed a short-range wireless protocol at Ericsson in Emmen.</span></p>
                     </div>
                 `
             },
