@@ -146,19 +146,15 @@ const GardenScene = {
         },
         {
             id: 'tree',
-            name: 'Large Tree',
             // SVG: translate(1700,300), canopy top at cy=60-ry=60→abs y=300, trunk to y=350→abs y=650
             // Actual: x=1570, y=300, w=270, h=350
             x: (1570 / 1920) * 100,   // 81.77%
             y: (300 / 1080) * 100,    // 27.78%
             width: (270 / 1920) * 100, // 14.06%
             height: (350 / 1080) * 100, // 32.41%
-            cursor: 'pointer',
-            action: function(game) {
-                game.startDialogue([
-                    { speaker: 'Ryan', text: 'A big old oak tree. Been here longer than the house.' }
-                ]);
-            }
+            cursor: 'exit',
+            skipWalk: true,
+            targetScene: 'garden_back'
         },
         {
             id: 'house-back',
@@ -498,17 +494,51 @@ const GardenScene = {
             });
         }
 
+        // LOFAR Superterp — accessible after visiting ASTRON
+        if (game.getFlag('visited_astron')) {
+            destinations.push({
+                id: 'lofar',
+                name: 'LOFAR Superterp',
+                desc: 'World\'s largest low-frequency radio telescope. Cees Bassa.',
+                distance: '30 min · South',
+                icon: '📶',
+                drivingScene: 'driving_day',
+                drivingDest: 'lofar',
+                night: false,
+                visited: !!game.getFlag('visited_lofar'),
+                urgent: false
+            });
+        }
+
         // Westerbork Memorial — accessible after visiting klooster
+        // (200 m from WSRT — same location area, same ~40 min drive)
         if (game.getFlag('visited_klooster')) {
             destinations.push({
                 id: 'westerbork',
                 name: 'Westerbork Memorial',
-                desc: 'Camp Westerbork. A place to remember.',
-                distance: '30 min · South-west',
+                desc: 'Camp Westerbork. 200 m from the WSRT dishes.',
+                distance: '40 min · South-west',
                 icon: '✡️',
-                directScene: 'westerbork_memorial',
+                drivingScene: 'driving_day',
+                drivingDest: 'westerbork',
                 night: false,
                 visited: !!game.getFlag('visited_westerbork_memorial'),
+                urgent: false
+            });
+        }
+
+        // Hackerspace Drenthe — available after mancave unlocked
+        if (game.getFlag('mancave_unlocked')) {
+            destinations.push({
+                id: 'hackerspace',
+                name: 'Hackerspace Drenthe',
+                desc: 'Community maker space in Coevorden. CNC, 3D printing, welding, soldering.',
+                distance: '25 min · South-east',
+                icon: '🔧',
+                drivingScene: 'driving_day',
+                drivingDest: 'hackerspace',
+                night: false,
+                visited: !!game.getFlag('visited_hackerspace'),
                 urgent: false
             });
         }

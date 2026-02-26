@@ -83,7 +83,7 @@ const DebriefScene = {
             skipWalk: true,
             action: function(game) {
                 if (game.getFlag('debrief_complete')) {
-                    game.loadScene('epilogue');
+                    game.loadScene('return_to_ies');
                 } else {
                     game.startDialogue([
                         { speaker: 'Ryan', text: 'Not yet. Still processing all this.' }
@@ -216,24 +216,18 @@ const DebriefScene = {
                 { speaker: 'Agent Van der Berg', text: 'My direct line. When you\'re ready.' },
                 { speaker: '', text: '*The agents stand. Coffee cups empty.*' },
                 { speaker: 'Agent Van der Berg', text: 'Thank you, Ryan. For what you did.' },
-                { speaker: 'Agent Van der Berg', text: 'You may have saved thousands of lives.' },
-                { speaker: '', text: '*A car waits to take Ryan home. The Den Haag skyline recedes in the mirror.*' }
+                { speaker: 'Agent Van der Berg', text: 'You may have saved thousands of lives.' }
             ],
 
-            // ── Ryan's reflection ──
+            // ── Ryan's reflection in the car ──
             [
+                { speaker: '', text: '*A black car waits outside. The Den Haag skyline recedes in the mirror.*' },
                 { speaker: 'Ryan', text: '*In the back of the car, staring at the business card*' },
                 { speaker: 'Ryan', text: 'AIVD. Dutch Intelligence.' },
                 { speaker: 'Ryan', text: 'From freelance hacker to… what? Government agent?' },
                 { speaker: 'Ryan', text: 'Is that who I am now?' },
-                { speaker: 'Ryan', text: '*Watches the flat Dutch landscape scroll past* I need to think about this.' }
-            ],
-
-            // ── Mission complete ──
-            [
-                { speaker: '', text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━' },
-                { speaker: '', text: 'MISSION COMPLETE — THE CHOICE IS YOURS' },
-                { speaker: '', text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━' }
+                { speaker: 'Ryan', text: '*Watches the flat Dutch landscape scroll past*' },
+                { speaker: 'Ryan', text: 'First things first. I need to talk to Ies. Tell her everything.' }
             ]
         ];
 
@@ -242,9 +236,9 @@ const DebriefScene = {
         const playNext = () => {
             if (sectionIndex >= sections.length) {
                 game.setFlag('debrief_complete', true);
-                game.showNotification('Click to continue to the epilogue…');
+                game.showNotification('Click to continue…');
                 const tid = setTimeout(() => {
-                    game.loadScene('epilogue');
+                    game.loadScene('return_to_ies');
                 }, 10000);
                 this._timeoutIds.push(tid);
                 return;
