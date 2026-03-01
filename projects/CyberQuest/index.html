@@ -3,16 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CyberQuest - Redirecting...</title>
-    <script>
-        window.open('https://ryanweylant.tech', '_blank');
-        window.location.href = document.referrer || '/projects/';
-    </script>
-    <noscript>
-        <meta http-equiv="refresh" content="0;url=https://ryanweylant.tech">
-    </noscript>
+    <title>CyberQuest: Operation ZERFALL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #070a0f;
+            --fog: #e7f7f2;
+            --glow: #00f6ff;
+            --acid: #39ff14;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: "Space Grotesk", "IBM Plex Mono", monospace;
+            color: var(--fog);
+            background:
+                radial-gradient(900px 700px at 12% 12%, rgba(0, 246, 255, 0.25), transparent 62%),
+                radial-gradient(900px 700px at 90% 5%, rgba(255, 177, 0, 0.18), transparent 60%),
+                linear-gradient(130deg, #04070c 0%, #0a111c 45%, #0c1a22 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            font-family: "Share Tech Mono", monospace;
+            font-size: clamp(1.8rem, 5vw, 3rem);
+            color: var(--glow);
+            text-shadow: 0 0 30px rgba(0, 246, 255, 0.5);
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--fog);
+            opacity: 0.7;
+            margin-bottom: 2.5rem;
+        }
+
+        .play-btn {
+            display: inline-block;
+            padding: 1rem 3rem;
+            font-family: "Share Tech Mono", monospace;
+            font-size: 1.4rem;
+            color: var(--ink);
+            background: var(--acid);
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            box-shadow:
+                0 0 20px rgba(57, 255, 20, 0.4),
+                0 0 60px rgba(57, 255, 20, 0.15);
+            transition: all 0.2s ease;
+        }
+
+        .play-btn:hover {
+            background: #5fff42;
+            box-shadow:
+                0 0 30px rgba(57, 255, 20, 0.6),
+                0 0 80px rgba(57, 255, 20, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .play-btn:active {
+            transform: translateY(0);
+        }
+
+        .back {
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .back a {
+            color: var(--glow);
+            text-decoration: none;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+
+        .back a:hover {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting to <a href="https://ryanweylant.tech" target="_blank">ryanweylant.tech</a>...</p>
+    <h1>CyberQuest: Operation ZERFALL</h1>
+    <p class="subtitle">A hacking adventure with encryption puzzles</p>
+    <a class="play-btn" href="https://ryanweylant.tech" target="_blank" rel="noopener noreferrer">&#9654; Play the Game</a>
+    <p class="back"><a href="/projects/">&larr; Back to Projects</a></p>
 </body>
 </html>
